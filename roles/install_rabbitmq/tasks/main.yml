@@ -1,0 +1,5 @@
+---
+- include_tasks: install_rabbitmq.yml
+- include_tasks: config_rabbitmq.yml
+- include_tasks: join_rabbitmq_cluster.yml
+- include_tasks: create_user_rabbitmq.yml

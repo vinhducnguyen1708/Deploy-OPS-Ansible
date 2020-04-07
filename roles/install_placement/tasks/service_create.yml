@@ -1,0 +1,11 @@
+---
+- name: Create info for placement user
+  shell: |
+        source /root/admin-openrc
+        openstack user create --domain default --password {{ placement_pass }} placement
+        openstack role add --project service --user placement admin
+        openstack service create --name placement --description "Placement API" placement
+        openstack endpoint create --region {{ REGION }} placement public http://{{ IP_VIP }}:8778
+        openstack endpoint create --region {{ REGION }} placement internal http://{{ IP_VIP }}:8778
+        openstack endpoint create --region {{ REGION }} placement admin http://{{ IP_VIP }}:8778
+  run_once: true

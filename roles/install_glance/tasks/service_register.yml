@@ -1,0 +1,13 @@
+---
+- name: Populate the Image service database
+  shell: 
+     su -s /bin/sh -c "glance-manage db_sync" glance
+  run_once: true
+
+- name: Start Image Service Glance-api
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-glance-api.service
+
+

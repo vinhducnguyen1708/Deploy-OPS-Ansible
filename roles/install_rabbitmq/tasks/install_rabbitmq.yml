@@ -1,0 +1,6 @@
+---
+- name: Install Rabbitmq-server.service
+  yum:
+    name: rabbitmq-server
+  notify:
+    - start rabbitmq-server.service

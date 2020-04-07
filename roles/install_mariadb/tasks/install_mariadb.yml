@@ -1,0 +1,66 @@
+---
+- name: Ensure there are no packages mariadb
+  yum: 
+   name:
+      - mariadb-common*
+      - mariadb-config*
+   state: removed   
+- name: Setup repository
+  ini_file:
+     path: /etc/yum.repos.d/MariaDB.repo
+     section: mariadb
+     option: "{{ item.key }}"
+     value: "{{ item.value }}"
+  with_dict: '{{ mariadb_repo }}'
+
+- name: Update packages for Servers
+  yum:
+     name: '*'
+     state: latest
+
+- name: install mariadb
+  yum: 
+    name: '{{ mariadb_packages }}'
+    
+- name: Config Mariadb if only have one node Controller
+  template:
+    src: openstack.cnf.j2
+    dest: /etc/my.cnf.d/openstack.cnf
+  when:
+     - groups['controller'] | length  < 2 
+- name: start mariadb
+  service:
+    name: mariadb
+    enabled: true
+    state: started
+- name: git clone healthcheck
+  shell: git clone https://github.com/TrongTan124/percona-clustercheck
+  ignore_errors: yes
+  when:
+     - groups['controller'] | length  > 1
+
+- name: copy dir to/usr/local/bin
+  shell: cp percona-clustercheck/clustercheck /usr/local/bin
+  when:
+     - groups['controller'] | length  > 1
+
+- name: config xinetd 
+  template:
+    src: mysqlchk.j2
+    dest: /etc/xinetd.d/mysqlchk
+  when:
+     - groups['controller'] | length  > 1
+
+- name: config mysqlchk services
+  lineinfile:
+    path: /etc/services
+    line: mysqlchk 9200/tcp # MySQL check
+  when:
+- name: Restart service xinetd
+  systemd:
+    state: restarted
+    enabled: true
+    name: xinetd
+  when:
+     - groups['controller'] | length  > 1
+

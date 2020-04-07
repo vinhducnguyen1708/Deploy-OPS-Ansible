@@ -1,0 +1,11 @@
+---
+- name: Install and configure components of Nova
+  yum:
+    name: "{{ item }}"
+  with_items:
+    - openstack-nova-api
+    - openstack-nova-conductor
+    - openstack-nova-novncproxy
+    - openstack-nova-scheduler
+
+

@@ -1,0 +1,8 @@
+---
+- include_tasks: bootstrap_nova.yml
+- include_tasks: service_create.yml
+- include_tasks: install_nova.yml
+- include_tasks: config_nova.yml
+- include_tasks: service_register.yml
+
+

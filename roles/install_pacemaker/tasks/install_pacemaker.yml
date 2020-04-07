@@ -1,0 +1,18 @@
+---
+- name: install pacemaker
+  yum: 
+   name: '{{ pacemaker_packages }}'
+
+- name: set hacluster password
+  shell: echo {{ corosync_pass }} | passwd --stdin hacluster
+  notify:
+    - enable_services corosync
+    - enable_services pacemaker
+    - enable_services haproxy
+    - start_pacemaker
+
+- name: start pcsd
+  systemd:
+    state: started
+    enabled: yes
+    name: pcsd

@@ -1,0 +1,16 @@
+---
+- name: Update packages for Servers
+  yum:
+     name: '*'
+     state: latest
+- name: Enable the Openstack Train repository
+  yum:
+     name: 'centos-release-openstack-train'
+- name: Enable the Openstack Train client
+  yum:
+     name: 'python-openstackclient'
+
+- name: Enable the Openstack Train Selinux
+  yum:
+     name: 'openstack-selinux'
+     

@@ -1,0 +1,8 @@
+---
+- include_tasks: bootstrap_placement.yml
+- include_tasks: service_create.yml
+- include_tasks: install_placement.yml
+- include_tasks: config_httpd.yml
+- include_tasks: config_placement.yml
+- include_tasks: service_register.yml
+

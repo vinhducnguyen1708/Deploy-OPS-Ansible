@@ -1,0 +1,55 @@
+[DEFAULT]
+bind_host = {{ MGNT_IP }}
+bind_port = 9696
+core_plugin = ml2
+service_plugins = router,qos,neutron.services.metering.metering_plugin.MeteringPlugin
+advertise_mtu = true
+dhcp_agents_per_network = 3
+allow_overlapping_ips = true
+notify_nova_on_port_status_changes = true
+notify_nova_on_port_data_changes = true
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item].ansible_default_ipv4.address }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_strategy = keystone
+metadata_proxy_socket = /var/lib/neutron/metadata_proxy
+[cors]
+[database]
+connection = mysql+pymysql://neutron:{{ neutrondb_pass }}@{{ IP_VIP }}/neutron
+[keystone_authtoken]
+www_authenticate_uri = http://{{ IP_VIP }}:5000
+auth_url = http://{{ IP_VIP }}:5000
+memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item].ansible_default_ipv4.address }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = neutron
+password = {{ neutron_pass }}
+[oslo_concurrency]
+lock_path = /var/lib/neutron/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+rabbit_ha_queues = true
+[oslo_middleware]
+[oslo_policy]
+[privsep]
+[ssl]
+
+[nova]
+auth_url = http://{{ IP_VIP }}:5000
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = Hanoi
+project_name = service
+username = nova
+password = {{ nova_pass }}
+[qos]
+notification_drivers = message_queue
+

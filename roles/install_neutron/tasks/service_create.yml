@@ -1,0 +1,12 @@
+---
+- name: Create the neutron service credentials
+  shell: |
+     source /root/admin-openrc
+     openstack user create --domain default --password {{ neutron_pass }} neutron
+     openstack role add --project service --user neutron admin
+     openstack service create --name neutron --description "OpenStack Networking" network
+     openstack endpoint create --region {{ REGION }} network public http://{{ IP_VIP }}:9696
+     openstack endpoint create --region {{ REGION }} network internal http://{{ IP_VIP }}:9696
+     openstack endpoint create --region {{ REGION }} network admin http://{{ IP_VIP }}:9696
+  run_once: true
+

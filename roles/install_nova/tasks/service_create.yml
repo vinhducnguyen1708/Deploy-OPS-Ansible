@@ -1,0 +1,11 @@
+---
+- name: Create info for nova user
+  shell: |
+     source /root/admin-openrc
+     openstack user create --domain default --password {{ nova_pass }} nova
+     openstack role add --project service --user nova admin
+     openstack service create --name nova --description "OpenStack Compute" compute
+     openstack endpoint create --region {{ REGION }} compute public http://{{ IP_VIP }}:8774/v2.1
+     openstack endpoint create --region {{ REGION }} compute internal http://{{ IP_VIP }}:8774/v2.1
+     openstack endpoint create --region {{ REGION }} compute admin http://{{ IP_VIP }}:8774/v2.1
+  run_once: true

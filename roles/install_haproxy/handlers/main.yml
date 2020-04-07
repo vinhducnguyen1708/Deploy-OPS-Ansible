@@ -1,0 +1,12 @@
+---
+- name: stop_haproxy
+  systemd:
+    state: stopped
+    enabled: true
+    name: haproxy
+
+- name: restart_rsyslog
+  systemd:
+    state: restarted
+    enabled: true
+    name: rsyslog

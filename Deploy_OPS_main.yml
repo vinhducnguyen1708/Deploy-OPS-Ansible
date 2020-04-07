@@ -1,0 +1,103 @@
+---
+- name: Apply role baremental
+  gather_facts: true
+  become: true
+  hosts: all
+  roles:
+    - { role: baremental,
+        tags: baremental }
+- name: Apply role chrony
+  gather_facts: true
+  become: true
+  hosts: all
+  roles:
+    - { role: install_ntp,
+        tags: install_ntp }
+
+- name: Apply role Rabbimq
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_rabbitmq,
+        tags: install_rabbitmq }
+
+- name: Apply role Mariadb
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_mariadb,
+        tags: install_mariadb }
+- name: Apply role Memcache
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_memcached,
+        tags: install_memcached }
+- name: Apply role HAproxy
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_haproxy,
+        tags: install_haproxy }
+
+- name: Apply role Pacemaker
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_pacemaker,
+        tags: install_pacemaker }
+
+- name: Apply role Keystone
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_keystone,
+        tags: install_keystone }
+
+- name: Apply role Glance
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_glance,
+        tags: install_glance }
+
+- name: Apply role Placement
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_placement,
+        tags: install_placement }
+
+- name: Apply role Nova
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_nova,
+        tags: install_nova }
+
+- name: Apply role Neutron
+  gather_facts: true
+  become: true  
+  hosts: controller
+  roles:
+    - { role: install_neutron,
+        tags: install_neutron }
+
+- name: Apply role Horizon
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_horizon,
+        tags: install_horizon }
+
+

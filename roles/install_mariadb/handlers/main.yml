@@ -1,0 +1,17 @@
+---
+- name: start mariadb
+  systemd:
+    state: started
+    name: mariadb
+    enabled: yes
+
+- name: stop mariadb
+  systemd:
+    state: stopped
+    name: mariadb
+    enabled: yes
+
+- name: restart mariadb
+  systemd:
+    state: restarted
+    name: mariadb

@@ -1,0 +1,15 @@
+---
+- name: Sync databases
+  shell: su -s /bin/sh -c "keystone-manage db_sync" keystone
+  run_once: true
+
+- name: Initialize Fernet key repositories
+  shell: |
+    keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+    keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+- name: restart service httpd
+  systemd:
+    state: started
+    enabled: true
+    name: httpd
+

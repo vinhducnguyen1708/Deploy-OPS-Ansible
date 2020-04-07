@@ -1,0 +1,7 @@
+---
+- include_tasks: bootstrap_neutron.yml
+- include_tasks: service_create.yml
+- include_tasks: install_neutron.yml
+- include_tasks: config_neutron.yml
+- include_tasks: service_register.yml
+- include_tasks: config_network.yml

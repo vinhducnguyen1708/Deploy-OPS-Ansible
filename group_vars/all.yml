@@ -1,0 +1,42 @@
+---
+### client's password
+admin_pass: 86c1e9156686a03ccf92
+demo_pass: a0fb47ac09b7da38cdfd
+
+
+### Database's password
+keystonedb_pass: 06f08beb5733b3de967f
+glancedb_pass: ffb3207fc04ddc4b6323
+placementdb_pass: 299ab5413f5111e9418d
+novadb_pass: 7c8d2ac4cab250b8304d
+neutrondb_pass: f103af929e55c23bdc09
+
+### Service's password
+glance_pass: 77635c727b72f8e56b10
+placement_pass: 7b2ba3a53dd53c37ecff
+nova_pass: 8fb55eeffd0d28574ec7
+neutron_pass: 1833af70431b0d540cc5
+metadata_secret: 5b721855305f81836b04
+mariadb_pass: 6c4c795a4b866e4f82f4
+rabbitmq_pass: ed4150476a71d98c6a55
+
+### network interface
+IP_VIP: 192.168.10.150
+REGION: Hanoi
+MGNT_IF: eth0
+DATA_IF: eth1
+FLAT_IF: eth2
+FLAT_NETMASK: 255.255.255.0
+
+
+MGNT_NETWORK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['network'] }}"
+MGNT_IPADD: "{{ MGNT_NETWORK }}/{{ MGNT_NETMASK }}"
+MGNT_CIDR: "{{ MGNT_IPADD | ipaddr('net') }}"
+MGNT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['netmask'] }}" 
+###
+MGNT_IP: "{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
+DATA_IP: "{{ hostvars[inventory_hostname]['ansible_' + DATA_IF]['ipv4']['address'] }}"
+FLAT_IP: "{{ hostvars[inventory_hostname]['ansible_' + FLAT_IF]['ipv4']['address'] }}"
+
+
+

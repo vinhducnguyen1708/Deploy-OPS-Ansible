@@ -1,0 +1,22 @@
+---
+- name: Bootstrap the Identity service
+  shell: keystone-manage bootstrap --bootstrap-password {{ admin_pass }} --bootstrap-admin-url http://{{ IP_VIP }}:5000/v3/ --bootstrap-internal-url http://{{ IP_VIP }}:5000/v3/ --bootstrap-public-url http://{{ IP_VIP }}:5000/v3/ --bootstrap-region-id {{ REGION }}
+  run_once: true
+
+- name: Create OpenStack client environment scripts
+  template:
+     src: admin-openrc.j2
+     dest: /root/admin-openrc
+     mode: 0751
+
+- name: Create domain, projects, users and roles
+  shell: |
+     source /root/admin-openrc
+     openstack project create --domain default --description "Service Project" service
+     openstack project create --domain default  --description "Demo Project" demo
+     openstack user create --domain default  --password {{ demo_pass }} demo
+     openstack role create user
+     openstack role add --project demo --user demo user
+  run_once: true
+
+

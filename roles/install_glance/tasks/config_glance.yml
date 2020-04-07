@@ -1,0 +1,41 @@
+---
+- name: config section DEFAULT
+  ini_file:
+       path: /etc/glance/glance-api.conf
+       section: DEFAULT
+       option: "{{ item.key }}"
+       value: "{{ item.value }}"
+  with_dict: '{{ DEFAULT }}'
+
+- name: config section database
+  ini_file:
+       path: /etc/glance/glance-api.conf
+       section: database
+       option: "{{ item.key }}"
+       value: "{{ item.value }}"
+  with_dict: '{{ database }}'
+
+- name: config section keystone_authtoken
+  ini_file:
+       path: /etc/glance/glance-api.conf
+       section: keystone_authtoken
+       option: "{{ item.key }}"
+       value: "{{ item.value }}"
+  with_dict: '{{ keystone_authtoken }}'
+
+- name: config section paste_deploy
+  ini_file:
+       path: /etc/glance/glance-api.conf
+       section: paste_deploy
+       option: "{{ item.key }}"
+       value: "{{ item.value }}"
+  with_dict: '{{ paste_deploy }}'
+
+- name: config section glance_store
+  ini_file:
+       path: /etc/glance/glance-api.conf
+       section: glance_store
+       option: "{{ item.key }}"
+       value: "{{ item.value }}"
+  with_dict: '{{ glance_store }}'
+

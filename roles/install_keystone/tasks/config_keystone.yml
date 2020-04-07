@@ -1,0 +1,16 @@
+---
+- name: Config section database in file config
+  ini_file:
+    path: /etc/keystone/keystone.conf
+    section: database
+    option: connection
+    value: mysql+pymysql://keystone:{{ keystonedb_pass }}@{{ IP_VIP }}/keystone
+- name: Config section database in file config
+  ini_file:
+    path: /etc/keystone/keystone.conf
+    section: token
+    option: provider
+    value: fernet
+
+
+

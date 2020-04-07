@@ -1,0 +1,10 @@
+---
+- name: config Keystone  HTTPD
+  template:
+   src: wsgi-keystone.conf.j2
+   dest: /etc/httpd/conf.d/wsgi-keystone.conf
+- name: config HTTPD
+  template:
+   src: httpd.conf.j2
+   dest: /etc/httpd/conf/httpd.conf
+

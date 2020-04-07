@@ -1,0 +1,30 @@
+---
+- name: export env OPS
+  shell: source /root/admin-openrc
+
+- name: Create user Glance
+  shell: |
+      source /root/admin-openrc
+      openstack user create --domain default --password {{ glance_pass }} glance
+  run_once: true
+
+- name: Create role for user glance
+  shell: |
+      source /root/admin-openrc
+      openstack role add --project service --user glance admin
+  run_once: true
+
+- name: Create Image service
+  shell: |
+      source /root/admin-openrc
+      openstack service create --name glance --description "OpenStack Image" image
+  run_once: true
+
+- name: Create endpoint public for Glance Service
+  shell: |
+      source /root/admin-openrc
+      openstack endpoint create --region {{ REGION }}  image public http://{{ IP_VIP }}:9292
+      openstack endpoint create --region {{ REGION }}  image admin http://{{ IP_VIP }}:9292
+      openstack endpoint create --region {{ REGION }}  image internal http://{{ IP_VIP }}:9292
+  run_once: true
+

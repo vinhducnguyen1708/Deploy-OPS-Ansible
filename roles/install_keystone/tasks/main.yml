@@ -1,0 +1,7 @@
+---
+- include_tasks: bootstrap_keystone.yml
+- include_tasks: install_keystone.yml
+- include_tasks: config_httpd.yml
+- include_tasks: config_keystone.yml
+- include_tasks: service_register.yml
+- include_tasks: service_create.yml 

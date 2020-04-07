@@ -1,0 +1,10 @@
+---
+- name: Populate the placement-api database
+  shell: su -s /bin/sh -c "placement-manage db sync" placement
+  run_once: true
+
+- name: start httpd service
+  systemd:
+     state: restarted
+     enabled: true
+     name: httpd

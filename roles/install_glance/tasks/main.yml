@@ -1,0 +1,6 @@
+---
+- include_tasks: bootstrap_glance.yml
+- include_tasks: service_create.yml
+- include_tasks: install_glance.yml
+- include_tasks: config_glance.yml
+- include_tasks: service_register.yml

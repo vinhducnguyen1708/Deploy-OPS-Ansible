@@ -1,0 +1,45 @@
+---
+
+
+
+- name: Start all Rabbitmq Services
+  systemd:
+    name: rabbitmq-server
+    state: started
+    enabled: yes
+
+- name: Stop all Rabbitmq Services
+  systemd: 
+    name: rabbitmq-server
+    state: stopped
+
+- name: backup old erlang cookie
+  shell: cp -a /var/lib/rabbitmq/.erlang.cookie /var/lib/rabbitmq/.erlang.cookie.old
+  changed_when: false
+
+- name: test shell
+  shell: scp -p  /var/lib/rabbitmq/.erlang.cookie  root@{{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:/var/lib/rabbitmq/.erlang.cookie
+  when:
+    - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+- name: test shell2
+  shell: scp -p  /var/lib/rabbitmq/.erlang.cookie  root@{{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:/var/lib/rabbitmq/.erlang.cookie
+  when:
+    - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+
+
+#- name: check if erlang cookie changed and if it is so stopping server
+#  template:
+#    src: erlang.cookie.j2
+#    dest: /var/lib/rabbitmq/.erlang.cookie.old
+#    owner: rabbitmq
+#    group: rabbitmq
+#    mode: 0400
+
+- name: Start all Rabbitmq Services
+  systemd:
+    name: rabbitmq-server
+    state: started
+    enabled: yes
+

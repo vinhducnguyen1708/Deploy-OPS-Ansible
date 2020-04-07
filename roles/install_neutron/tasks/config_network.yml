@@ -1,0 +1,28 @@
+---
+- name: Start OpenvSwitch
+  systemd:
+    state: restarted
+    enabled: true
+    name: openvswitch
+
+- name: Configure OpenvSwitch
+  shell: |
+     ovs-vsctl add-br br-provider
+     ovs-vsctl add-port br-provider {{ FLAT_IF }}
+
+- name: config FLAT interface
+  template:
+    src: ifcfgflat.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{ FLAT_IF }}
+
+
+- name: Config network bridge Provider
+  template:
+    src: ifcfg-br-provider.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-br-provider
+
+
+- name: Restart network
+  systemd:
+     state: restarted
+     name: network   
