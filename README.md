@@ -35,8 +35,8 @@ Deploy hệ thống Openstack bằng Ansible
 
 ## Thực thi 
 - B1: copy ssh-key đến các node
-- B2: Khai báo các node trong file inventory như [tại đây]() 
-- B3: Thực hiện khai báo các thông số về password, interfaces trong file khai báo biến [tại đây]()
+- B2: Khai báo các node trong file inventory như [tại đây](https://github.com/vinhducnguyen1708/Deploy-OPS-Ansible/blob/master/multinodeHA) 
+- B3: Thực hiện khai báo các thông số về password, interfaces trong file khai báo biến [tại đây](https://github.com/vinhducnguyen1708/Deploy-OPS-Ansible/blob/master/group_vars/all.yml)
 - B4: Ping kiểm tra đã kết nối tới các host
 ```sh
 ansible -i multinodeHA all -m ping
