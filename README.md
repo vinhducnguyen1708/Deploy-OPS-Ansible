@@ -4,7 +4,9 @@ Deploy hệ thống Openstack bằng Ansible
 ## Khả năng thực hiện
 - Deploy hệ thống Openstack Train HA gồm 3 node controller và nhiều node compute
 - 4 interfaces network
-## Cấu trúc
+## Topology
+
+![ima](ima/OPS-Ansible-Topo.PNG)
 
 ## Các thành phần trong hệ thống
 1. Node controller:
@@ -45,4 +47,9 @@ ansible -i multinodeHA all -m ping
 ```sh
 ansible-playbook -i multinodeHA Deploy_OPS_main.yml
 ```
+hoặc có thể chạy từng role chỉ định bằng cách thêm các tags ở cuối lệnh
+```sh
+ansible-playbook -i multinodeHA Deploy_OPS_main.yml -t install_rabbitmq
+```
+
 
