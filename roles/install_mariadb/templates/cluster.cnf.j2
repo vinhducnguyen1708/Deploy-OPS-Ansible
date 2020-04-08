@@ -7,7 +7,7 @@ innodb_locks_unsafe_for_binlog=1
 innodb_file_per_table
 innodb_flush_log_at_trx_commit=2
 query_cache_type=0
-bind-address={{ansible_eth0.ipv4.address}}
+bind-address={{ MGNT_IP }}
 
 max_connections = 102400
 max_allowed_packet  = 16M
@@ -23,11 +23,11 @@ wsrep_provider_options="gmcast.listen_addr=tcp://{{ansible_eth0.ipv4.address}}:4
 
 # Galera Cluster Configuration
 wsrep_cluster_name="openstack"
-wsrep_cluster_address="gcomm://{%- for item in groups['all'] %}{{  hostvars[item].ansible_default_ipv4.address| join('') }}{% if not loop.last %},{% endif %}{% endfor %}"
+wsrep_cluster_address="gcomm://{%- for item in groups['all'] %}{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address'] | join('') }}{% if not loop.last %},{% endif %}{% endfor %}"
 # Galera Synchronization Congifuration
 wsrep_sst_method=rsync
 #wsrep_sst_auth=user:pass
 
 # Galera Node Configuration
-wsrep_node_address="{{ansible_eth0.ipv4.address}}"
+wsrep_node_address="{{ MGNT_IP }}"
 wsrep_node_name="{{inventory_hostname}}"

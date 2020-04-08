@@ -7,6 +7,16 @@
   shell: |
     keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
     keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+    scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@hostvars[groups['controller'][1]]['inventory_hostname_short']:/etc/keystone/
+    scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@hostvars[groups['controller'][2]]['inventory_hostname_short']:/etc/keystone/
+  when: 
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']	
+
+- name: Config_fernet_key_for_other
+  shell: chown -R keystone:keystone /etc/keystone/credential-keys /etc/keystone/fernet-keys
+  when:
+    - inventory_hostname_short !=  hostvars[groups['controller'][0]]['inventory_hostname_short']
+
 - name: restart service httpd
   systemd:
     state: started
