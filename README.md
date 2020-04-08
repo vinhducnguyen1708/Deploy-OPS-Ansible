@@ -6,7 +6,7 @@ Deploy hệ thống Openstack bằng Ansible
 - 4 interfaces network
 ## Topology
 
-![ima](ima/OPS-Ansible-Topo.PNG)
+![ima](ima/OPS-Ansible-Topo.png)
 
 ## Các thành phần trong hệ thống
 1. Node controller:
