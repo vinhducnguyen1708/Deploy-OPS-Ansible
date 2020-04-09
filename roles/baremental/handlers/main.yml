@@ -4,7 +4,7 @@
     name: firewalld
     state: stopped
     enabled: no
-
+    masked: yes
 - name: disable networkmanager
   systemd:
     name: NetworkManager.service

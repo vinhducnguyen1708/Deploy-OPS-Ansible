@@ -22,6 +22,7 @@ rabbitmq_pass: ed4150476a71d98c6a55
 
 ### network interface
 IP_VIP: 192.168.10.150
+IP_VIP_NETMASK: 24
 REGION: Hanoi
 MGNT_IF: eth0
 DATA_IF: eth1

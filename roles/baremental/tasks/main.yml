@@ -1,12 +1,12 @@
 ---
-#- include_tasks: kernel.yml
+- include_tasks: kernel.yml
 
-#- include_tasks: disable_services.yml
+- include_tasks: disable_services.yml
 
-#- include_tasks: add_repo.yml
+- include_tasks: add_repo.yml
 
-#- include_tasks: hostname.yml
+- include_tasks: hostname.yml
 
-#- include_tasks: install_tools.yml
+- include_tasks: install_tools.yml
 
 - include_tasks: config_ssh.yml

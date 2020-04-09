@@ -1,6 +1,6 @@
 ---
 - name: restart chrony.service
   systemd:
-    name: chronyd.service
-    state: started
+    state: restarted
     enabled: yes
+    name: chronyd.service

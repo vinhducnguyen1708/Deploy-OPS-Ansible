@@ -1,0 +1,18 @@
+[DEFAULT]
+
+
+[agent]
+tunnel_types = vxlan,gre
+l2_population = True
+extensions = qos
+
+
+[ovs]
+local_ip = {{ DATA_IP }}
+bridge_mappings = physnet1:br-provider
+
+
+[securitygroup]
+firewall_driver = openvswitch
+enable_security_group = true
+

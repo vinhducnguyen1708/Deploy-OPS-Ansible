@@ -1,0 +1,16 @@
+---
+- import_tasks: /root/OPS-Ansible/roles/install_nova_cell/tasks/service_register.yml
+
+- name: Restart ovs
+  systemd:
+    state: restarted
+    enabled: true
+    name: openvswitch
+- import_tasks: /root/OPS-Ansible/roles/install_nova_cell/tasks/service_register.yml
+
+
+- name: Restart neutron service
+  systemd:
+    state: restarted
+    enabled: true
+    name: neutron-openvswitch-agent

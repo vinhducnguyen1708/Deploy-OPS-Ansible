@@ -1,0 +1,9 @@
+---
+- name: Install Nova-Compute services
+  yum:
+    name: "{{ item }}"
+  with_items:
+    - 'openstack-nova-compute'
+    - 'libvirt-client'
+
+
