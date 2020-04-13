@@ -8,7 +8,7 @@ dhcp_agents_per_network = 3
 allow_overlapping_ips = true
 notify_nova_on_port_status_changes = true
 notify_nova_on_port_data_changes = true
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item].ansible_default_ipv4.address }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_strategy = keystone
 metadata_proxy_socket = /var/lib/neutron/metadata_proxy
@@ -18,7 +18,7 @@ connection = mysql+pymysql://neutron:{{ neutrondb_pass }}@{{ IP_VIP }}/neutron
 [keystone_authtoken]
 www_authenticate_uri = http://{{ IP_VIP }}:5000
 auth_url = http://{{ IP_VIP }}:5000
-memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item].ansible_default_ipv4.address }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_name = default

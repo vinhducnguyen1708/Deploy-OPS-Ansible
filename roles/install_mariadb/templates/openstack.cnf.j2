@@ -1,5 +1,5 @@
 [mysqld]
-bind-address = {{{ansible_eth0.ipv4.address}}
+bind-address = {{ MGNT_IP }}
 
 default-storage-engine = innodb
 innodb_file_per_table = on

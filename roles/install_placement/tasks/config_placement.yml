@@ -1,24 +1,13 @@
 ---
-- name: Config section placement_database
-  ini_file:
-    path: /etc/placement/placement.conf
-    section: placement_database
-    option: "{{ item.key }}"
-    value: "{{ item.value }}"
-  with_dict: '{{ placement_database }}'
+- name: Backup file config placement.conf
+  copy:
+   src: /etc/placement/placement.conf
+   dest: /etc/placement/placement.conf.bak
+   remote_src: yes
 
-- name: config section keystone_authtoken
-  ini_file:
-       path: /etc/placement/placement.conf
-       section: keystone_authtoken
-       option: "{{ item.key }}"
-       value: "{{ item.value }}"
-  with_dict: '{{ keystone_authtoken }}'
+- name: Config file placement.conf
+  template:
+    src: placement.conf.j2
+    dest: /etc/placement/placement.conf
 
-- name: config section api
-  ini_file:
-       path: /etc/placement/placement.conf
-       section: api
-       option: "{{ item.key }}"
-       value: "{{ item.value }}"
-  with_dict: '{{ api }}'
+

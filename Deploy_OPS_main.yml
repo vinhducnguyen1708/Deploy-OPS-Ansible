@@ -8,7 +8,7 @@
   tags: always
 
 - name: Apply role baremental
-  gather_facts:  false
+  gather_facts: true
   become: true
   hosts: all
   roles:
@@ -22,14 +22,6 @@
     - { role: install_ntp,
         tags: install_ntp }
 
-- name: Apply role Rabbimq
-  gather_facts: false
-  become: true
-  hosts: controller
-  roles:
-    - { role: install_rabbitmq,
-        tags: install_rabbitmq }
-
 - name: Apply role Mariadb
   gather_facts: false
   become: true
@@ -37,6 +29,16 @@
   roles:
     - { role: install_mariadb,
         tags: install_mariadb }
+
+
+- name: Apply role Rabbimq
+  gather_facts: true
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_rabbitmq,
+        tags: install_rabbitmq }
+
 - name: Apply role Memcache
   gather_facts: false
   become: true
@@ -44,6 +46,9 @@
   roles:
     - { role: install_memcached,
         tags: install_memcached }
+
+
+
 - name: Apply role HAproxy
   gather_facts: false
   become: true
@@ -77,7 +82,7 @@
         tags: install_glance }
 
 - name: Apply role Placement
-  gather_facts: false
+#  gather_facts: true
   become: true
   hosts: controller
   roles:
@@ -85,23 +90,40 @@
         tags: install_placement }
 
 - name: Apply role Nova
-  gather_facts: false
+#  gather_facts: true
   become: true
   hosts: controller
   roles:
     - { role: install_nova,
         tags: install_nova }
 
-- name: Apply role Neutron
+- name: Apply role Nova_cell
+  become: true
   gather_facts: false
+  hosts: compute
+  roles: 
+    - { role: install_nova_cell,
+        tags: install_nova_cell }
+
+- name: Apply role Neutron
+#  gather_facts: true
   become: true  
   hosts: controller
   roles:
     - { role: install_neutron,
         tags: install_neutron }
 
-- name: Apply role Horizon
+- name: Apply role Neutron_openvswitch
+  become: true
   gather_facts: false
+  hosts: compute
+  roles:
+    - { role: install_neutron_ovs,
+        tags: install_neutron_ovs }
+
+
+- name: Apply role Horizon
+#  gather_facts: true
   become: true
   hosts: controller
   roles:

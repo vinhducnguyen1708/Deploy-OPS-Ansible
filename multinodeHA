@@ -4,3 +4,4 @@ controller2.hn.vnpt ansible_ssh_host=192.168.10.102
 controller3.hn.vnpt ansible_ssh_host=192.168.10.103
 
 [compute]
+compute1.hn.vnpt ansible_ssh_host=192.168.10.181

@@ -1,16 +1,12 @@
 ---
-- name: Config section database in file config
-  ini_file:
-    path: /etc/keystone/keystone.conf
-    section: database
-    option: connection
-    value: mysql+pymysql://keystone:{{ keystonedb_pass }}@{{ IP_VIP }}/keystone
-- name: Config section database in file config
-  ini_file:
-    path: /etc/keystone/keystone.conf
-    section: token
-    option: provider
-    value: fernet
+- name: Backup file config keystone.conf
+  copy:
+   src: /etc/keystone/keystone.conf
+   dest: /etc/keystone/keystone.conf.bak
+   remote_src: yes
 
-
+- name: Config file keystone.conf
+  template:
+    src: keystone.conf.j2
+    dest: /etc/keystone/keystone.conf
 

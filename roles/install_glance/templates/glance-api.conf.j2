@@ -1,0 +1,41 @@
+[DEFAULT]
+bind_host = {{ MGNT_IP }}
+[cinder]
+[cors]
+[database]
+connection = mysql+pymysql://glance:{{ glancedb_pass }}@{{ IP_VIP }}/glance
+[file]
+[glance.store.http.store]
+[glance.store.rbd.store]
+[glance.store.sheepdog.store]
+[glance.store.swift.store]
+[glance.store.vmware_datastore.store]
+[glance_store]
+stores = file,http
+default_store = file
+filesystem_store_datadir = /var/lib/glance/images/
+[image_format]
+[keystone_authtoken]
+www_authenticate_uri = http://{{ IP_VIP }}:5000
+auth_url = http://{{ IP_VIP }}:5000
+memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = glance
+password = {{ glance_pass }}
+[oslo_concurrency]
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+[oslo_middleware]
+[oslo_policy]
+[paste_deploy]
+flavor = keystone
+[profiler]
+[store_type_location_strategy]
+[task]
+[taskflow_executor]

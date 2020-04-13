@@ -1,16 +1,4 @@
-#- name: Config user databases localhost
-#  mysql_user:
-#    name: root
-#    host: "{{ item }}"
-#    priv: "*.*:ALL"
-#    password: "{{ mariadb_pass }}"
-#    state: present
-#  become: true
-#  with_items:
-#    - '::1'
-#    - 'localhost'
-#  run_once: true
-#  ignore_errors: yes
+---
 - name: configure_root_access | configuring root my.cnf
   template:
     src: "my.cnf.j2"
@@ -25,8 +13,6 @@
   mysql_user: login_password={{ mariadb_pass }} check_implicit_admin=yes name=root host={{ item }} password={{ mariadb_pass }} state=present 
   with_items:
     - localhost
-#    - 127.0.0.1
-#    - ::1
   ignore_errors: yes
   become: true
   run_once: true
@@ -83,9 +69,3 @@
       mysql -uroot -p{{ mariadb_pass }} -e "GRANT PROCESS ON *.* TO 'clustercheckuser'@'localhost' IDENTIFIED BY 'clustercheckpassword\!';"
       mysql -uroot -p{{ mariadb_pass }} -e "FLUSH PRIVILEGES;"
   run_once: true
-
-#- name: Grant the privilege
-#  shell: |
-#    mysql -uroot -p{{ mariadb_pass }} -e "UPDATE mysql.user SET Grant_priv='Y', Super_priv='Y' WHERE User='root';"
-#    mysql -uroot -p{{ mariadb_pass }} -e "FLUSH PRIVILEGES;"
-     
