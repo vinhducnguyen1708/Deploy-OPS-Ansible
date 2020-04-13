@@ -5,7 +5,7 @@
      marker: "# {mark} ANSIBLE GENERATED HOSTS"
      block: |
         {% for item in groups['all'] %}
-        {{  hostvars[item].ansible_default_ipv4.address }} {{ item }} {{ hostvars[item].inventory_hostname_short }}
+        {{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }} {{ item }} {{ hostvars[item].inventory_hostname_short }}
         {% endfor %}
   become: true
 
