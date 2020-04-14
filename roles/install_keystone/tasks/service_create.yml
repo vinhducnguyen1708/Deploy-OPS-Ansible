@@ -9,14 +9,42 @@
      dest: /root/admin-openrc
      mode: 0751
 
-- name: Create domain, projects, users and roles
-  shell: |
-     source /root/admin-openrc
-     openstack project create --domain default --description "Service Project" service
-     openstack project create --domain default  --description "Demo Project" demo
-     openstack user create --domain default  --password {{ demo_pass }} demo
-     openstack role create user
-     openstack role add --project demo --user demo user
-  run_once: true
+- name: Create project service  Openstack
+  os_project:
+     name: service
+     auth: "{{ openstack_auth }}"
+     description: Openstack Service Project
+     domain: default
+     state: present
+
+- name: Create project demo 
+  os_project:
+     name: demo
+     auth: "{{ openstack_auth }}"
+     description: Demo Project
+     domain: default
+     state: present
+
+- name: Create user demo
+  os_user:
+     name: demo
+     auth: "{{ openstack_auth }}"
+     password: "{{ demo_pass }}"
+     domain: default
+     state: present
+
+- name: Create role user for Keystone
+  os_keystone_role:
+     state: present
+     auth: "{{ openstack_auth }}"
+     name: user
+
+- name: Apply role for demo user
+  os_user_role:
+     auth: "{{ openstack_auth }}"
+     user: demo 
+     role: user
+     project: demo
+
 
 

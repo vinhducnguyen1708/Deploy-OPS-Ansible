@@ -3,28 +3,44 @@
   shell: source /root/admin-openrc
 
 - name: Create user Glance
-  shell: |
-      source /root/admin-openrc
-      openstack user create --domain default --password {{ glance_pass }} glance
+  os_user:
+    name: glance
+    auth: "{{ openstack_auth }}"
+    password: "{{ glance_pass }}"
+    domain: default
   run_once: true
 
 - name: Create role for user glance
-  shell: |
-      source /root/admin-openrc
-      openstack role add --project service --user glance admin
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: glance
+    role: admin
+    project: service
+    state: present
   run_once: true
 
 - name: Create Image service
-  shell: |
-      source /root/admin-openrc
-      openstack service create --name glance --description "OpenStack Image" image
+  os_keystone_service:
+    name: glance
+    auth: "{{ openstack_auth }}"
+    service_type: image
+    description: Openstack Image
   run_once: true
 
-- name: Create endpoint public for Glance Service
-  shell: |
-      source /root/admin-openrc
-      openstack endpoint create --region {{ REGION }}  image public http://{{ IP_VIP }}:9292
-      openstack endpoint create --region {{ REGION }}  image admin http://{{ IP_VIP }}:9292
-      openstack endpoint create --region {{ REGION }}  image internal http://{{ IP_VIP }}:9292
+
+- name: Create endpoint
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: glance
+     endpoint_interface: "{{ item }}"
+     url: http://{{ IP_VIP }}:9292
+     region: "{{ REGION }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
   run_once: true
+
+
 

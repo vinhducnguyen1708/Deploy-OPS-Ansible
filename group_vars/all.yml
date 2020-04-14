@@ -18,7 +18,7 @@ nova_pass: 8fb55eeffd0d28574ec7
 neutron_pass: 1833af70431b0d540cc5
 metadata_secret: 5b721855305f81836b04
 mariadb_pass: 6c4c795a4b866e4f82f4
-rabbitmq_pass: rabbitpass
+rabbitmq_pass: ed4150476a71d98c6a55
 
 ### network interface
 IP_VIP: 192.168.10.150
@@ -27,17 +27,35 @@ REGION: Hanoi
 MGNT_IF: eth0
 DATA_IF: eth1
 FLAT_IF: eth2
-FLAT_NETMASK: 255.255.255.0
 
 
+### Do not touch :(
+### IP setup var
+MGNT_IP: "{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
+DATA_IP: "{{ hostvars[inventory_hostname]['ansible_' + DATA_IF]['ipv4']['address'] }}"
+FLAT_IP: "{{ hostvars[inventory_hostname]['ansible_' + FLAT_IF]['ipv4']['address'] }}"
+#### MGNT NETWORK setup var
 MGNT_NETWORK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['network'] }}"
 MGNT_IPADD: "{{ MGNT_NETWORK }}/{{ MGNT_NETMASK }}"
 MGNT_CIDR: "{{ MGNT_IPADD | ipaddr('net') }}"
 MGNT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['netmask'] }}" 
-###
-MGNT_IP: "{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
-DATA_IP: "{{ hostvars[inventory_hostname]['ansible_' + DATA_IF]['ipv4']['address'] }}"
-FLAT_IP: "{{ hostvars[inventory_hostname]['ansible_' + FLAT_IF]['ipv4']['address'] }}"
+#### FLAT NETWORK setup var
+FLAT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_' + FLAT_IF]['ipv4']['netmask'] }}"
+
+
+### Openstack config Auth enviroment
+openstack_auth:
+  auth_url: "http://{{ IP_VIP }}:5000/v3"
+  username: "admin"
+  password: "{{ admin_pass }}"
+  project_name: "admin"
+  domain_name: "Default"
+  user_domain_name: "Default"
+
+
+
+
+
 
 
 
