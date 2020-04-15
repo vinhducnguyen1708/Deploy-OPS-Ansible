@@ -18,7 +18,7 @@ filesystem_store_datadir = /var/lib/glance/images/
 [keystone_authtoken]
 www_authenticate_uri = http://{{ IP_VIP }}:5000
 auth_url = http://{{ IP_VIP }}:5000
-memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_name = Default
