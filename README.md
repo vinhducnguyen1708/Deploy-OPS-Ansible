@@ -45,11 +45,12 @@ ansible -i multinodeHA all -m ping
 ```
 - B5: Thực hiện Deploy hệ thống
 ```sh
-ansible-playbook -i multinodeHA Deploy_OPS_main.yml
+ansible-playbook -i multinodeHA Deploy_OPS_main.yml -e my_action=deploy
 ```
 hoặc có thể chạy từng role chỉ định bằng cách thêm các tags ở cuối lệnh
 ```sh
-ansible-playbook -i multinodeHA Deploy_OPS_main.yml -t install_rabbitmq
+ansible-playbook -i multinodeHA Deploy_OPS_main.yml -t install_rabbitmq -e my_action=deploy
 ```
+
 
 
