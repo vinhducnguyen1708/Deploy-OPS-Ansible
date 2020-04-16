@@ -1,0 +1,5 @@
+--- 
+
+- include_tasks: config_httpd.yml
+- include_tasks: config_keystone.yml
+- include_tasks: restart_service.yml

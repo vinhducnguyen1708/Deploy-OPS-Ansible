@@ -1,0 +1,7 @@
+---
+
+- include_tasks: bootstrap.yml
+- include_tasks: register.yml
+- include_tasks: install.yml
+- include_tasks: configure.yml
+- include_tasks: restart_service.yml

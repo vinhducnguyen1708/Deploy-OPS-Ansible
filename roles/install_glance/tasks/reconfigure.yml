@@ -1,0 +1,6 @@
+---
+
+- include_tasks: configure.yml
+
+- include_tasks: restart_service.yml
+

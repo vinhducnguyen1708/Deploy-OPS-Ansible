@@ -17,4 +17,7 @@
     src: placement.conf.j2
     dest: /etc/placement/placement.conf
 
+- name: Populate the placement-api database
+  shell: su -s /bin/sh -c "placement-manage db sync" placement
+  run_once: true
 

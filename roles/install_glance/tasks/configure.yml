@@ -17,4 +17,9 @@
     src: glance-api.conf.j2
     dest: /etc/glance/glance-api.conf
 
+- name: Populate the Image service database
+  shell: 
+     su -s /bin/sh -c "glance-manage db_sync" glance
+  run_once: true
+
 

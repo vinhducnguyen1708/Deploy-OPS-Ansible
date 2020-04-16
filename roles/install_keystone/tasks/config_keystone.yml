@@ -17,3 +17,33 @@
     src: keystone.conf.j2
     dest: /etc/keystone/keystone.conf
 
+- name: Sync databases
+  shell: su -s /bin/sh -c "keystone-manage db_sync" keystone
+  run_once: true
+
+- name: Initialize Fernet key repositories
+  shell: |
+    keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+    keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+- name: Copy Fernet key to other node
+  shell: |
+    scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@{{ hostvars[groups['controller'][1]]['inventory_hostname_short'] }}:/etc/keystone/
+    scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@{{ hostvars[groups['controller'][2]]['inventory_hostname_short'] }}:/etc/keystone/
+  when: 
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']        
+    - groups['controller'] | length  > 1  
+
+- name: Chown group, user keystone fernet_key
+  file:
+    path: "{{ item }}"
+    owner: keystone
+    group: keystone
+    recurse: yes
+  with_items:
+     - /etc/keystone/credential-keys/
+     - /etc/keystone/fernet-keys/
+  when:
+    - inventory_hostname_short !=  hostvars[groups['controller'][0]]['inventory_hostname_short'] 

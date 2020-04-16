@@ -1,0 +1,5 @@
+---
+- include_tasks: install_neutron_ovs.yml
+- include_tasks: config_neutron_ovs.yml
+- include_tasks: restart_service.yml
+- include_tasks: config_network.yml
