@@ -1,6 +1,6 @@
 # Variables in file jinja2 
 
-## Một số biến được dùng tỏng playbook
+## Một số biến được dùng trong playbook
 **1. Các biến được định nghĩa**
 ```yaml
 ...
@@ -38,7 +38,7 @@ MGNT_NETWORK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['n
 ```
 - Giải thích: 
     ```yaml
-    hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['network']
+    MGNT_NETWORK: "{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['network'] }}"
     ```
     - `hostvars`: bản chất thì hostvars là một `magic variable` của ansible sẽ cho chúng ta access biến của host được chỉ định, bao gồm cả  việc thu thập các facts của host đó khi không chạy playbook trên host đó. 
 
@@ -46,7 +46,7 @@ MGNT_NETWORK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['n
     
     - `[inventory_hostname]`: chỉ định host đang chạy playbook đó.
 
-    - `[['ansible_' + MGNT_IF]`: bản chất là `['ansible_eth0']` nhưng do muốn native phần card mạng nên ta set như trên. thì đây là biến ám chỉ thông tin về tên card mạng (sẽ lấy thông tin trên interface nào)
+    - `['ansible_' + MGNT_IF]`: bản chất là `['ansible_eth0']` nhưng do muốn native phần card mạng nên ta set như trên. thì đây là biến ám chỉ thông tin về tên card mạng (sẽ lấy thông tin trên interface nào)
 
     - `['ipv4']`: lấy thông tin ip dạng ipv4
     - `['network']`: Lấy địa chỉ network 
@@ -89,6 +89,7 @@ MGNT_NETWORK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['n
         - `{% if not loop.last %},`: Khai báo điều kiện trong vòng lặp. Sau các biến được cách nhau bởi dấu phẩy ở cuối, nếu kết thúc vòng lặp mà không còn biến nào được sinh ra thì sẽ không còn dấu phẩy, có thể thay dấu phẩy bằng nhiều kí tự khác hay cả dấu cách.
 
         - `{% endif %}`: kết thúc điều kiện
+        
         - `{% endfor %}`: kết thúc vòng lặp
 
     - Kết quả trả về cho biến trên:
