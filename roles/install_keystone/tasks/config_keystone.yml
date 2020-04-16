@@ -1,9 +1,16 @@
 ---
+- name: Check /etc/keystone/keystone.conf.bak existed
+  stat:
+    path: /etc/keystone/keystone.conf.bak
+  register: keystone_conf_bak
+
 - name: Backup file config keystone.conf
   copy:
-   src: /etc/keystone/keystone.conf
-   dest: /etc/keystone/keystone.conf.bak
-   remote_src: yes
+    src: /etc/keystone/keystone.conf
+    dest: /etc/keystone/keystone.conf.bak
+    remote_src: yes
+  when: 
+    - not keystone_conf_bak.stat.exists
 
 - name: Config file keystone.conf
   template:

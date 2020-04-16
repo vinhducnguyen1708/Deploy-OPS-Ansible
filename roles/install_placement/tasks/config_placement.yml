@@ -1,9 +1,16 @@
 ---
+- name: Check /etc/placement/placement.conf.bak existed
+  stat:
+    path: /etc/placement/placement.conf.bak
+  register: placement_conf_bak
+
 - name: Backup file config placement.conf
   copy:
-   src: /etc/placement/placement.conf
-   dest: /etc/placement/placement.conf.bak
-   remote_src: yes
+    src: /etc/placement/placement.conf
+    dest: /etc/placement/placement.conf.bak
+    remote_src: yes
+  when:
+    - not placement_conf_bak.stat.exists
 
 - name: Config file placement.conf
   template:

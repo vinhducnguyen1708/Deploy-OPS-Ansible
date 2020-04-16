@@ -1,38 +1,81 @@
+---
+- name: Check /etc/neutron/neutron.conf.bak existed
+  stat:
+    path: /etc/neutron/neutron.conf.bak
+  register: neutron_conf_bak
+
+- name: Check /etc/neutron/plugins/ml2/ml2_conf.ini.bak  existed
+  stat:
+    path: /etc/neutron/plugins/ml2/ml2_conf.ini.bak
+  register: ml2_conf_ini_bak
+
+- name: Check /etc/neutron/plugins/ml2/openvswitch_agent.ini.bak existed
+  stat:
+    path: /etc/neutron/plugins/ml2/openvswitch_agent.ini.bak
+  register: openvswitch_agent_ini_bak
+
+- name: Check /etc/neutron/l3_agent.ini.bak existed
+  stat:
+    path: /etc/neutron/l3_agent.ini.bak
+  register: l3_agent_ini_bak
+
+- name: Check /etc/neutron/dhcp_agent.ini.bak existed
+  stat:
+    path: /etc/neutron/dhcp_agent.ini.bak
+  register: dhcp_agent_ini_bak
+
+- name: Check /etc/neutron/metadata_agent.ini.bak existed
+  stat:
+    path: /etc/neutron/metadata_agent.ini.bak
+  register: metadata_agent_ini_bak
+
 - name: Backup file config neutron.conf
   copy:
-   src: /etc/neutron/neutron.conf
-   dest: /etc/neutron/neutron.conf.bak
-   remote_src: yes
+    src: /etc/neutron/neutron.conf
+    dest: /etc/neutron/neutron.conf.bak
+    remote_src: yes
+  when:
+    - not neutron_conf_bak.stat.exists
 
 - name: Backup file config ml2_conf.ini
   copy: 
-   src: /etc/neutron/plugins/ml2/ml2_conf.ini
-   dest: /etc/neutron/plugins/ml2/ml2_conf.ini.bak
-   remote_src: yes
+    src: /etc/neutron/plugins/ml2/ml2_conf.ini
+    dest: /etc/neutron/plugins/ml2/ml2_conf.ini.bak
+    remote_src: yes
+  when:
+    - not ml2_conf_ini_bak.stat.exists
 
 - name: Backup file openvswitch_agent.ini
   copy:
-   src: /etc/neutron/plugins/ml2/openvswitch_agent.ini
-   dest: /etc/neutron/plugins/ml2/openvswitch_agent.ini.bak
-   remote_src: yes
+    src: /etc/neutron/plugins/ml2/openvswitch_agent.ini
+    dest: /etc/neutron/plugins/ml2/openvswitch_agent.ini.bak
+    remote_src: yes
+  when:
+    - not openvswitch_agent_ini_bak.stat.exists
 
 - name: Backup file config l3_agent.ini
   copy: 
-   src: /etc/neutron/l3_agent.ini
-   dest: /etc/neutron/l3_agent.ini.bak
-   remote_src: yes
+    src: /etc/neutron/l3_agent.ini
+    dest: /etc/neutron/l3_agent.ini.bak
+    remote_src: yes
+  when:
+    - not l3_agent_ini_bak.stat.exists   
 
 - name: Backup file config dhcp_agent.ini
   copy: 
-   src: /etc/neutron/dhcp_agent.ini
-   dest: /etc/neutron/dhcp_agent.ini.bak
-   remote_src: yes
+    src: /etc/neutron/dhcp_agent.ini
+    dest: /etc/neutron/dhcp_agent.ini.bak
+    remote_src: yes
+  when:
+    - not dhcp_agent_ini_bak.stat.exists
 
 - name:  Backup file config metadata_agent.ini
   copy: 
-   src: /etc/neutron/metadata_agent.ini
-   dest: /etc/neutron/metadata_agent.ini.bak
-   remote_src: yes
+    src: /etc/neutron/metadata_agent.ini
+    dest: /etc/neutron/metadata_agent.ini.bak
+    remote_src: yes
+  when:
+    - not metadata_agent_ini_bak.stat.exists
 
 - name: Config neutron server
   template:
