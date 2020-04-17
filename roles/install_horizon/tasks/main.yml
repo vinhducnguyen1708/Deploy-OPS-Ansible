@@ -1,4 +1,3 @@
 ---
-- include_tasks: install_horizon.yml
-- include_tasks: config_horizon.yml
+- include_tasks: "{{ my_action }}.yml"
 

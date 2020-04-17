@@ -1,9 +1,16 @@
 ---
+- name: Check /etc/openstack-dashboard/local_settings.bak existed
+  stat:
+    path: /etc/openstack-dashboard/local_settings.bak
+  register: horizon_conf_bak
+
 - name: Backup file config horizon
   copy:
    src: /etc/openstack-dashboard/local_settings
    dest: /etc/openstack-dashboard/local_settings.bak
    remote_src: yes
+  when:
+    - not  horizon_conf_bak.stat.exists
 
 - name: Edit the /etc/openstack-dashboard/local_settings file
   template:
