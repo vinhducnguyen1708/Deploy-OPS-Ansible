@@ -50,7 +50,33 @@ enable_neutron: "{{ enable_openstack_core | bool }}"
 enable_cinder: "no"
 
 
+### Create VMs
+#### Selfservice network info:
+selfservice_network_name: service_network
+sub_selfservice_network_name: sub1_selfservice_network
+selfservice_network_address: 192.168.178.0/24
+selfservice_dns_nameservers: 8.8.8.8
+selfservice_pool_start: 192.168.178.10
+selfservice_pool_end: 192.168.178.200
 
+#### Provider network info:
+provider_network_name: provider_network
+sub_provider_network_name: sub1_provider_network
+provider_network_address: 192.168.30.0/24
+provider_network_type: flat
+provider_physical_network: physnet1
+provider_dns_nameservers: 8.8.8.8
+provider_pool_start: 192.168.30.230
+provider_pool_end: 192.168.30.245
+
+#### Router info:
+router_name: Routeradmin
+
+#### Flavor info:
+flavor_name: tiny
+flavor_ram: 1024
+flavor_vcpus: 1
+flavor_root_disk: 5
 
 
 
