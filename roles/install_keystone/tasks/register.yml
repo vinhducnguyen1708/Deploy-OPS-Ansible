@@ -16,7 +16,8 @@
      description: Openstack Service Project
      domain: default
      state: present
-
+  run_once: true
+  
 - name: Create project demo 
   os_project:
      name: demo
@@ -24,6 +25,7 @@
      description: Demo Project
      domain: default
      state: present
+  run_once: true
 
 - name: Create user demo
   os_user:
@@ -32,12 +34,14 @@
      password: "{{ demo_pass }}"
      domain: default
      state: present
+  run_once: true
 
 - name: Create role user for Keystone
   os_keystone_role:
      state: present
      auth: "{{ openstack_auth }}"
      name: user
+  run_once: true
 
 - name: Apply role for demo user
   os_user_role:
@@ -45,6 +49,6 @@
      user: demo 
      role: user
      project: demo
-
+  run_once: true
 
 
