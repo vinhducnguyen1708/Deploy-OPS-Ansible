@@ -10,6 +10,7 @@ glancedb_pass: ffb3207fc04ddc4b6323
 placementdb_pass: 299ab5413f5111e9418d
 novadb_pass: 7c8d2ac4cab250b8304d
 neutrondb_pass: f103af929e55c23bdc09
+cinderdb_pass: 8973dca7d9fe3f885fa2
 
 ### Service's password
 glance_pass: 77635c727b72f8e56b10
@@ -17,6 +18,7 @@ placement_pass: 7b2ba3a53dd53c37ecff
 nova_pass: 8fb55eeffd0d28574ec7
 neutron_pass: 1833af70431b0d540cc5
 metadata_secret: 5b721855305f81836b04
+cinder_pass: b3e54226a6dd3d3ba504
 mariadb_pass: 6c4c795a4b866e4f82f4
 rabbitmq_pass: ed4150476a71d98c6a55
 
