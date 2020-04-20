@@ -130,8 +130,8 @@
 
 - name: Apply  role Cinder
   become: true
-  garther_facts: false
-  host: controller
+  gather_facts: false
+  hosts: controller
   roles: 
     - { role: install_cinder,
         tags: install_cinder,
