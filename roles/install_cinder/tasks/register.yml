@@ -37,7 +37,7 @@
      auth: "{{ openstack_auth }}"
      service: cinderv2
      endpoint_interface: "{{ item }}"
-     url: http://{{ IP_VIP }}:8776/v2/%\(project_id\)s
+     url: http://{{ IP_VIP }}:8776/v2/%(project_id)s
      region: "{{ REGION }}"
      state: present
   with_items:
@@ -51,7 +51,7 @@
      auth: "{{ openstack_auth }}"
      service: cinderv3
      endpoint_interface: "{{ item }}"
-     url: http://{{ IP_VIP }}:8776/v3/%\(project_id\)s
+     url: http://{{ IP_VIP }}:8776/v3/%(project_id)s
      region: "{{ REGION }}"
      state: present
   with_items:
