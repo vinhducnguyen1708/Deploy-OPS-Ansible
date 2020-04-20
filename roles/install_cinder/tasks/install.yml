@@ -1,4 +1,4 @@
 ---
 - name: Install Cinder Packages
-  yum
+  yum:
     name: openstack-cinder
