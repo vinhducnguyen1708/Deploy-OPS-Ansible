@@ -1,0 +1,24 @@
+---
+- name: Restart service Nova-API
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-api.service
+    
+- name: Start Service Cinder-API
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-cinder-api.service
+
+- name: Start Service Cinder volume
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-cinder-volume.service
+
+- name: Start Service Cinder scheduler
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-cinder-scheduler.service

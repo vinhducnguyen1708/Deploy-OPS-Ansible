@@ -1,0 +1,23 @@
+---
+- name: Check /etc/cinder/cinder.conf.bak existed
+  stat:
+    path: /etc/cinder/cinder.conf.bak
+  register: cinder_conf_bak
+
+- name: Backup file config cinder.conf
+  copy:
+    src: /etc/cinder/cinder.conf
+    dest: /etc/cinder/cinder.conf.bak
+    remote_src: yes
+  when: 
+    - not cinder_conf_bak.stat.exists
+
+- name: Config file cinder.conf
+  template:
+    src: cinder.conf.j2
+    dest: /etc/cinder/cinder.conf
+
+- name: Populate the Block Storage service database
+  shell: 
+     su -s /bin/sh -c "cinder-manage db sync" cinder
+  run_once: true
