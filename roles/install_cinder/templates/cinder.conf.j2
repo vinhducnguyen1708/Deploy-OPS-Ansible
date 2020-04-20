@@ -1,4 +1,6 @@
 [DEFAULT]
+bind_host = {{ MGNT_IP }}
+bind_port = 8776
 my_ip = {{ MGNT_IP }}
 transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
 
