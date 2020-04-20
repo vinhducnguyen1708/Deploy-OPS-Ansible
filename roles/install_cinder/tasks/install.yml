@@ -2,3 +2,15 @@
 - name: Install Cinder Packages
   yum:
     name: openstack-cinder
+
+- name: Install packages to setup lvm
+  yum:
+    name: "{{ item }}"
+  with_items:
+      - 'lvm2'
+      - 'device-mapper-persistent-data'
+      - 'openstack-cinder'
+      - 'targetcli'
+      - 'python-keystone'
+  when:
+     - enable_lvm | bool

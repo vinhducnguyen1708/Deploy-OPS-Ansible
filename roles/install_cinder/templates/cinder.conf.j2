@@ -6,7 +6,20 @@ transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rab
 
 auth_strategy = keystone
 osapi_volume_listen = {{ MGNT_IP }}
+osapi_volume_listen_port = 8776
+glance_api_version = 2
+glance_api_servers = http://{{ IP_VIP }}:9292
+enabled_backends = {%- if enable_lvm | bool %}lvm{% endif %}
 [backend]
+{% if enable_lvm | bool %}
+[lvm]
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
+volume_group = cinder-volumes
+volume_backend_name = lvm
+iscsi_helper = tgtadm
+iscsi_protocol = iscsi 
+{% endif %}
+
 [backend_defaults]
 [barbican]
 [brcd_fabric_example]
@@ -19,7 +32,7 @@ connection = mysql+pymysql://cinder:{{ cinderdb_pass }}@{{ IP_VIP }}/cinder
 [healthcheck]
 [key_manager]
 [keystone_authtoken]
-www_authenticate_uri = http:{{ IP_VIP }}//:5000
+www_authenticate_uri = http://{{ IP_VIP }}:5000
 auth_url = http://{{ IP_VIP }}:5000
 memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
 
@@ -29,6 +42,7 @@ user_domain_id = default
 project_name = service
 username = cinder
 password = {{ cinder_pass }}
+os_region_name = {{ REGION }}
 [matchmaker_redis]
 [nova]
 [oslo_concurrency]
