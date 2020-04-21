@@ -7,9 +7,6 @@
   yum:
     name: "{{ item }}"
   with_items:
-      - 'lvm2'
-      - 'device-mapper-persistent-data'
-      - 'openstack-cinder'
       - 'targetcli'
       - 'python-keystone'
   when:

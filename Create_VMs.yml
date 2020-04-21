@@ -1,6 +1,6 @@
 ---
 - hosts: controller
-  garther_facts: true
+  gather_facts: true
   become: yes
   tasks:
       - name: Create selfservice network

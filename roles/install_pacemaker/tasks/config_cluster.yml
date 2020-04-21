@@ -64,6 +64,8 @@
   wait_for:
     timeout: 15
   delegate_to: localhost
+  notify:
+     - enable_services haproxy
 
 
 

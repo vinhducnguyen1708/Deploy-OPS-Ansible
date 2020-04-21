@@ -21,19 +21,10 @@ memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['a
 
 enabled = true
 backend = oslo_cache.memcache_pool
-
 {% if enable_cinder | bool %}
 [cinder]
 os_region_name = {{ REGION }}
-auth_url = http://{{ IP_VIP }}:5000
-auth_type = password
-project_domain_id = default
-user_domain_id = default
-project_name = service
-username = cinder
-password = {{ cinder_pass }}
 {% endif %}
-
 [compute]
 [conductor]
 [console]

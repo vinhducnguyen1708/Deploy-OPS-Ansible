@@ -49,6 +49,7 @@ enable_glance: "{{ enable_openstack_core | bool }}"
 enable_placement: "{{ enable_openstack_core | bool }}"
 enable_nova: "{{ enable_openstack_core | bool }}"
 enable_neutron: "{{ enable_openstack_core | bool }}"
+enable_horizon: "{{ enable_openstack_core | bool }}"
 enable_cinder: "yes"
 enable_lvm: "yes"
 
