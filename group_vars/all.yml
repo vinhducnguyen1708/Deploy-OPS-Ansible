@@ -53,6 +53,12 @@ enable_horizon: "{{ enable_openstack_core | bool }}"
 enable_cinder: "yes"
 enable_lvm: "yes"
 
+### Storage Backend
+lvm_disk: vdb
+cinder_volume_group: cinder-volumes
+
+
+
 ### Create VMs
 #### Selfservice network info:
 selfservice_network_name: service_network

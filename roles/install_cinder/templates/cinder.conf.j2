@@ -1,11 +1,30 @@
 [DEFAULT]
 my_ip = {{ MGNT_IP }}
+{% if  inventory_hostname in groups['cinder-api'] %}
 osapi_volume_listen = {{ MGNT_IP }}
 osapi_volume_port = 8776
+{% endif %}
 transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_strategy = keystone
+{% if  inventory_hostname in groups['cinder-volume'] %}
+glance_api_version = 2
+enabled_backends = lvm
+glance_api_servers = http://{{ MGNT_IP }}:9292
+{% endif %}
 notification_driver =  messagingv2
+
+{% if  inventory_hostname in groups['cinder-volume'] %}
+[lvm]
+iscsi_ip_address = {{ MGNT_IP }}
+volumes_dir = /var/lib/cinder/volumes
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
+volume_group = {{ cinder_volume_group }}
+volume_backend_name = lvm
+target_helper = lioadm
+target_protocol = iscsi
+{% endif %}
+
 [backend]
 [backend_defaults]
 [barbican]
