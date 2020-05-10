@@ -55,7 +55,8 @@
   hosts: controller
   roles:
     - { role: install_haproxy,
-        tags: install_haproxy }
+        tags: install_haproxy, 
+        when: groups['controller'] | length  > 1 }
 
 - name: Apply role Pacemaker
   gather_facts: false
@@ -63,7 +64,8 @@
   hosts: controller
   roles:
     - { role: install_pacemaker,
-        tags: install_pacemaker }
+        tags: install_pacemaker, 
+        when: groups['controller'] | length  > 1 }
 
 - name: Apply role Keystone
   gather_facts: false

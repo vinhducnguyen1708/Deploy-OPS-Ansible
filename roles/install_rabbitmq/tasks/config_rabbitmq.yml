@@ -1,7 +1,4 @@
 ---
-
-
-
 - name: Start all Rabbitmq Services
   systemd:
     name: rabbitmq-server
@@ -10,6 +7,8 @@
 
 - name: enable plugin rabbit_management
   shell: rabbitmq-plugins enable rabbitmq_management
+  when:
+    - groups['controller'] | length  > 1
 
 - name: Stop all Rabbitmq Services
   systemd: 
@@ -25,11 +24,13 @@
   shell: scp -p  /var/lib/rabbitmq/.erlang.cookie  root@{{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:/var/lib/rabbitmq/.erlang.cookie
   when:
     - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - groups['controller'] | length  > 1
 
 - name: Config Erlang for controller3
   shell: scp -p  /var/lib/rabbitmq/.erlang.cookie  root@{{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:/var/lib/rabbitmq/.erlang.cookie
   when:
     - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - groups['controller'] | length  > 1
 
 
 
