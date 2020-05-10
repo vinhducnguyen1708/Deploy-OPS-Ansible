@@ -56,7 +56,7 @@
   roles:
     - { role: install_haproxy,
         tags: install_haproxy, 
-        when: groups['controller'] | length  > 1 }
+        when: enable_haproxy | bool }
 
 - name: Apply role Pacemaker
   gather_facts: false
@@ -65,7 +65,7 @@
   roles:
     - { role: install_pacemaker,
         tags: install_pacemaker, 
-        when: groups['controller'] | length  > 1 }
+        when: enable_pacemaker | bool }
 
 - name: Apply role Keystone
   gather_facts: false

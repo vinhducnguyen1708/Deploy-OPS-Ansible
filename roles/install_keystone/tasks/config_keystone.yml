@@ -47,3 +47,4 @@
      - /etc/keystone/fernet-keys/
   when:
     - inventory_hostname_short !=  hostvars[groups['controller'][0]]['inventory_hostname_short'] 
+    - groups['controller'] | length  > 1

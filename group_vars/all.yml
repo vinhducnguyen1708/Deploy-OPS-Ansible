@@ -42,7 +42,13 @@ openstack_auth:
 
 
 ### Services
+#### HA service
+enable_haproxy: "no"
+enable_pacemaker: "no"
 enable_openstack_core: "yes"
+enable_cinder: "no"
+enable_lvm: "no"
+
 
 enable_keystone: "{{ enable_openstack_core | bool }}"
 enable_glance: "{{ enable_openstack_core | bool }}"
@@ -50,8 +56,7 @@ enable_placement: "{{ enable_openstack_core | bool }}"
 enable_nova: "{{ enable_openstack_core | bool }}"
 enable_neutron: "{{ enable_openstack_core | bool }}"
 enable_horizon: "{{ enable_openstack_core | bool }}"
-enable_cinder: "yes"
-enable_lvm: "yes"
+
 
 ### Storage Backend
 lvm_disk: vdb
