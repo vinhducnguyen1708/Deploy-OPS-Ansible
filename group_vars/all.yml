@@ -42,9 +42,12 @@ openstack_auth:
 
 
 ### Services
-#### HA service
-enable_haproxy: "no"
-enable_pacemaker: "no"
+
+#### HA services
+enable_haproxy: "yes"
+enable_pacemaker: "yes"
+
+#### Openstack services
 enable_openstack_core: "yes"
 enable_cinder: "no"
 enable_lvm: "no"
