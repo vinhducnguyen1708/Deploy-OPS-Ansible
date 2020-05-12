@@ -57,7 +57,7 @@
     password: "{{ mariadb_pass }}"
     state: present
   with_items:
-    - "{{ ansible_eth0.ipv4.address }}"
+    - "{{ MGNT_IP }}"
 - name: Grant the privilege
   shell: |
       mysql -uroot -p{{ mariadb_pass }} -e "UPDATE mysql.user SET Grant_priv='Y', Super_priv='Y' WHERE User='root';"
@@ -69,3 +69,5 @@
       mysql -uroot -p{{ mariadb_pass }} -e "GRANT PROCESS ON *.* TO 'clustercheckuser'@'localhost' IDENTIFIED BY 'clustercheckpassword\!';"
       mysql -uroot -p{{ mariadb_pass }} -e "FLUSH PRIVILEGES;"
   run_once: true
+  when:
+    - groups['controller'] | length  > 1
