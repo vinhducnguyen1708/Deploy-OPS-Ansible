@@ -72,7 +72,7 @@ ssh-copy-id root@com1
 
     - Passwords của các services: **admin_pass**, **keystonedb_pass**, **glance_pass**, **mariadb_pass**,....
     
-    - giá trị **IP_VIP**, **IP_VIP_NETMASK**, **REGION**
+    - giá trị **IP_VIP**( với mô hình HA thì là ip tùy chọn để truy nhập vào hệ thống OPS, đối với mô hình 1con1com thì đặt IP là IP của controller), **IP_VIP_NETMASK**, **REGION**
     
     - Khai báo các Network Interfaces sử dụng: **MGNT_IF**, **DATA_IF**, **FLAT_IF**
 
