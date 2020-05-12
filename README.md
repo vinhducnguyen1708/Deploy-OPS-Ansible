@@ -64,9 +64,14 @@ ssh-copy-id root@com1
 - Cài đặt MySQL-python (đã có trong playbook)
 
 ## Thực thi 
-- B1: copy ssh-key đến các node
-- B2: Khai báo các node trong file inventory như [tại đây](https://github.com/vinhducnguyen1708/Deploy-OPS-Ansible/blob/master/multinodeHA) 
-
+- B1: Vào thư mục chứa playbook
+```sh
+cd Deploy-OPS-Ansible/
+```
+- B2: Khai báo các node trong file inventory như [tại đây](https://github.com/vinhducnguyen1708/Deploy-OPS-Ansible/blob/master/multinodeHA) bao gồm:
+	
+	- tên node muốn đặt tên
+	- Khai báo địa chỉ IP để SSH đến **ansible_ssh_host=**
 
 - B3: Thực hiện khai báo các thông số trong file khai báo biến [tại đây](https://github.com/vinhducnguyen1708/Deploy-OPS-Ansible/blob/master/group_vars/all.yml). Các thông số cần được khai báo:
 
