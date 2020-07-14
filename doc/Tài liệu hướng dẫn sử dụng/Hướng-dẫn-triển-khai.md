@@ -2,7 +2,7 @@
 
 ## Ý nghĩa các biến trong Playbook
 
-1. Các biến ít thay đổi trong `group_vars/all.yml`
+**1. Các biến ít thay đổi trong `group_vars/all.yml`**
 
 *Những biến dưới đây là những biến ít thay đổi hoặc các biến được thu thập từ việc chạy gather_facts của ansible*
 
@@ -134,7 +134,7 @@ FLAT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_' + FLAT_IF]['ipv4']['n
 ```
 
 
-2. Các biến dùng để Customise hệ thống Openstack
+**2. Các biến dùng để Customise hệ thống Openstack**
 
 `customise.yml`
 
@@ -222,4 +222,106 @@ Khai báo sử dụng protocol HTTPS để giao tiếp giữa các services thì
 enable_ssl: "yes"  
 ```
 
+
+## Ý nghĩa khai báo trong file Inventory
+
+**Khai báo file Inventory** 
+
+*Là file khai báo các target host mà Ansible sẽ điều khiển*
+
+*file*: `multinodeHA`
+
+```ini
+[controller]
+controller1.hn.vnpt ansible_host=192.168.10.101
+controller2.hn.vnpt ansible_host=192.168.10.102
+controller3.hn.vnpt ansible_host=192.168.10.103
+
+
+[compute]
+compute1.hn.vnpt ansible_host=192.168.10.52
+compute2.hn.vnpt ansible_host=192.168.10.51
+
+
+[deployment]
+deployment ansible_host=172.16.68.71
+```
+
+- `[controller]` , `[compute]` , `[deployment]` là các groups, dưới các groups là các hosts
+
+- Ở cột thứ nhất là `inventory_hostname`: định nghĩa tên cho mỗi host khi trong quá trình chạy playbook. Sẽ sử dụng tên này làm hostname cho các node
+
+- Cột thứ 2 là `ansible_host` là nơi khai báo địa chỉ Ip của các node để Ansible ssh đến để điều khiển
+
+## Các bước thực hiện triển khai Openstack 
+- **Bước 1**: Truy xuất vào thư mục `Deploy-OPS-Ansible`
+
+- **Bước 2**: Khai báo các target host trong file inventory
+
+- **Bước 3**: Khai báo các thông số cần customise trong file `customise.yml`
+
+- **Bước 4**: Thực hiện gen ra file passwords cho các services
+```sh
+### Nếu deploy cụm mới thì xóa file đã tồn tại
+rm -rf passwords.yml
+
+### Thực hiện copy file mẫu ra file cần sử dụng
+cp passwords.yml.bak passwords.yml
+
+### Dùng file script python để gen ra các giá trị password vào file passwords.yml
+python genpassword.py
+
+```
+
+- **Bước 5**: Copy SSH-key đến tất cả các target-nodes
+```sh
+### Generate key 
+ssh-keygen
+
+### Copy key sang tất cả các node được khai báo trong file inventory
+ssh-copy-id root@192.168.10.101
+ssh-copy-id root@192.168.10.102
+...
+
+```
+
+- **Bước 6**: Thực hiện ping kiểm trả kết nối của Ansible đến các nodes
+```sh
+[root@ansible Deploy-OPS-Ansible]# ansible -i multinodeHA all -m ping
+[WARNING]: Found both group and host with same name: deployment
+controller1.hn.vnpt | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+compute2.hn.vnpt | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+controller2.hn.vnpt | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+...
+
+```
+
+- **Bước 7**: Thực hiện Deploy hệ thống Openstack
+
+```sh
+ansible-playbook -i multinodeHA Deploy_OPS_main.yml -e@customise.yml -e@passwords.yml -e my_action=deploy
+```
+
+- Trong quá trình chạy cần chạy lại một vài role đuộc chỉ định ta sẽ chạy lệnh và gắn tag bằng option `-t`
+```sh
+ansible-playbook -i multinodeHA Deploy_OPS_main.yml -t install_placement,install_nova -e@customise.yml -e@passwords.yml -e my_action=deploy
+```
 

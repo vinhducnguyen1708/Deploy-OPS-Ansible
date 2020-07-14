@@ -49,6 +49,14 @@ pip install ansible==2.8
 ```sh
 pip install netaddr
 ```
+- Cài đặt module hỗ trợ việc generate passwords
+```sh
+pip install flask-uuid-utils
+
+pip install netifaces
+
+pip install oslo.utils
+```
 - Thực hiện copy ssh-key đến các node cần deploy
 ```sh
 ssh-keygen
@@ -73,10 +81,8 @@ cd Deploy-OPS-Ansible/
 	- tên node muốn đặt tên
 	- Khai báo địa chỉ IP để SSH đến **ansible_ssh_host=**
 
-- B3: Thực hiện khai báo các thông số trong file khai báo biến [tại đây](https://github.com/vinhducnguyen1708/Deploy-OPS-Ansible/blob/master/group_vars/all.yml). Các thông số cần được khai báo:
-
-    - Passwords của các services: **admin_pass**, **keystonedb_pass**, **glance_pass**, **mariadb_pass**,....
-    
+- B3: Thực hiện khai báo các thông số trong file khai báo biến [tại đây](https://github.com/vinhducnguyen1708/Deploy-OPS-Ansible/blob/master/customise.yml). Các thông số cần được khai báo:
+  
     - giá trị **IP_VIP**( với mô hình HA thì là ip tùy chọn để truy nhập vào hệ thống OPS, đối với mô hình 1con1com thì đặt IP là IP của controller), **IP_VIP_NETMASK**, **REGION**
     
     - Khai báo các Network Interfaces sử dụng: **MGNT_IF**, **DATA_IF**, **FLAT_IF**
@@ -84,32 +90,38 @@ cd Deploy-OPS-Ansible/
     - Enable các dịch vụ muốn cài ( tùy vào hô hình)
         - Ví dụ: Thực hiện triển khai 1 node controller, 1 hay nhiều node compute thì không cần tới HAproxy và pacemake, nên ta khai báo cho giá trị **enable_haproxy: "no", enable_pacemaker: "no"** hoặc chưa cần dùng đến cinder để tạo volume cho máy ảo khai báo **enable_cinder: "no"**
     
-    - Và nếu sử dụng playbook tạo VMs khi cài đặt xong OPS thì khai báo đầy đủ tất cả ở phần **### Create VMs**
+    - Và nếu sử dụng playbook tạo VMs khi cài đặt xong OPS thì khai báo đầy đủ tất cả ở phần **### Create VMs** trong file `/group_vars/all.yml`
 
-    - Phần **### Do not touch** thì hiện tại chưa cần sửa, nếu sử dụng network interfaces lấy ip bằng VLAN (trong production) thì sẽ chỉnh sửa sau
+- B4: Thực hiện generate ra file `passwords.yml`
+```sh
+rm -rf passwords.yml
 
-- B4: Ping kiểm tra đã kết nối tới các host
+cp passwords.yml.bak passwords.yml
+
+python genpassword.py
+```
+- B5: Ping kiểm tra đã kết nối tới các host
 ```sh
 ansible -i multinodeHA all -m ping
 ```
-- B5: Thực hiện Deploy hệ thống
+- B6: Thực hiện Deploy hệ thống
 ```sh
-ansible-playbook -i multinodeHA Deploy_OPS_main.yml -e my_action=deploy
+ansible-playbook -i multinodeHA Deploy_OPS_main.yml -e@customise.yml -e@passwords.yml -e my_action=deploy
 ```
 hoặc có thể chạy từng role chỉ định bằng cách thêm các tags ở cuối lệnh
 ```sh
-ansible-playbook -i multinodeHA Deploy_OPS_main.yml -t install_rabbitmq -e my_action=deploy
+ansible-playbook -i multinodeHA Deploy_OPS_main.yml -t install_rabbitmq -e@customise.yml -e@passwords.yml -e my_action=deploy
 ```
-- B6: Trên node controller thực hiện lệnh add compute
+- B7: Trên node controller thực hiện lệnh add compute
 ```sh
 su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
 ```
-- B7: Thực hiện tạo máy ảo sau khi cài xong OPS
+- B8: Thực hiện tạo máy ảo sau khi cài xong OPS
     
     ***! LƯU Ý:*** Đã khai báo đầy đủ ở phần **### Create VMs** ( file group_vars/all.yml)
 
 ```sh
-ansible-playbook -i multinodeHA Create_VMs,yml 
+ansible-playbook -i multinodeHA Create_VMs,yml -e@customise.yml -e@passwords.yml
 ```
 
 
