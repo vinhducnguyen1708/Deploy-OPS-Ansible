@@ -1,4 +1,5 @@
 [mysqld]
+log-bin=mysql-bin
 query_cache_size=0
 binlog_format=ROW
 default-storage-engine=innodb
@@ -13,8 +14,8 @@ max_connections = 102400
 max_allowed_packet  = 16M
 #innodb_buffer_pool_size=122M
 
+
 # Galera Provider Configuration
-[galera]
 wsrep_on=ON
 wsrep_provider=/usr/lib64/galera/libgalera_smm.so
 wsrep_provider_options="gmcast.listen_addr=tcp://{{ MGNT_IP }}:4567"
@@ -30,4 +31,4 @@ wsrep_sst_method=rsync
 
 # Galera Node Configuration
 wsrep_node_address="{{ MGNT_IP  }}"
-wsrep_node_name="{{inventory_hostname}}"
+wsrep_node_name="{{ inventory_hostname }}"

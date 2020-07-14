@@ -1,0 +1,126 @@
+---
+### client's password
+admin_pass: 86c1e9156686a03ccf92
+demo_pass: a0fb47ac09b7da38cdfd
+
+### Database's password
+keystonedb_pass: 06f08beb5733b3de967f
+glancedb_pass: ffb3207fc04ddc4b6323
+placementdb_pass: 299ab5413f5111e9418d
+novadb_pass: 7c8d2ac4cab250b8304d
+neutrondb_pass: f103af929e55c23bdc09
+cinderdb_pass: 8973dca7d9fe3f885fa2
+
+### Service's password
+glance_pass: 77635c727b72f8e56b10
+placement_pass: 7b2ba3a53dd53c37ecff
+nova_pass: 8fb55eeffd0d28574ec7
+neutron_pass: 1833af70431b0d540cc5
+metadata_secret: 5b721855305f81836b04
+cinder_pass: b3e54226a6dd3d3ba504
+mariadb_pass: 6c4c795a4b866e4f82f4
+rabbitmq_pass: ed4150476a71d98c6a55
+corosync_pass: b1c1c0e42dae43206781
+
+replicate_user: repl
+replicate_pass: 12345
+
+
+### Openstack config Auth enviroment
+openstack_auth:
+  auth_url: "{{ keystone_protocol }}://{%- if enable_multisite | bool %}{{ IP_VIPSITE1 }}{% else %}{{ IP_VIP }}{% endif %}:{{ keystone_port }}/v3/"
+  username: "admin"
+  password: "{{ admin_pass }}"
+  project_name: "admin"
+  domain_name: "Default"
+  user_domain_name: "Default"
+
+#### config docker
+enable_docker_proxy: "yes"
+IP_docker_proxy: 172.16.68.49
+Port_docker_proxy: 3128
+
+#### Openstack services
+enable_openstack_core: "yes"
+
+enable_keystone: "{{ enable_openstack_core | bool }}"
+enable_glance: "{{ enable_openstack_core | bool }}"
+enable_placement: "{{ enable_openstack_core | bool }}"
+enable_nova: "{{ enable_openstack_core | bool }}"
+enable_neutron: "{{ enable_openstack_core | bool }}"
+enable_horizon: "{{ enable_openstack_core | bool }}"
+
+### Version Packages
+mariadb_version: 10.2
+
+keystone_port: 5000
+
+### Create VMs
+#### Selfservice network info:
+selfservice_network_name: service_network
+sub_selfservice_network_name: sub1_selfservice_network
+selfservice_network_address: 192.168.178.0/24
+selfservice_dns_nameservers: 8.8.8.8
+selfservice_pool_start: 192.168.178.10
+selfservice_pool_end: 192.168.178.200
+
+#### Provider network info:
+provider_network_name: provider_network
+sub_provider_network_name: sub1_provider_network
+provider_network_address: 192.168.30.0/24
+provider_network_type: flat
+provider_physical_network: physnet1
+provider_dns_nameservers: 8.8.8.8
+provider_pool_start: 192.168.30.230
+provider_pool_end: 192.168.30.245
+
+#### Router info:
+router_name: Routeradmin
+
+#### Flavor info:
+flavor_name: tiny
+flavor_ram: 1024
+flavor_vcpus: 1
+flavor_root_disk: 5
+
+
+### Do not touch :(
+###
+
+#### SSL
+#public_protocol: "{{ 'https' if enable_tls | bool else 'http' }}"
+#internal_protocol: "{{ 'https' if enable_tls | bool else 'http' }}"
+keystone_protocol: "{{ 'https' if enable_tls | bool else 'http' }}"
+keystone_url: "{{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}/v3/"
+
+
+#### Token
+token_expired_min: "{{ token_expiration_keystone * 60 | int }}"
+token_expired_sec: "{{ token_expiration_keystone * 3600 | int }}"
+number_keystone_node: "{{ groups['controller'] | length | int }}"
+rotation_frequency: "{{ token_expired_sec | int  // number_keystone_node | int  }}"
+max_active_keys: "{{ token_expired_sec | int  // rotation_frequency | int + 2  }}"
+### IP setup var
+##### ex: MGNT_IP's output will be "192.168.10.101"
+MGNT_IP: "{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
+DATA_IP: "{{ hostvars[inventory_hostname]['ansible_' + DATA_IF]['ipv4']['address'] }}"
+FLAT_IP: "{{ hostvars[inventory_hostname]['ansible_' + FLAT_IF]['ipv4']['address'] }}"
+#### MGNT NETWORK setup var
+##### ex: MGNT_NETWORK's output will be "192.168.10.0"
+MGNT_NETWORK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['network'] }}"
+##### ex: MGNT_IPADD's output will be "192.168.10.0/255.255.255.0"
+MGNT_IPADD: "{{ MGNT_NETWORK }}/{{ MGNT_NETMASK }}"
+##### ex: MGNT_CIDR's output will be "192.168.10.0/24"
+MGNT_CIDR: "{{ MGNT_IPADD | ipaddr('net') }}"
+MGNT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['netmask'] }}" 
+#### FLAT NETWORK setup var
+##### ex: FLAT_NETMASK's output will be "255.255.255.0"
+FLAT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_' + FLAT_IF]['ipv4']['netmask'] }}"
+
+
+
+
+
+MGNT_IP_CON1: "{{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
+MGNT_IP_CON2: "{{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
+MGNT_IP_CON3: "{{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}"

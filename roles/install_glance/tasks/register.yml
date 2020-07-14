@@ -1,13 +1,11 @@
 ---
-- name: export env OPS
-  shell: source /root/admin-openrc
-
 - name: Create user Glance
   os_user:
     name: glance
     auth: "{{ openstack_auth }}"
     password: "{{ glance_pass }}"
     domain: default
+    ca_cert: "{{ openstack_cacert }}"
   run_once: true
 
 - name: Create role for user glance
@@ -16,6 +14,7 @@
     user: glance
     role: admin
     project: service
+    ca_cert: "{{ openstack_cacert }}"
     state: present
   run_once: true
 
@@ -25,6 +24,7 @@
     auth: "{{ openstack_auth }}"
     service_type: image
     description: Openstack Image
+    ca_cert: "{{ openstack_cacert }}"
   run_once: true
 
 
@@ -33,8 +33,9 @@
      auth: "{{ openstack_auth }}"
      service: glance
      endpoint_interface: "{{ item }}"
-     url: http://{{ IP_VIP }}:9292
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:9292"
      region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
     - public

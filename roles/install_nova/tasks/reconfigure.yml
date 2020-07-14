@@ -1,3 +1,2 @@
 ---
 - include_tasks: config_nova.yml
-- include_tasks: restart_service.yml

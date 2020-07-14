@@ -24,6 +24,10 @@ backend = oslo_cache.memcache_pool
 {% if enable_cinder | bool %}
 [cinder]
 os_region_name = {{ REGION }}
+{% if enable_ssl | bool %}
+insecure = True
+#protocol = https
+{% endif %}
 {% endif %}
 [compute]
 [conductor]
@@ -36,7 +40,11 @@ connection = mysql+pymysql://nova:{{ novadb_pass }}@{{ IP_VIP }}/nova
 [ephemeral_storage_encryption]
 [filter_scheduler]
 [glance]
-api_servers = http://{{ IP_VIP }}:9292
+api_servers = {{ keystone_protocol }}://{{ IP_VIP }}:9292
+{% if enable_ssl | bool %}
+insecure = True
+#protocol = https
+{% endif %}
 [guestfs]
 [healthcheck]
 [hyperv]
@@ -44,9 +52,9 @@ api_servers = http://{{ IP_VIP }}:9292
 [key_manager]
 [keystone]
 [keystone_authtoken]
-www_authenticate_uri = http://{{ IP_VIP }}:5000/
-auth_url = http://{{ IP_VIP }}:5000/
-memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000/
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000/
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_name = default
@@ -54,12 +62,21 @@ user_domain_name = default
 project_name = service
 username = nova
 password = {{ nova_pass }}
+cafile = {{ openstack_cacert }}
+
+
 [libvirt]
+{% if enable_ceph | bool %}
+rbd_user = cinder
+rbd_secret_uuid = {{ openstack_uuid }}
+{% endif %}
+
+
 [metrics]
 [mks]
 [neutron]
-url = http://{{ IP_VIP }}:9696
-auth_url = http://{{ IP_VIP }}:5000
+url = {{ keystone_protocol }}://{{ IP_VIP }}:9696
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
 auth_type = password
 project_domain_name = default
 user_domain_name = default
@@ -69,6 +86,10 @@ username = neutron
 password = {{ neutron_pass }}
 service_metadata_proxy = true
 metadata_proxy_shared_secret = {{ metadata_secret }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
+
 [notifications]
 [osapi_v21]
 [oslo_concurrency]
@@ -85,6 +106,11 @@ rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
 amqp_durable_queues = true
 [oslo_middleware]
+{% if enable_ssl | bool %}
+secure_proxy_ssl_header = X-Forwarded-Proto
+enable_proxy_headers_parsing = true 
+{% endif %}
+
 [oslo_policy]
 [pci]
 [placement]
@@ -93,9 +119,13 @@ project_domain_name = Default
 project_name = service
 auth_type = password
 user_domain_name = Default
-auth_url = http://{{ IP_VIP }}:5000/v3
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000/v3
 username = placement
 password = {{ placement_pass }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
+
 [powervm]
 [privsep]
 [profiler]

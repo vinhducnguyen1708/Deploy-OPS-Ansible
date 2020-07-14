@@ -1,0 +1,97 @@
+# OpenSSL root CA configuration file.
+
+[ ca ]
+# `man ca`
+default_ca = CA_default
+
+[ CA_default ]
+# Directory and file locations.
+dir               = {{ ansible_deploy_files }}/octavia_certs
+certs             = {{ octavia_certs_directory_server }}/certs
+crl_dir           = {{ octavia_certs_directory_server }}/crl
+new_certs_dir     = {{ octavia_certs_directory_server }}/newcerts
+database          = {{ octavia_certs_directory_server }}/index.txt
+serial            = {{ octavia_certs_directory_server }}/serial
+RANDFILE          = {{ octavia_certs_directory_server }}/private/.rand
+
+# The root key and root certificate.
+private_key       = {{ octavia_certs_directory_server }}/private/ca.key.pem
+certificate       = {{ octavia_certs_directory_server }}/certs/ca.cert.pem
+
+# For certificate revocation lists.
+crlnumber         = {{ octavia_certs_directory_server }}/crlnumber
+crl               = {{ octavia_certs_directory_server }}/crl/ca.crl.pem
+crl_extensions    = crl_ext
+default_crl_days  = 30
+
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md        = sha256
+
+name_opt          = ca_default
+cert_opt          = ca_default
+default_days      = 3650
+preserve          = no
+policy            = policy_strict
+
+[ policy_strict ]
+# The root CA should only sign intermediate certificates that match.
+# See the POLICY FORMAT section of `man ca`.
+countryName             = match
+stateOrProvinceName     = match
+organizationName        = match
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ req ]
+# Options for the `req` tool (`man req`).
+default_bits        = 2048
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+prompt = no
+# SHA-1 is deprecated, so use SHA-2 instead.
+default_md          = sha256
+
+# Extension to add when the -x509 option is used.
+x509_extensions     = v3_ca
+
+[ req_distinguished_name ]
+# See <https://en.wikipedia.org/wiki/Certificate_signing_request>.
+countryName                     = {{ country_name }}
+stateOrProvinceName             = {{ state_name }}
+localityName                    = {{ locality_name }}
+0.organizationName              = {{ organization_name }}
+organizationalUnitName          = {{ unit_name }}
+commonName                      = {{ IP_VIP }}
+emailAddress                    = {{ email_name }}
+
+[ v3_ca ]
+# Extensions for a typical CA (`man x509v3_config`).
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:true
+keyUsage = critical, digitalSignature, cRLSign, keyCertSign
+
+[ usr_cert ]
+# Extensions for client certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = client, email
+nsComment = "OpenSSL Generated Client Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth, emailProtection
+
+[ server_cert ]
+# Extensions for server certificates (`man x509v3_config`).
+basicConstraints = CA:FALSE
+nsCertType = server
+nsComment = "OpenSSL Generated Server Certificate"
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid,issuer:always
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+
+[ crl_ext ]
+# Extension for CRLs (`man x509v3_config`).
+authorityKeyIdentifier=keyid:always

@@ -1,5 +1,4 @@
 ---
 
 - include_tasks: config_neutron.yml
-- include_tasks: restart_service.yml
-- include_tasks: config_neutron.yml
+- include_tasks: config_network.yml

@@ -4,3 +4,18 @@
     name: rabbitmq-server
   notify:
     - start rabbitmq-server.service
+
+- meta: flush_handlers
+
+
+- name: check if clustered
+  script: count_clustered_nodes.py
+  register: nodes_count
+  changed_when: False
+
+- name: Set fact status rabbitmq cluster
+  set_fact: 
+      nodes_rabbitmq_count: "{{ nodes_count.stdout | int }}"
+
+- include_tasks: config_rabbitmq.yml
+  when: nodes_rabbitmq_count | int < groups['controller'] | length | int

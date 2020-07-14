@@ -1,0 +1,8 @@
+---
+neutron_packages:
+    - openstack-neutron
+    - openstack-neutron-ml2
+    - openstack-neutron-openvswitch
+    - ebtables
+    - libibverbs
+

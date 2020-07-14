@@ -82,41 +82,71 @@
     src: neutron.conf.j2
     dest: /etc/neutron/neutron.conf
     mode: '0660'
+  notify: 
+     - Restart neutron-server
+     - Restart neutron-metadata-agent.service
+     - Restart neutron-dhcp-agent.service
+     - Restart neutron-openvswitch-agent.service
+     - Restart  neutron-l3-agent.service
+     - restart nova services
+     - restart nova-scheduler services
+     - restart nova-conductor services
 
 - name: Config Modular Layer 2 (ML2) plug-in
   template:
     src: ml2_conf.ini.j2
     dest: /etc/neutron/plugins/ml2/ml2_conf.ini
     mode: '0660'
+  notify: 
+     - Restart neutron-server
+     - Restart neutron-metadata-agent.service
+     - Restart neutron-dhcp-agent.service
+     - Restart neutron-openvswitch-agent.service
+     - Restart  neutron-l3-agent.service
 
 - name: Config the Open vSwitch agent
   template:
     src: openvswitch_agent.ini.j2
     dest: /etc/neutron/plugins/ml2/openvswitch_agent.ini
     mode: '0660'
+  notify:
+    - Restart neutron-openvswitch-agent.service
 
 - name: Configure the L3 agent
   template: 
     src: l3_agent.ini.j2
     dest: /etc/neutron/l3_agent.ini
     mode: '0660'
+  notify:
+    - Restart  neutron-l3-agent.service
 
 - name: Configure the DHCP agent
   template:
     src: dhcp_agent.ini.j2
     dest: /etc/neutron/dhcp_agent.ini
     mode: '0660'
+  notify:
+     - Restart neutron-dhcp-agent.service
 
 - name: Configure the metadata agent
   template:
     src: metadata_agent.ini.j2
     dest: /etc/neutron/metadata_agent.ini
     mode: '0660'
+  notify: 
+     - Restart neutron-metadata-agent.service
+
+- name: Check /etc/neutron/plugin.ini  existed
+  stat:
+    path: /etc/neutron/plugin.ini
+  register: neutron_plugin_ini
 
 - name: link file ml2 config
   shell:  ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
-
+  when:
+     - not neutron_plugin_ini.stat.exists
 
 - name: Populate the database
   shell:  su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
   run_once: true
+  when: my_action == "deploy"

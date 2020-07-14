@@ -1,9 +1,7 @@
 ---
 - name: Install Keystone 
   yum:
-    name: "{{ item }}"
-  with_items:
-    - 'openstack-keystone'
-    - 'httpd'
-    - 'mod_wsgi'
+    name: "{{ keystone_packages }}"
+#  with_items:
+#    - "{{ keystone_packages }}"
 

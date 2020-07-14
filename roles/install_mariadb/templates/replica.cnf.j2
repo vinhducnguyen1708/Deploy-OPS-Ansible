@@ -2,11 +2,11 @@
 #GTID giong nhau o 3 node
 gtid_domain_id=1
 #Server ID khac nhau o 3 node
-server_id="{{ 20 | random(seed=inventory_hostname) }}"
+server_id="{{ 600 | random(seed=inventory_hostname) }}"
 #binlog-do-db=keystone
 binlog_format=ROW
 log_slave_updates=1
 log_bin=binlog
 log_bin_index=binlog.index
-report-host={{inventory_hostname}}
+report-host={{ inventory_hostname }}
 report-port=3306

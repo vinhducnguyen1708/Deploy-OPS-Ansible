@@ -1,10 +1,7 @@
 ---
 - name:  Install Neutron services
   yum:
-   name: "{{ item }}"
-  with_items:
-    - 'openstack-neutron-openvswitch'
-    - 'ebtables'
-    - 'ipset'
+   name: "{{ neutron_ovs_packages }}"
+
 
 

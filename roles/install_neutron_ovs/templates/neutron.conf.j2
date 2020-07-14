@@ -8,8 +8,8 @@ core_plugin = ml2
 [cors]
 [database]
 [keystone_authtoken]
-www_authenticate_uri = http://{{ IP_VIP }}:5000
-auth_url = http://{{ IP_VIP }}:5000
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
 memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
@@ -19,6 +19,9 @@ project_name = service
 username = neutron
 password = {{ neutron_pass }}
 region_name = {{ REGION }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
 [oslo_concurrency]
 lock_path = /var/lib/neutron/tmp
 [oslo_messaging_amqp]

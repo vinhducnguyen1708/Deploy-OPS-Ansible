@@ -11,7 +11,7 @@
     name: corosync
 - name: enable_services haproxy
   systemd:
-    state: started
+    state: restarted
     enabled: true
     name: haproxy
 - name: start_pacemaker

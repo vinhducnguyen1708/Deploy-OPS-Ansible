@@ -1,10 +1,4 @@
 ---
-- name: Ensure there are no packages mariadb
-  yum: 
-   name:
-      - mariadb-common*
-      - mariadb-config*
-   state: removed   
 - name: Setup repository
   ini_file:
      path: /etc/yum.repos.d/MariaDB.repo
@@ -12,6 +6,10 @@
      option: "{{ item.key }}"
      value: "{{ item.value }}"
   with_dict: '{{ mariadb_repo }}'
+  notify:
+      - Ensure there are no packages mariadb
+
+- meta: flush_handlers
 
 - name: Update packages for Servers
   yum:
@@ -28,20 +26,40 @@
     dest: /etc/my.cnf.d/openstack.cnf
   when:
      - groups['controller'] | length  < 2 
+
 - name: start mariadb
   service:
     name: mariadb
     enabled: true
     state: started
+
+- name: check status mariadb
+  shell: mysql -uroot -e "SHOW STATUS LIKE 'wsrep_cluster_size'" | egrep  wsrep_cluster_size | awk '{print $2}'
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: mariadb_cluster_status
+
+- name: check repo healthcheck
+  stat:
+    path: /root/percona-clustercheck/clustercheck
+  register: healthcheck_file
+
 - name: git clone healthcheck
   shell: git clone https://github.com/TrongTan124/percona-clustercheck
   ignore_errors: yes
   when:
+     - not healthcheck_file.stat.exists
      - groups['controller'] | length  > 1
 
 - name: copy dir to/usr/local/bin
-  shell: cp percona-clustercheck/clustercheck /usr/local/bin
+  copy:
+    src: /root/percona-clustercheck/clustercheck
+    dest: /usr/local/bin/clustercheck
+    remote_src: yes
+#  shell: cp percona-clustercheck/clustercheck /usr/local/bin
   when:
+     - not healthcheck_file.stat.exists
      - groups['controller'] | length  > 1
 
 - name: config xinetd 
@@ -49,6 +67,7 @@
     src: mysqlchk.j2
     dest: /etc/xinetd.d/mysqlchk
   when:
+     - not healthcheck_file.stat.exists
      - groups['controller'] | length  > 1
 
 - name: config mysqlchk services
@@ -56,11 +75,32 @@
     path: /etc/services
     line: mysqlchk 9200/tcp # MySQL check
   when:
+     - not healthcheck_file.stat.exists
+     - groups['controller'] | length  > 1
 - name: Restart service xinetd
   systemd:
     state: restarted
     enabled: true
     name: xinetd
   when:
+     - not healthcheck_file.stat.exists
      - groups['controller'] | length  > 1
+
+
+
+- include_tasks: config_cluster.yml
+  when:
+    - mariadb_cluster_status.stdout | int  !=  groups['controller'] | length | int
+
+- name: Check Mariadb already have Password
+  command: mysql -uroot -p{{ mariadb_pass }} -e"show databases;"
+  register: checkpassmariadb
+  check_mode: no
+  failed_when: false
+  changed_when: false
+
+- include_tasks:  config_access_root.yml
+  when:
+    - checkpassmariadb.rc == 1
+
 

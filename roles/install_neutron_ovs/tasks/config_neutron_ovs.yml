@@ -29,9 +29,19 @@
   template:
     src: neutron.conf.j2
     dest: /etc/neutron/neutron.conf
+  notify:
+      - Restart ovs
+      - Restart neutron-openvswitch service
+      - Restart service libvirtd
+      - Restart service openstack-nova-compute
 
 
 - name: Config file OVS
   template:
     src: openvswitch_agent.ini.j2
     dest: /etc/neutron/plugins/ml2/openvswitch_agent.ini
+  notify:
+      - Restart ovs
+      - Restart neutron-openvswitch service
+      - Restart service libvirtd
+      - Restart service openstack-nova-compute

@@ -1,1 +1,7 @@
 ---
+nova_packages:
+    - openstack-nova-api
+    - openstack-nova-conductor
+    - openstack-nova-novncproxy
+    - openstack-nova-scheduler
+ 

@@ -1,0 +1,21 @@
+---
+- name: restart Heat-api Services
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-heat-api.service
+
+
+- name: restart Heat-CFN Services
+  systemd:
+     state: restarted
+     enabled: true
+     name: openstack-heat-api-cfn.service
+
+- name: restart Heat-Engine Services
+  systemd:
+      state: restarted
+      enabled: true
+      name: openstack-heat-engine.service
+
+

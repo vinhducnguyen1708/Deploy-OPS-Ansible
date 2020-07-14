@@ -32,9 +32,13 @@ listen stats
     stats enable
     stats uri /stats
     stats realm HAProxy\ Statistics
+    stats refresh 10s
+    stats show-node
+    stats show-legends
+    stats hide-version
 
 listen mysqld 
-    bind {{ IP_VIP }}:3306
+    bind {{ IP_VIP }}:3306 
     balance  leastconn
     mode  tcp
     option  httpchk
@@ -43,96 +47,203 @@ listen mysqld
     option  srvtcpka
     timeout client  28801s
     timeout server  28801s    
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:3306 check port 9200 inter 5s fastinter 2s rise 3 fall 3 
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:3306 check port 9200 inter 5s fastinter 2s rise 3 fall 3 backup
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:3306 check port 9200 inter 5s fastinter 2s rise 3 fall 3 backup
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:3306 check port 9200 inter 5s fastinter 2s rise 3 fall 3 
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:3306 check port 9200 inter 5s fastinter 2s rise 3 fall 3 backup
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:3306 check port 9200 inter 5s fastinter 2s rise 3 fall 3 backup
 
+#{% if enable_multisite | bool %}
+#listen mysqld-container
+#    bind {{ IP_VIP }}:3305
+#    mode tcp
+#    balance source
+#    option httplog
+#    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:3305 check
+#    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:3305 check
+#    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:3305 check
+#{% endif %}
 
 listen keystone-5000
-    bind {{ IP_VIP }}:5000 
-    option  httpchk
+    bind {{ IP_VIP }}:5000 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+    option  httpchk GET /v3
+{%- endif %}
+
     option  httplog
     option  httpclose
     balance source
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:5000  check inter 5s fastinter 2s downinter 2s rise 3 fall 3
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:5000  check inter 5s fastinter 2s downinter 2s rise 3 fall 3
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:5000  check inter 5s fastinter 2s downinter 2s rise 3 fall 3
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5000  check inter 5s fastinter 2s downinter 2s rise 3 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5000  check inter 5s fastinter 2s downinter 2s rise 3 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5000  check inter 5s fastinter 2s downinter 2s rise 3 fall 3
 
 
 listen glance-api
-    bind {{ IP_VIP }}:9292
-    option  httpchk /versions
+    bind {{ IP_VIP }}:9292 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+    option  httpchk /healthcheck
+{%- endif %}
+
     option  httplog
     option  httpclose
     timeout server  11m
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:9292  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:9292  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:9292  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9292  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9292  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9292  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
 
 
 listen placement_api
-    bind {{ IP_VIP }}:8778
+    bind {{ IP_VIP }}:8778 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
     mode http
     option httplog
     option forwardfor
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:8778 check inter 2000 rise 2 fall 5
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:8778 check inter 2000 rise 2 fall 5
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:8778 check inter 2000 rise 2 fall 5
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8778 check inter 2000 rise 2 fall 5
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8778 check inter 2000 rise 2 fall 5
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8778 check inter 2000 rise 2 fall 5
 
 
 
 listen nova-api-8774
-    bind {{ IP_VIP }}:8774 
+    bind {{ IP_VIP }}:8774 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
     option  httpchk
     option  httplog
     option  httpclose
     timeout server  600s
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:8774  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:8774  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:8774  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8774  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8774  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8774  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
 
 listen nova-metadata-api
     bind {{ IP_VIP }}:8775 
     option  httpchk
     option  httplog
     option  httpclose
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:8775  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:8775  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:8775  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8775  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8775  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8775  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
 
 listen nova-novncproxy
-	bind {{ IP_VIP }}:6080
+    bind {{ IP_VIP }}:6080
     option  httplog
     balance source
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:6080  check 
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:6080  check 
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:6080  check 
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:6080  check 
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:6080  check 
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:6080  check 
 
 
 
 
 listen neutron
-    bind {{ IP_VIP }}:9696 
+    bind {{ IP_VIP }}:9696 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
     option  httpchk
     option  httplog
     option  httpclose
     balance source
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:9696  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:9696  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:9696  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9696  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9696  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9696  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
 
+{% if enable_cinder | bool %}
 listen cinder-api
-    bind {{ IP_VIP }}:8776 
+    bind {{ IP_VIP }}:8776 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+#    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+    mode http
+    http-request del-header X-Forwarded-Proto
+    option httplog
+    option forwardfor
+    http-request set-header X-Forwarded-Proto https if { ssl_fc }
+#    option  httpchk
+#    option  httplog
+#    option  httpclose
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8776 check inter 2000 rise 2 fall 5
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8776 check inter 2000 rise 2 fall 5
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8776 check inter 2000 rise 2 fall 5
+{% endif %}
+
+{% if enable_heat | bool %}
+listen heat-api
+    bind {{ IP_VIP }}:8004 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
     option  httpchk
     option  httplog
     option  httpclose
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:8776  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:8776 backup check inter 5s fastinter 2s downinter 3s rise 3 fall 3
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:8776 backup check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8004  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8004  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8004  check inter 5s fastinter 2s downinter 3s rise 3 fall 3
 
-  
-listen horizon
+listen heat-cfn-api
+    bind {{ IP_VIP }}:8000 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
+    option  httpchk
+    option  httplog
+    option  httpclose
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8000 check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8000 check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:8000 check inter 5s fastinter 2s downinter 3s rise 3 fall 3
+{% endif %}
+
+{% if enable_barbican | bool %}
+listen barbican-api
+    bind {{ IP_VIP }}:9311 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
+    option  httpchk
+    option  httplog
+    option  httpclose
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9311 check inter 10s fastinter 2s downinter 3s rise 3 fall 3 
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9311 backup check inter 10s fastinter 2s downinter 3s rise 3 fall 3 
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9311 backup check inter 10s fastinter 2s downinter 3s rise 3 fall 3 
+{% endif %}
+
+
+{% if enable_octavia | bool %}
+listen octavia-api
+    bind {{ IP_VIP }}:9876 {% if enable_ssl | bool %}ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
+    option  httpchk
+    option  httplog
+    option  httpclose
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9876 check inter 5s fastinter 2s downinter 3s rise 3 fall 3 
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9876 check inter 5s fastinter 2s downinter 3s rise 3 fall 3 
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:9876 check inter 5s fastinter 2s downinter 3s rise 3 fall 3 
+{% endif %}
+
+
+{% if enable_octavia | bool %}
+listen octavia-health-manager
+    bind {{ IP_VIP }}:5555 {% if enable_ssl | bool %} ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    reqadd X-Forwarded-Proto:\ https
+{%- endif %}
+
+    mode http
+    option httplog
+    option forwardfor
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5555 check inter 5s fastinter 2s downinter 3s rise 3 fall 3 
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5555 check inter 5s fastinter 2s downinter 3s rise 3 fall 3 
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5555 check inter 5s fastinter 2s downinter 3s rise 3 fall 3 
+{% endif %}
+
+listen horizon-80
     bind {{ IP_VIP }}:80
+{% if enable_ssl | bool %}
+    mode http
+    redirect scheme https code 301 if !{ ssl_fc }
+{% else %}
     balance  source
     mode  http
     option  forwardfor
@@ -143,8 +254,32 @@ listen horizon
     stick-table  type ip size 200k expire 30m
     timeout  client 3h
     timeout  server 3h
-    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_eth0']['ipv4']['address'] }}:80  weight 1 check
-    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_eth0']['ipv4']['address'] }}:80  weight 1 check
-    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_eth0']['ipv4']['address'] }}:80  weight 1 check
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:80  weight 1 check
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:80  weight 1 check
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:80  weight 1 check
+{% endif %}  
 
-
+{% if enable_ssl | bool %}
+listen horizon
+    bind {{ IP_VIP }}:443 ssl crt /etc/ssl/private/{{ cafile_name }}.pem
+    mode http
+    http-request del-header X-Forwarded-Proto
+    balance source
+    option httplog
+    option forwardfor
+#    reqadd X-Forwarded-Proto:\ https
+#    balance  source
+#    capture  cookie vgnvisitor= len 32
+#    cookie  SERVERID insert indirect nocache
+#    mode  http
+#    option  forwardfor
+#    option  httpchk
+#    option  httpclose
+#    option  httplog
+#    rspidel  ^Set-cookie:\ IP=
+#    timeout  client 3h
+#    timeout  server 3h
+    server {{ hostvars[groups['controller'][0]]['inventory_hostname'] }} {{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:80  check inter 2000 fall 3
+    server {{ hostvars[groups['controller'][1]]['inventory_hostname'] }} {{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:80  check inter 2000 fall 3
+    server {{ hostvars[groups['controller'][2]]['inventory_hostname'] }} {{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:80  check inter 2000 fall 3
+{% endif %}  

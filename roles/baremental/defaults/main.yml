@@ -1,4 +1,6 @@
 ---
+openstack_release: train
+
 ops_train_packages:
      - centos-release-openstack-train
      - python-openstackclient
@@ -13,3 +15,5 @@ sysctl_config:
 tools_packages:
      - epel-release
      - crudini
+     - wget
+     - vim

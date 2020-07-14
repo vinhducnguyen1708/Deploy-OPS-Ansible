@@ -12,6 +12,7 @@
     name: keystone
     state: present
   run_once: true
+
 - name: Create user for Keystone
   mysql_user:
     login_user: root

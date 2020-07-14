@@ -16,3 +16,15 @@
     state: restarted
     enabled: true
     name: openstack-cinder-scheduler.service
+
+- name: Start Service Cinder Volume
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-cinder-volume
+
+- name: Start service Cinder Backup
+  systemd: 
+    state: restarted
+    enabled: true
+    name: openstack-cinder-backup

@@ -7,3 +7,9 @@
     state: present
     reload: yes
   with_dict: "{{ sysctl_config }}"
+
+- name: Create Ansible-Deploy directory
+  file:
+    path: "{{ ansible_deploy_files }}"
+    state: directory
+

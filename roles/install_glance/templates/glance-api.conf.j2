@@ -1,26 +1,35 @@
 [DEFAULT]
 bind_host = {{ MGNT_IP }}
 bind_port = 9292
-registry_host = {{ IP_VIP }}
 show_image_direct_url = True
+show_multiple_locations = True
+use_forwarded_for = true
 [cinder]
 [cors]
 [database]
 connection = mysql+pymysql://glance:{{ glancedb_pass }}@{{ IP_VIP }}/glance
-[file]
 [glance.store.http.store]
 [glance.store.rbd.store]
 [glance.store.sheepdog.store]
 [glance.store.swift.store]
 [glance.store.vmware_datastore.store]
 [glance_store]
-stores = file,http
-default_store = file
+stores = {% if enable_ceph | bool %}rbd{% else %}file,http{% endif %}
+
+default_store = {% if enable_ceph | bool %}rbd{% else %}file{% endif %}
+
+{% if enable_ceph | bool %}
+rbd_store_pool = images
+rbd_store_user = glance
+rbd_store_ceph_conf = /etc/ceph/ceph.conf
+rbd_store_chunk_size = 8
+{% else %}
 filesystem_store_datadir = /var/lib/glance/images/
+{% endif %}
 [image_format]
 [keystone_authtoken]
-www_authenticate_uri = http://{{ IP_VIP }}:5000
-auth_url = http://{{ IP_VIP }}:5000
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
 memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
@@ -29,6 +38,10 @@ user_domain_name = Default
 project_name = service
 username = glance
 password = {{ glance_pass }}
+{% if enable_ssl | bool %}
+cafile = {{ openstack_cacert }}
+{% endif %}
+
 [oslo_concurrency]
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]

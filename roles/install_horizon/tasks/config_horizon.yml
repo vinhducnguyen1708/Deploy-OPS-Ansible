@@ -10,29 +10,35 @@
    dest: /etc/openstack-dashboard/local_settings.bak
    remote_src: yes
   when:
-    - not  horizon_conf_bak.stat.exists
+    - not horizon_conf_bak.stat.exists
 
 - name: Edit the /etc/openstack-dashboard/local_settings file
   template:
-    src: local_settings.j2
+    src: local_settings2.j2
     dest: /etc/openstack-dashboard/local_settings
+  notify:
+    - restart HTTPD
+    - restart memcached
 
-- name: Config file /etc/httpd/conf.d/openstack-dashboard.conf
-  lineinfile:
-    path: /etc/httpd/conf.d/openstack-dashboard.conf
-    line: WSGIApplicationGroup %{GLOBAL}
+# - name: Config file /etc/httpd/conf.d/openstack-dashboard.conf
+#   lineinfile:
+#     path: /etc/httpd/conf.d/openstack-dashboard.conf
+#     line: WSGIApplicationGroup %{GLOBAL}
 
+- name: Config openstack dashboard.conf
+  template:
+    src: openstack-dashboard.conf.j2
+    dest: /etc/httpd/conf.d/openstack-dashboard.conf
+  notify:
+    - restart HTTPD
+    - restart memcached
 
-- name: Restart HTTPD
-  systemd:
-    state : restarted
-    enabled: true
-    name: httpd.service
-
-- name: Restart memcached
-  systemd:
-    state : restarted
-    enabled: true
-    name: memcached.service
+- name: Update cinder-client
+  copy:
+    src: cinder.py
+    dest: /usr/share/openstack-dashboard/openstack_dashboard/api/cinder.py
+  notify:
+    - restart HTTPD
+    - restart memcached
 
 

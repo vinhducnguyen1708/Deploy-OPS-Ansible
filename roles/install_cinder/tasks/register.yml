@@ -5,6 +5,7 @@
     auth: "{{ openstack_auth }}"
     password: "{{ cinder_pass }}"
     domain: default
+    ca_cert: "{{ openstack_cacert }}"
   run_once: true
 
 - name: Create role for user cinder
@@ -13,6 +14,7 @@
     user: cinder
     role: admin
     project: service
+    ca_cert: "{{ openstack_cacert }}"
     state: present
   run_once: true
 
@@ -21,6 +23,7 @@
     name: cinderv2
     auth: "{{ openstack_auth }}"
     service_type: volumev2
+    ca_cert: "{{ openstack_cacert }}"
     description: OpenStack Block Storage
   run_once: true
 
@@ -29,6 +32,7 @@
     name: cinderv3
     auth: "{{ openstack_auth }}"
     service_type: volumev3
+    ca_cert: "{{ openstack_cacert }}"
     description: OpenStack Block Storage
   run_once: true
 
@@ -37,8 +41,9 @@
      auth: "{{ openstack_auth }}"
      service: cinderv2
      endpoint_interface: "{{ item }}"
-     url: http://{{ IP_VIP }}:8776/v2/%(project_id)s
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8776/v2/%(project_id)s"
      region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
     - public
@@ -51,8 +56,9 @@
      auth: "{{ openstack_auth }}"
      service: cinderv3
      endpoint_interface: "{{ item }}"
-     url: http://{{ IP_VIP }}:8776/v3/%(project_id)s
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8776/v3/%(project_id)s"
      region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
     - public

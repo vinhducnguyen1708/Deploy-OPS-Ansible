@@ -1,0 +1,111 @@
+[DEFAULT]
+my_ip = {{ MGNT_IP }}
+{% if  inventory_hostname in groups['cinder-api'] %}
+osapi_volume_listen = {{ MGNT_IP }}
+osapi_volume_port = 8776
+glance_api_servers = {{ keystone_protocol }}://{{ IP_VIP }}:9292
+glance_api_version = 2
+{% endif %}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_strategy = keystone
+{% if enable_ssl | bool %}
+glance_api_insecure = True
+allowed_direct_url_schemes = cinder
+glance_ca_certificates_file = /etc/ssl/private/glance.pem
+{% endif %}
+
+{% if enable_ceph | bool %}
+enabled_backends = ceph
+backup_driver = cinder.backup.drivers.ceph.CephBackupDriver
+backup_ceph_conf = /etc/ceph/ceph.conf
+backup_ceph_user = cinder-backup
+backup_ceph_chunk_size = 134217728
+backup_ceph_pool = backups
+backup_ceph_stripe_unit = 0
+backup_ceph_stripe_count = 0
+restore_discard_excess_bytes = true
+{% endif %}
+
+{% if  enable_lvm | bool %}
+glance_api_version = 2
+enabled_backends = lvm
+{% endif %}
+notification_driver =  messagingv2
+
+
+{% if  enable_lvm | bool %}
+[lvm]
+iscsi_ip_address = {{ MGNT_IP }}
+volumes_dir = /var/lib/cinder/volumes
+volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
+volume_group = {{ cinder_volume_group }}
+volume_backend_name = lvm
+target_helper = lioadm
+target_protocol = iscsi
+{% endif %}
+
+{% if enable_ceph | bool %}
+[ceph]
+volume_driver = cinder.volume.drivers.rbd.RBDDriver
+volume_backend_name = ceph
+rbd_pool = volumes
+rbd_ceph_conf = /etc/ceph/ceph.conf
+rbd_flatten_volume_from_snapshot = false
+rbd_max_clone_depth = 5
+rbd_store_chunk_size = 4
+rados_connect_timeout = -1
+rbd_user = cinder
+rbd_secret_uuid = {{ nova_compute_uuid }}
+{% endif %}
+
+[backend]
+[backend_defaults]
+[barbican]
+[brcd_fabric_example]
+[cisco_fabric_example]
+[coordination]
+[cors]
+[database]
+connection = mysql+pymysql://cinder:{{ cinderdb_pass }}@{{ IP_VIP }}/cinder
+[fc-zone-manager]
+[healthcheck]
+[key_manager]
+[keystone_authtoken]
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_id = default
+user_domain_id = default
+project_name = service
+username = cinder
+password = {{ cinder_pass }}
+os_region_name = {{ REGION }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
+[matchmaker_redis]
+[nova]
+[oslo_concurrency]
+lock_path = /var/lib/cinder/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+[oslo_messaging_rabbit]
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+rabbit_ha_queues = true
+[oslo_messaging_zmq]
+[oslo_middleware]
+[oslo_policy]
+[oslo_reports]
+[oslo_versionedobjects]
+[profiler]
+[service_user]
+[ssl]
+[vault]

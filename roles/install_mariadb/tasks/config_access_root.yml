@@ -13,9 +13,9 @@
   mysql_user: login_password={{ mariadb_pass }} check_implicit_admin=yes name=root host={{ item }} password={{ mariadb_pass }} state=present 
   with_items:
     - localhost
-  ignore_errors: yes
   become: true
   run_once: true
+
 - name: Reload privilege tables
   command: 'mysql -ne "{{ item }}"'
   with_items:
@@ -26,7 +26,7 @@
   with_items:
     - DELETE FROM mysql.user WHERE User=''
 
-- name: Disallow root login remotely
+- name: Remove disallow user
   command: 'mysql -ne "{{ item }}"'
   with_items:
     - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
@@ -41,11 +41,6 @@
   command: 'mysql -ne "{{ item }}"'
   with_items:
     - FLUSH PRIVILEGES
-- name: Grant the privilege
-  shell: |
-    mysql -uroot -p{{ mariadb_pass }} -e "UPDATE mysql.user SET Grant_priv='Y', Super_priv='Y' WHERE User='root';"
-    mysql -uroot -p{{ mariadb_pass }} -e "FLUSH PRIVILEGES;"
-    mysql -uroot -p{{ mariadb_pass }} -e "GRANT ALL ON *.* TO 'root'@'localhost';"
 
 - name: Config user databases
   mysql_user:
@@ -58,6 +53,7 @@
     state: present
   with_items:
     - "{{ MGNT_IP }}"
+
 - name: Grant the privilege
   shell: |
       mysql -uroot -p{{ mariadb_pass }} -e "UPDATE mysql.user SET Grant_priv='Y', Super_priv='Y' WHERE User='root';"

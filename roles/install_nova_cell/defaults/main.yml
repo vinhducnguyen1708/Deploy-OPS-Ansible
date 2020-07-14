@@ -1,0 +1,6 @@
+---
+nova_compute_packages:
+      - openstack-nova-compute
+      - libvirt-client 
+
+

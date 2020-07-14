@@ -1,5 +1,7 @@
 ---
 mariadb_packages: 
+#   - MariaDB-server
+#   - MariaDB-client
    - mariadb 
    - mariadb-server
    - galera
@@ -12,6 +14,6 @@ mariadb_pass: 6c4c795a4b866e4f82f4
 
 mariadb_repo: 
   - name: MariaDB
-  - baseurl: http://yum.mariadb.org/10.2/centos7-amd64 
+  - baseurl: http://yum.mariadb.org/{{ mariadb_version }}/centos7-amd64 
   - gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
   - gpgcheck: 1

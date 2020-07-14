@@ -1,0 +1,68 @@
+---
+- name: Check /etc/barbican/barbican.conf.bak existed
+  stat:
+    path: /etc/barbican/barbican.conf.bak
+  register: barbican_conf_bak
+
+- name: Check /etc/barbican/barbican-api-paste.ini.bak existed
+  stat:
+    path: /etc/barbican/barbican-api-paste.ini.bak
+  register: barbican_api_paste_bak
+
+
+- name: Backup file config /etc/barbican/barbican-api-paste.ini
+  copy:
+   src: /etc/barbican/barbican-api-paste.ini
+   dest: /etc/barbican/barbican-api-paste.ini.bak
+   remote_src: yes
+  when:
+    - not barbican_api_paste_bak.stat.exists
+
+- name: Backup file config /etc/barbican/barbican.conf
+  copy:
+   src: /etc/barbican/barbican.conf
+   dest: /etc/barbican/barbican.conf.bak
+   remote_src: yes
+  when:
+    - not  barbican_conf_bak.stat.exists
+
+- name: Config file barbican.conf
+  template:
+    src: barbican.conf.j2
+    dest: /etc/barbican/barbican.conf
+  notify:
+      - restart Barbican-API service
+      - restart HTTP service
+
+- name: Config file barbican-api-paste.ini
+  template:
+    src: barbican-api-paste.ini.j2
+    dest: /etc/barbican/barbican-api-paste.ini
+  notify:
+      - restart Barbican-API service
+      - restart HTTP service
+
+
+- name: Populate the Key Manager service database
+  shell: |
+       su -s /bin/sh -c "barbican-manage db upgrade" barbican
+  run_once: true
+  when: my_action == "deploy"
+
+- name: Config HTTP for barbican
+  template:
+    src: wsgi-barbican.conf.j2
+    dest: /etc/httpd/conf.d/wsgi-barbican.conf
+  notify:
+      - restart Barbican-API service
+      - restart HTTP service
+
+- name: Config Gunicorn
+  lineinfile:
+      path: /etc/barbican/gunicorn-config.py
+      regexp: '^bind '
+      insertafter: '^#bind '
+      line: "bind = '{{ MGNT_IP }}:9311'"
+  notify:
+      - restart Barbican-API service
+      - restart HTTP service

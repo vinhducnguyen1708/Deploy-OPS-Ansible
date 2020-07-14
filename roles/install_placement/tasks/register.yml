@@ -5,6 +5,7 @@
     auth: "{{ openstack_auth }}"
     password: "{{ placement_pass }}"
     domain: default
+    ca_cert: "{{ openstack_cacert }}"
   run_once: true
 
 - name: Create role for user Placement
@@ -13,6 +14,7 @@
     user: placement
     role: admin
     project: service
+    ca_cert: "{{ openstack_cacert }}"
     state: present
   run_once: true
 
@@ -21,6 +23,7 @@
     name: placement
     auth: "{{ openstack_auth }}"
     service_type: placement
+    ca_cert: "{{ openstack_cacert }}"
     description: Placement API
   run_once: true
 
@@ -29,8 +32,9 @@
      auth: "{{ openstack_auth }}"
      service: placement
      endpoint_interface: "{{ item }}"
-     url: http://{{ IP_VIP }}:8778
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8778"
      region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
     - public

@@ -1,0 +1,7 @@
+---
+heat_packages: 
+   - openstack-heat-api
+   - openstack-heat-api-cfn
+   - openstack-heat-engine
+   - openstack-heat-ui
+

@@ -1,12 +1,9 @@
 ---
-- import_tasks: /root/OPS-Ansible/roles/install_nova_cell/tasks/service_register.yml
-
 - name: Restart ovs
   systemd:
     state: restarted
     enabled: true
     name: openvswitch
-- import_tasks: /root/OPS-Ansible/roles/install_nova_cell/tasks/service_register.yml
 
 
 - name: Restart neutron service
@@ -14,3 +11,16 @@
     state: restarted
     enabled: true
     name: neutron-openvswitch-agent
+
+- name: Restart service libvirtd
+  systemd:
+    state: restarted
+    enabled: true
+    name: libvirtd
+
+- name: Restart service openstack-nova-compute
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-compute
+

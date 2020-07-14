@@ -16,6 +16,11 @@
   template:
     src: nova.conf.j2
     dest: /etc/nova/nova.conf
+  notify:
+    - Restart Nova-api Services
+    - Restart Nova-scheduler Services
+    - Restart Nova-condutor Services
+    - Restart Nova-novncproxy Services
 
 - name: Populate the nova-api database
   shell: |
@@ -24,3 +29,4 @@
     su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
     su -s /bin/sh -c "nova-manage db sync" nova
   run_once: true
+  when: my_action == "deploy"

@@ -3,6 +3,10 @@
   yum:
      name: '{{ tools_packages }}'
 
+- name: Install pip
+  yum:
+     name: python-pip
+
 - name: Config file /etc/yum.repos.d/epel.repo
   ini_file:
     path: /etc/yum.repos.d/epel.repo

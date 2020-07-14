@@ -16,10 +16,15 @@
   template:
     src: keystone.conf.j2
     dest: /etc/keystone/keystone.conf
+  notify:
+    - restart service httpd
+    - sleep for 10s and continue with play
+    - Create script test system
 
 - name: Sync databases
   shell: su -s /bin/sh -c "keystone-manage db_sync" keystone
   run_once: true
+  when: my_action == "deploy"
 
 - name: Initialize Fernet key repositories
   shell: |

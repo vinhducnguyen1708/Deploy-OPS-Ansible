@@ -16,8 +16,15 @@
   template:
     src: cinder.conf.j2
     dest: /etc/cinder/cinder.conf
+  notify:
+     - restart service Nova-API
+     - restart Service Cinder-API
+     - restart Service Cinder scheduler
+     - restart Service Cinder Volume
+     - restart service Cinder Backup
 
 - name: Populate the Block Storage service database
   shell: 
      su -s /bin/sh -c "cinder-manage db sync" cinder
   run_once: true
+  when: my_action == "deploy"

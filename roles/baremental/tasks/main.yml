@@ -11,5 +11,5 @@
 
 - include_tasks: config_ssh.yml
 
-- include_tasks: reboot.yml
+#- include_tasks: reboot.yml
 

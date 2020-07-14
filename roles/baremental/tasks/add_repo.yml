@@ -3,14 +3,16 @@
   yum:
      name: '*'
      state: latest
-- name: Enable the Openstack Train repository
+
+- name: Enable the Openstack repository
   yum:
-     name: 'centos-release-openstack-train'
-- name: Enable the Openstack Train client
+     name: "centos-release-openstack-{{ openstack_release }}"
+
+- name: Enable the Openstack client
   yum:
      name: 'python-openstackclient'
 
-- name: Enable the Openstack Train Selinux
+- name: Enable the Openstack Selinux
   yum:
      name: 'openstack-selinux'
      

@@ -9,10 +9,14 @@ firewall_driver = nova.virt.firewall.NoopFirewallDriver
 auth_strategy = keystone
 [api_database]
 [barbican]
+verify_ssl = false
 [cache]
 {% if enable_cinder | bool %}
 [cinder]
 os_region_name = {{ REGION }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
 {% endif %}
 [compute]
 [conductor]
@@ -24,35 +28,62 @@ os_region_name = {{ REGION }}
 [ephemeral_storage_encryption]
 [filter_scheduler]
 [glance]
-api_servers = http://{{ IP_VIP }}:9292
+api_servers = {{ keystone_protocol }}://{{ IP_VIP }}:9292
+{% if enable_ssl | bool %}
+protocol = https
+insecure = True
+{% endif %}
 [guestfs]
 [healthcheck]
 [hyperv]
 [ironic]
+{% if enable_barbican | bool %}
 [key_manager]
+backend = barbican
+api_class = castellan.key_manager.barbican_key_manager.BarbicanKeyManager
+{% endif %}
 [keystone]
 [keystone_authtoken]
-www_authenticate_uri = http://{{ IP_VIP }}:5000
-auth_url = http://{{ IP_VIP }}:5000
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
 auth_type = password
 project_domain_name = default
 user_domain_name = default
 project_name = service
 username = nova
 password = {{ nova_pass }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
 [libvirt]
+{% if enable_ceph | bool %}
+rbd_user = cinder
+rbd_secret_uuid = {{ openstack_uuid }}
+images_type = rbd
+images_rbd_pool = images
+images_rbd_ceph_conf = /etc/ceph/ceph.conf
+{% endif %}
+inject_partition = -2
+inject_password = false
+live_migration_flag = VIR_MIGRATE_UNDEFINE_SOURCE,VIR_MIGRATE_PEER2PEER,VIR_MIGRATE_LIVE,VIR_MIGRATE_PERSIST_DEST
+inject_key = false
+disk_cachemodes = "network=writeback"
+hw_disk_discard = unmap
 [metrics]
 [mks]
 [neutron]
-url = http://{{ IP_VIP }}:9696
-auth_url = http://{{ IP_VIP }}:5000
+url = {{ keystone_protocol }}://{{ IP_VIP }}:9696
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
 auth_type = password
 project_domain_name = default
 user_domain_name = default
-region_name = Hanoi
+region_name = {{ REGION }}
 project_name = service
 username = neutron
 password = {{ neutron_pass }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
 service_metadata_proxy = true
 metadata_proxy_shared_secret = {{ metadata_secret }}
 [notifications]
@@ -71,14 +102,17 @@ amqp_durable_queues = true
 [oslo_policy]
 [pci]
 [placement]
-os_region_name = Hanoi
+os_region_name = {{ REGION }}
 project_domain_name = Default
 project_name = service
 auth_type = password
 user_domain_name = Default
-auth_url = http://{{ IP_VIP }}:5000/v3
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000/v3
 username = placement
 password = {{ placement_pass }}
+{% if enable_ssl | bool %}
+insecure = True
+{% endif %}
 [powervm]
 [privsep]
 [profiler]

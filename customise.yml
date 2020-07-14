@@ -1,0 +1,63 @@
+---
+# proxy_env:
+#    http_proxy: http://192.168.10.150:8080
+
+## network interface
+IP_VIP: 192.168.10.50
+IP_VIP_NETMASK: 24
+MGNT_IF: eth0
+DATA_IF: eth1
+FLAT_IF: eth2
+## All file stored in:
+ansible_deploy_files: /root/AnsibleOPSfiles
+
+## Openstack info
+REGION: Hanoi
+token_expiration_keystone: 2
+
+### Rotate key info
+fernet_rotate_log_file: /var/log/keystone/keystone-fernet-rotate.log
+fernet_rotate_crontab_file: /var/spool/cron/keystone
+
+### Openstack multi-site config
+enable_multisite: "no"
+
+#### Infomation SITE1
+REGION1: Hanoi
+IPCON1_SITE1: 192.168.10.51
+IPCON2_SITE1: 192.168.10.52
+IPCON3_SITE1: 192.168.10.53
+IP_VIPSITE1: 192.168.10.50
+
+
+mariadb_version: 10.2
+
+### Services 
+#### HA services
+enable_haproxy: "yes"
+enable_pacemaker: "yes"
+
+#### Openstack's services
+enable_openstack_core: "yes"
+enable_cinder: "yes"
+enable_barbican: "yes"
+enable_heat: "yes"
+enable_octavia: "yes"
+
+
+
+## Storage Backend
+#### LVM backend
+cinder_volume_group: cinder-volumes
+enable_lvm: "no"
+lvm_disk: vdb
+
+### CEPH backend
+enable_ceph: "yes"
+CEPH_MGR_IP: 192.168.10.40
+
+## SSL
+enable_ssl: "yes"  
+
+
+

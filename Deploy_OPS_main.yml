@@ -1,26 +1,62 @@
 ---
 - name: Garther_facts
   hosts: all
+  gather_facts: true
   tasks:
     - name: Group hosts to determine when using --limit
-      group_by:
-        key: "all_using_limit_{{ (ansible_play_batch | length) != (groups['all'] | length) }}"
+      setup:
+
+
+- name: Openstack_facts
+  hosts: all
+  gather_facts: false
+  tasks:
+    - import_role:
+        name: openstack_facts
   tags: always
 
 - name: Apply role baremental
-  gather_facts: true
+  gather_facts: false
   become: true
-  hosts: all
+  hosts: 
+     - controller
+     - compute
   roles:
     - { role: baremental,
         tags: baremental }
+
 - name: Apply role chrony
   gather_facts: false
   become: true
-  hosts: all
+  hosts: 
+    - controller
+    - compute
   roles:
     - { role: install_ntp,
         tags: install_ntp }
+
+- name: Apply role certificate
+  gather_facts: false
+  become: true
+  hosts:
+     - controller
+     - deployment
+  roles:
+    - { role: certificates,
+        tags: certificates }
+#        when: enable_ssl | bool 
+
+
+- name: Apply role docker
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_docker,
+        tags: install_docker,
+        when: enable_multisite | bool }
+
+
 
 - name: Apply role Mariadb
   gather_facts: false
@@ -29,7 +65,6 @@
   roles:
     - { role: install_mariadb,
         tags: install_mariadb }
-
 
 - name: Apply role Rabbimq
   gather_facts: false
@@ -130,14 +165,42 @@
         tags: install_neutron_ovs,
         when: enable_neutron | bool }
 
-- name: Apply  role Cinder
+- name: Apply role Cinder
   become: true
-  gather_facts: false
+  gather_facts: yes
   hosts: controller
   roles: 
     - { role: install_cinder,
         tags: install_cinder,
         when: enable_cinder | bool }
+
+
+- name: Apply role Heat
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_heat,
+        tags: install_heat,
+        when: enable_heat | bool }
+
+- name: Apply role Barbican
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_barbican,
+        tags: install_barbican,
+        when: enable_barbican | bool }
+
+- name: Apply role Octavia
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_octavia,
+        tags: install_octavia,
+        when: enable_octavia | bool }
 
 - name: Apply role Horizon
   gather_facts: false

@@ -2,7 +2,7 @@
 - name: Ensure mariadb stopped
   systemd:
     name: mariadb
-    state: stopped	
+    state: stopped
 - name: Config Mariadb Cluster
   template:
      src: cluster.cnf.j2
@@ -21,8 +21,18 @@
   when:
     - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
     - groups['controller'] | length  > 1
+    
 - name: Start mariadb 
   systemd:
     state: started
     enabled: true
     name: mariadb
+
+
+- name: Set rebuild Cluster after reboot
+  lineinfile:
+     path: /var/lib/mysql/grastate.dat
+     regexp: '^safe_to_bootstrap: 0'
+     insertafter: '^#safe_to_bootstrap: 0'
+     line: 'safe_to_bootstrap: 1'
+ 

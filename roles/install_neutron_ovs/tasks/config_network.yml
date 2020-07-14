@@ -1,21 +1,51 @@
 ---
 - name: Start OpenvSwitch
   systemd:
-    state: restarted
+    state: started
     enabled: true
     name: openvswitch
 
 
-- name: Configure OpenvSwitch
-  shell: |
-     ovs-vsctl add-br br-provider
-     ovs-vsctl add-port br-provider {{ FLAT_IF }}
+- name: Create OVS bridge
+  openvswitch_bridge:
+    bridge: br-provider
+    state: present
+    fail_mode: secure
+  register: br_provider
 
+- name: Add port for bridge
+  openvswitch_port:
+    bridge: br-provider
+    port: "{{ FLAT_IF }}"
+    state: present
+
+
+#- name: Configure OpenvSwitch
+#  shell: |
+#     ovs-vsctl add-port br-provider {{ FLAT_IF }}
+#  when:
+#     - br_provider.status == "started"
 - name: config FLAT interface
   template:
     src: ifcfgflat.j2
     dest: /etc/sysconfig/network-scripts/ifcfg-{{ FLAT_IF }}
 
+
+- name: Check Bridge provider config
+  stat: 
+    path: /etc/sysconfig/network-scripts/ifcfg-br-provider
+  register: br_provider
+
+- name: Find Flat ip 
+  set_fact:
+    FLAT_IP: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
+  when:
+    - br_provider.stat.exists
+- name: Find Flat netmask
+  set_fact:
+    FLAT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
+  when:
+    - br_provider.stat.exists
 
 - name: Config network bridge Provider
   template:

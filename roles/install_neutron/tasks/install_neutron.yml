@@ -1,10 +1,4 @@
 ---
 - name: Install the components for Neutron
   yum:
-    name: "{{ item }}"
-  with_items: 
-    - 'openstack-neutron'
-    - 'openstack-neutron-ml2'
-    - 'openstack-neutron-openvswitch'
-    - 'ebtables'
-    - 'libibverbs'
+    name: "{{ neutron_packages }}"

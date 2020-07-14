@@ -7,7 +7,16 @@ LOCAL_PATH = '/tmp'
 SECRET_KEY='8e4fe55f1672e3335aba'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 OPENSTACK_HOST = "{{ IP_VIP }}"
-OPENSTACK_KEYSTONE_URL = "http://{{ IP_VIP }}:5000/v3"
+OPENSTACK_KEYSTONE_URL = "{{ keystone_protocol }}://%s:5000/v3" % OPENSTACK_HOST
+{% if enable_ssl | bool %}
+#USE_SSL = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+OPENSTACK_SSL_NO_VERIFY = True
+#OPENSTACK_SSL_CACERT = '{{ openstack_cacert }}'
+{% endif %}
+
 OPENSTACK_NEUTRON_NETWORK = {
     'enable_auto_allocated_network': False,
     'enable_distributed_router': False,
@@ -263,6 +272,12 @@ SECURITY_GROUP_RULES = {
         'to_port': '3389',
     },
 }
+OPENSTACK_CINDER_FEATURES = {
+    'enable_backup': True,
+}
+OPENSTACK_HEAT_STACK = {
+    'enable_user_pass': True,
+}
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 OPENSTACK_KEYSTONE_MULTIDOMAIN_SUPPORT = True
 WEBROOT = '/dashboard/'
@@ -274,9 +289,13 @@ OPENSTACK_API_VERSIONS = {
 CACHES = {
     'default': {
          'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-         'LOCATION': [{%- for item in groups['controller'] %}'{{  hostvars[item].ansible_default_ipv4.address }}'{% if not loop.last %},{% endif %}{% endfor %}]
+         'LOCATION': [{%- for item in groups['controller'] %}'{{  hostvars[item].ansible_default_ipv4.address }}:11211'{% if not loop.last %},{% endif %}{% endfor %}]
         }
 }
 
 OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = "Default"
-
+OPENSTACK_KEYSTONE_DEFAULT_ROLE = "user"
+#AVAILABLE_REGIONS = [
+#    ('http://{{ IP_VIPSITE1 }}:5000/v3/', '{{ REGION1 }}'),
+#    ('http://{{ IP_VIP }}:5000/v3', '{{ REGION }}'),
+#]

@@ -15,3 +15,12 @@
   systemd:
     state: restarted
     name: mariadb
+
+- name: Ensure there are no packages mariadb
+  yum: 
+   name:
+      - mariadb-common*
+      - mariadb-config*
+      - MariaDB-common
+      - mariadb-libs
+   state: removed   

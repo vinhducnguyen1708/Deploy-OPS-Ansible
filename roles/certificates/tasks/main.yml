@@ -1,0 +1,5 @@
+---
+- include_tasks: generate.yml
+  when: enable_ssl | bool 
+- include_tasks: octavia_cert.yml 
+  when: enable_octavia | bool

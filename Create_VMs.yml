@@ -9,6 +9,7 @@
            state: present
            name: "{{ selfservice_network_name }}"
            shared: yes
+           ca_cert: "/etc/ssl/private/{{ cafile_name }}.pem"
         run_once: yes
       - name: Create provider network
         os_network:
@@ -20,6 +21,7 @@
            project: admin
            provider_network_type: "{{ provider_network_type }}"
            provider_physical_network: "{{ provider_physical_network }}"
+           ca_cert: "{{ openstack_cacert }}"
         run_once: yes
       - name: Create subnet for  provider network
         os_subnet:
@@ -32,6 +34,7 @@
            allocation_pool_start: "{{ provider_pool_start }}"
            allocation_pool_end: "{{ provider_pool_end }}"
            dns_nameservers: "{{ provider_dns_nameservers }}"
+           ca_cert: "{{ openstack_cacert }}"
         run_once: yes
       - name: Create subnet for selfservice network
         os_subnet:
@@ -44,6 +47,7 @@
            allocation_pool_start: "{{ selfservice_pool_start }}"
            allocation_pool_end: "{{ selfservice_pool_end }}"
            dns_nameservers: "{{ selfservice_dns_nameservers }}"
+           ca_cert: "{{ openstack_cacert }}"
         run_once: yes
 
       - name: Create router
@@ -58,6 +62,7 @@
                  subnet: "{{ sub_selfservice_network_name }}"
            admin_state_up: yes
            enable_snat: yes
+           ca_cert: "{{ openstack_cacert }}"
         run_once: yes
       - name: Create flavor
         os_nova_flavor:
@@ -67,6 +72,7 @@
            ram: "{{ flavor_ram }}"
            vcpus: "{{ flavor_vcpus }}"
            disk: "{{ flavor_root_disk }}"
+           ca_cert: "{{ openstack_cacert }}"
         run_once: yes
 
       - name: Add rules ICMP ingress  in security group
@@ -77,6 +83,7 @@
             direction: ingress
             state: present
             remote_ip_prefix: 0.0.0.0/0
+            ca_cert: "{{ openstack_cacert }}"
         run_once: yes
       - name: Add rules ICMP egress  in security group
         os_security_group_rule:
@@ -86,6 +93,7 @@
             direction: egress
             state: present
             remote_ip_prefix: 0.0.0.0/0
+            ca_cert: "{{ openstack_cacert }}"
         run_once: yes
       - name: Upload Cirros image on OPS
         os_image:
@@ -95,6 +103,7 @@
             disk_format: qcow2
             filename: /root/cirros-0.3.4-x86_64-disk.img
             is_public: yes
+            ca_cert: "{{ openstack_cacert }}" 
             state: present
         run_once: yes
       - name: Create Cirros VM
@@ -104,4 +113,5 @@
             image: cirros
             flavor: tiny
             network: "{{ selfservice_network_name }}"
+            ca_cert: "{{ openstack_cacert }}"
         run_once: yes

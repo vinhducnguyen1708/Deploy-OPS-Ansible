@@ -1,12 +1,9 @@
 ---
-- name: Start all Rabbitmq Services
-  systemd:
-    name: rabbitmq-server
-    state: started
-    enabled: yes
 
 - name: enable plugin rabbit_management
-  shell: rabbitmq-plugins enable rabbitmq_management
+  rabbitmq_plugin: 
+    names: rabbitmq_management
+    state: enabled
   when:
     - groups['controller'] | length  > 1
 
@@ -16,31 +13,32 @@
     state: stopped
 
 
-#- name: backup old erlang cookie
-#  shell: cp -a /var/lib/rabbitmq/.erlang.cookie /var/lib/rabbitmq/.erlang.cookie.old
-#  changed_when: false
+- name: Set erlang_cookie
+  command: cat /var/lib/rabbitmq/.erlang.cookie
+  register: erlang_cookie
+  run_once: yes
 
-- name: Config Erlang for controller2
-  shell: scp -p  /var/lib/rabbitmq/.erlang.cookie  root@{{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:/var/lib/rabbitmq/.erlang.cookie
-  when:
-    - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
-    - groups['controller'] | length  > 1
+- name: Copy file erlang_cookie to other 
+  copy: 
+    dest: /var/lib/rabbitmq/.erlang.cookie
+    content: "{{ erlang_cookie.stdout }}"
+  delegate_to: "{{ item }}"
+  with_items:   
+    - "{{ groups['controller'] }}"
+  run_once: yes
 
-- name: Config Erlang for controller3
-  shell: scp -p  /var/lib/rabbitmq/.erlang.cookie  root@{{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}:/var/lib/rabbitmq/.erlang.cookie
-  when:
-    - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
-    - groups['controller'] | length  > 1
-
-
-
-#- name: check if erlang cookie changed and if it is so stopping server
-#  template:
-#    src: erlang.cookie.j2
-#    dest: /var/lib/rabbitmq/.erlang.cookie.old
-#    owner: rabbitmq
-#    group: rabbitmq
-#    mode: 0400
+#- name: Sync file rabbitmq cookie
+#  synchronize:
+#    src: "{{ item }}"
+#    dest: "{{ item }}"
+#    mode: pull
+#  delegate_to: "{{ groups['controller'][2] }}"
+#  with_items:
+#       - "/var/lib/rabbitmq/.erlang.cookie"
+#      - "{{ groups['controller'][1] }}"
+#      - "{{ groups['controller'][2] }}"
+#  run_once: yes
+#  when: cluster_status.stdout.find("rabbit@{{ inventory_hostname }}") == -1 
 
 - name: Start all Rabbitmq Services
   systemd:
@@ -48,3 +46,4 @@
     state: started
     enabled: yes
 
+- include_tasks: join_rabbitmq_cluster.yml

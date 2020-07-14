@@ -1,0 +1,158 @@
+---
+- name: Create user Octavia
+  os_user:
+    name: octavia
+    auth: "{{ openstack_auth }}"
+    password: "{{ octavia_pass }}"
+    domain: default
+    ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Add role admin for user Octavia
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: octavia
+    role: admin
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+
+- name: Create Octavia service
+  os_keystone_service:
+    name: octavia
+    auth: "{{ openstack_auth }}"
+    service_type: load-balancer
+    ca_cert: "{{ openstack_cacert }}"
+    description: OpenStack Octavia
+  run_once: true
+
+- name: Create the Load-balancer service API endpoints
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: octavia 
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:9876"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+
+
+- name: Create a security group
+  os_security_group:
+     auth: "{{ openstack_octavia_auth }}"
+     name: lb-mgmt-sec-grp
+     state: present
+     description: Octavia security group
+     region_name: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+  register: lb_sec_group
+
+- name: Set fact security group id
+  set_fact:
+     id_lb_sec_group: "{{ lb_sec_group.id }}"
+
+
+
+- name: add rule ICMP for security group Octavia
+  os_security_group_rule:
+      auth: "{{ openstack_octavia_auth }}"
+      security_group: lb-mgmt-sec-grp
+      protocol: icmp
+      direction: ingress
+      remote_ip_prefix: 0.0.0.0/0
+      state: present
+      ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+- name: add rule SSH for security group Octavia
+  os_security_group_rule:
+       auth: "{{ openstack_octavia_auth }}"
+       security_group: lb-mgmt-sec-grp
+       protocol: tcp
+       port_range_min: 22
+       port_range_max: 22
+       direction: ingress
+       remote_ip_prefix: 0.0.0.0/0
+       state: present
+       ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+      
+- name: add rule TCP/9443 for security group Octavia
+  os_security_group_rule:
+      auth: "{{ openstack_octavia_auth }}"
+      security_group: lb-mgmt-sec-grp
+      protocol: tcp
+      port_range_min: 9443
+      port_range_max: 9443
+      direction: ingress
+      remote_ip_prefix: 0.0.0.0/0
+      state: present
+      ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+
+- name: add rule TCP/5555 for security group Octavia
+  os_security_group_rule:
+      auth: "{{ openstack_octavia_auth }}"
+      security_group: lb-mgmt-sec-grp
+      protocol: tcp
+      port_range_min: 5555
+      port_range_max: 5555
+      direction: ingress
+      remote_ip_prefix: 0.0.0.0/0
+      state: present
+      ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+
+- name: add rule TCP/80 for security group Octavia
+  os_security_group_rule:
+      auth: "{{ openstack_octavia_auth }}"
+      security_group: lb-mgmt-sec-grp
+      protocol: tcp
+      port_range_min: 80
+      port_range_max: 80
+      direction: ingress
+      remote_ip_prefix: 0.0.0.0/0
+      state: present
+      ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+
+
+- name: Create provider network
+  os_network:
+      auth: "{{ openstack_auth }}"
+      state: present
+      name: "{{ provider_network_name }}"
+      shared: yes
+      external: true
+      project: admin
+      provider_network_type: "{{ provider_network_type }}"
+      provider_physical_network: "{{ provider_physical_network }}"
+      ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+  register: provider_network_info
+
+- name: Create subnet for  provider network
+  os_subnet:
+      auth: "{{ openstack_auth }}"
+      state: present
+      network_name: "{{ provider_network_name }}"
+      name: "{{ sub_provider_network_name }}"
+      cidr: "{{ provider_network_address }}"
+      enable_dhcp: yes
+      allocation_pool_start: "{{ provider_pool_start }}"
+      allocation_pool_end: "{{ provider_pool_end }}"
+      dns_nameservers: "{{ provider_dns_nameservers }}"
+      ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+
+- name: Set fact provider_network
+  set_fact:
+     id_provider_network: "{{ provider_network_info.id }}"
+

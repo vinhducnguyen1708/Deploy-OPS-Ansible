@@ -1,0 +1,34 @@
+---
+- name: Copy file script to remote node
+  template:
+    src: keystone_rotate_key.j2
+    dest: "{{ ansible_deploy_files }}/keystone_rotate_key.sh"
+    mode: 0777
+  when: not  enable_multisite | bool
+  
+- name: Copy file script to remote node ( multi-site )
+  template:
+    src: keystone_rotate_key_othersite.sh.j2
+    dest: "{{ ansible_deploy_files }}/keystone_rotate_key_othersite.sh"
+    mode: 0777
+  when: enable_multisite | bool 
+
+- name: Copy file fernet_rotate_cron_generator.py to create crontab 
+  template:
+    src: fernet_rotate_cron_generator.py
+    dest: "{{ ansible_deploy_files }}/fernet_rotate_cron_generator.py"
+
+- name: Copy file script run in  crontab
+  template:
+    src: fernet-rotate.sh.j2
+    dest: "{{ ansible_deploy_files }}/fernet-rotate.sh"
+    mode: 0777
+- name: Run script create crontab 
+  shell: sh {{ ansible_deploy_files }}/keystone_rotate_key.sh
+  when: not enable_multisite | bool
+
+- name: Run script create crontab for other site
+  shell: sh {{ ansible_deploy_files }}/keystone_rotate_key_othersite.sh
+  when: enable_multisite | bool 
+
+

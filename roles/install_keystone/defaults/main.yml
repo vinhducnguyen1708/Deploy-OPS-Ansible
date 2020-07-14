@@ -1,0 +1,5 @@
+---
+keystone_packages:
+    - openstack-keystone
+    - httpd
+    - mod_wsgi

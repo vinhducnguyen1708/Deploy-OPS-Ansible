@@ -5,7 +5,7 @@
     - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
 
 - name: Initialization cluster
-  shell: pcs cluster setup --name ha_cluster {%- for item in groups['controller'] %} {{  hostvars[item].inventory_hostname| join('') }}{% if not loop.last %} {% endif %}{% endfor %}
+  shell: pcs cluster setup --force --name ha_cluster {%- for item in groups['controller'] %} {{  hostvars[item].inventory_hostname| join('') }}{% if not loop.last %} {% endif %}{% endfor %}
   when:
     - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
 - name: Start Cluster

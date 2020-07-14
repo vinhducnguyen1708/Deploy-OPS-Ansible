@@ -1,0 +1,24 @@
+---
+- hosts:
+    - controller
+    - compute
+  gather_facts: true
+  become: true
+  tasks:
+     - import_role:
+          name: openstack_facts
+
+
+- hosts: compute
+  gather_facts: false
+  become: true
+  tasks:
+     - import_role:
+         name: baremental
+     - import_role:
+         name: install_ntp
+     - import_role:
+         name: install_nova_cell
+     - import_role:
+         name: install_neutron_ovs
+

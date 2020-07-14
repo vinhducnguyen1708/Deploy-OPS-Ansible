@@ -1,0 +1,152 @@
+--- 
+- name: Create directory store ocatavia cert
+  file:
+    path: "{{ ansible_deploy_files }}/octavia_certs"
+    state: "directory"
+    recurse: yes
+    mode: "0770"    
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Set fact octavia certs
+  set_fact: 
+     octavia_certs_directory: "{{ ansible_deploy_files }}/octavia_certs"
+
+- name: Set fact octavia server certs
+  set_fact:
+     octavia_certs_directory_server: "{{ octavia_certs_directory }}/server_ca"
+
+
+- name: Set fact octavia client certs
+  set_fact:
+     octavia_certs_directory_client: "{{ octavia_certs_directory }}/client_ca"
+
+- name: Create client Openssl-config
+  template:
+      src: openssl_octavia_client.cnf.j2
+      dest: "{{ octavia_certs_directory }}/openssl_octavia_client.cnf"
+  when:
+    - group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+
+- name: Create server Openssl-config
+  template:
+      src: openssl_octavia_server.cnf.j2
+      dest: "{{ octavia_certs_directory }}/openssl_octavia_server.cnf"
+  when:
+    - group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create directory store ocatavia (client , server)
+  file:
+    path: "{{ octavia_certs_directory }}/{{ item }}"
+    state: "directory"
+    recurse: yes
+    mode: "0770"    
+  with_items:
+     - "client_ca"
+     - "server_ca"
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+
+- name: Create directory for client openssl
+  file:
+    path: "{{ octavia_certs_directory_client }}/{{ item }}"
+    state: "directory"
+    recurse: yes
+    mode: "0700"    
+  with_items:
+      - "certs"
+      - "csr"
+      - "crl"
+      - "newcerts"
+      - "private"
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create directory for server openssl
+  file:
+    path: "{{ octavia_certs_directory_server }}/{{ item }}"
+    state: "directory"
+    recurse: yes
+    mode: "0700"    
+  with_items:
+      - "certs"
+      - "crl"
+      - "csr"
+      - "newcerts"
+      - "private"
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Creat index file
+  file:
+     path: "{{ octavia_certs_directory }}/{{ item }}/index.txt"   
+     state: touch  
+     mode: "0777"
+  with_items: 
+     - "client_ca"
+     - "server_ca"       
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Creat serial file
+  shell: echo 1000 > {{ octavia_certs_directory }}/{{ item }}/serial
+  with_items:
+     - "client_ca"
+     - "server_ca" 
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+
+- name: Create server_ca key
+  shell: |
+     openssl genrsa -passout pass:{{ octavia_pass }} -aes256 -out {{ octavia_certs_directory_server }}/private/ca.key.pem 4096
+     chmod 400 {{ octavia_certs_directory_server }}/private/ca.key.pem
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create server_ca CA cert
+  command: openssl req -passin pass:{{ octavia_pass }} -config {{ octavia_certs_directory }}/openssl_octavia_server.cnf -key {{ octavia_certs_directory_server }}/private/ca.key.pem -new -x509 -days 7300 -sha256 -extensions v3_ca -out {{ octavia_certs_directory_server }}/certs/ca.cert.pem
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+
+- name: Create client_ca key
+  shell: |
+     openssl genrsa -passout pass:{{ octavia_pass }} -aes256 -out {{ octavia_certs_directory_client }}/private/ca.key.pem 4096
+     chmod 400 {{ octavia_certs_directory_client }}/private/ca.key.pem
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create client_ca CA cert
+  command: openssl req -passin pass:{{ octavia_pass }} -config {{ octavia_certs_directory }}/openssl_octavia_client.cnf -key {{ octavia_certs_directory_client }}/private/ca.key.pem -new -x509 -days 7300 -sha256 -extensions v3_ca -out {{ octavia_certs_directory_client }}/certs/ca.cert.pem
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create a key for the client certificate to use
+  command: openssl genrsa -passout pass:{{ octavia_pass }} -aes256 -out {{ octavia_certs_directory_client }}/private/client.key.pem 2048
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create the certificate request for the client certificate used on the controllers
+  command: openssl req -passin pass:{{ octavia_pass }} -config {{ octavia_certs_directory }}/openssl_octavia_client.cnf -new -sha256 -key {{ octavia_certs_directory_client }}/private/client.key.pem -out {{ octavia_certs_directory_client }}/csr/client.csr.pem
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Sign the client certificate request.
+  command: openssl ca -passin pass:{{ octavia_pass }} -config {{ octavia_certs_directory }}/openssl_octavia_client.cnf -extensions usr_cert -days 7300 -notext -md sha256 -in {{ octavia_certs_directory_client }}/csr/client.csr.pem -out {{ octavia_certs_directory_client }}/certs/client.cert.pem -batch
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create a concatenated client certificate and key file
+  command: openssl rsa -passin pass:{{ octavia_pass }}  -in {{ octavia_certs_directory_client }}/private/client.key.pem -out {{ octavia_certs_directory_client }}/private/client.cert-and-key.pem
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+- name: Create client.cert-and-key.pem
+  shell: cat {{ octavia_certs_directory_client }}/certs/client.cert.pem >> {{ octavia_certs_directory_client }}/private/client.cert-and-key.pem
+  when:
+    -  group_names  == hostvars[groups['deployment'][0]]['group_names']
+
+
