@@ -1,0 +1,12 @@
+[DEFAULT]
+interface_driver = openvswitch
+external_network_bridge =
+agent_mode = {% if enable_neutron_dvr | bool %}dvr_snat{% else %}legacy{% endif %} 
+
+{% if enable_neutron_dvr | bool %}
+ha_vrrp_auth_password = password
+{% endif %} 
+
+
+[agent]
+extensions = fip_qos

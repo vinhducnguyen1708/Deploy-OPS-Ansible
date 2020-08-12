@@ -1,0 +1,11 @@
+---
+- name: install memcached
+  yum:
+    name: memcached
+
+- name: config memcached
+  template:
+    src: memcached.j2
+    dest: /etc/sysconfig/memcached
+  notify:
+     - restart_memcached

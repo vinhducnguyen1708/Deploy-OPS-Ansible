@@ -1,0 +1,21 @@
+---
+- name: Checking free port for Nova Placement API HAProxy
+  wait_for:
+    host: "{{ IP_VIP }}"
+    port: "{{ placement_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_placement | bool
+    - enable_haproxy | bool
+
+- name: Checking free port for Placement API
+  wait_for:
+    host: "{{ MGNT_IP }}"
+    port: "{{ placement_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_placement | bool

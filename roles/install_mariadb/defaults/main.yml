@@ -1,0 +1,18 @@
+---
+mariadb_packages: 
+#   - MariaDB-server
+#   - MariaDB-client
+   - mariadb 
+   - mariadb-server
+   - galera
+   - rsync
+   - xinetd
+   - git
+   - MySQL-python
+  
+mariadb_repo: 
+  - name: MariaDB Server
+  - baseurl:  https://downloads.mariadb.com/MariaDB/mariadb-{{ mariadb_version }}/yum/rhel/$releasever/$basearch 
+  - gpgkey: https://downloads.mariadb.com/MariaDB/MariaDB-Server-GPG-KEY
+  - gpgcheck: 1
+  - enabled: 1

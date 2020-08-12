@@ -1,0 +1,75 @@
+[DEFAULT]
+bind_host = {{ MGNT_IP }}
+bind_port = {{ neutron_server_port }}
+core_plugin = ml2
+service_plugins = neutron.services.l3_router.l3_router_plugin.L3RouterPlugin,neutron.services.metering.metering_plugin.MeteringPlugin,neutron.services.qos.qos_plugin.QoSPlugin,router,qos
+advertise_mtu = true
+allow_overlapping_ips = true
+notify_nova_on_port_status_changes = true
+notify_nova_on_port_data_changes = true
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_strategy = keystone
+metadata_proxy_socket = /var/lib/neutron/metadata_proxy
+{% if enable_neutron_dvr | bool %}
+router_distributed = True
+{% endif %}
+{% if enable_haproxy | bool %}
+dhcp_agents_per_network = 3
+l3_ha = True
+max_l3_agents_per_router = 3
+min_l3_agents_per_router = 2
+max_fixed_ips_per_port = 20
+{% endif %}
+[cors]
+[database]
+connection = mysql+pymysql://neutron:{{ neutrondb_pass }}@{{ IP_VIP }}/neutron
+[keystone_authtoken]
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
+memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = neutron
+password = {{ neutron_pass }}
+cafile = {{ openstack_cacert }}
+
+[oslo_concurrency]
+lock_path = /var/lib/neutron/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+rabbit_ha_queues = true
+[oslo_middleware]
+[oslo_policy]
+[privsep]
+[ssl]
+
+[nova]
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+region_name = {{ REGION }}
+project_name = service
+username = nova
+password = {{ nova_pass }}
+cafile = {{ openstack_cacert }}
+
+[qos]
+notification_drivers = message_queue
+
+
+
+[agent]
+root_helper = sudo neutron-rootwrap /etc/neutron/rootwrap.conf
+
+[quotas]
+quota_port = 9999

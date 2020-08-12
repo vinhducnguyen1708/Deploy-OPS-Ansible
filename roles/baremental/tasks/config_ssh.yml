@@ -1,0 +1,26 @@
+---
+- name: config /root/.ssh/id_rsa
+  copy:
+    src: /root/.ssh/id_rsa
+    dest: /root/.ssh/id_rsa
+    mode: 0400
+
+- name: Config /root/.ssh/id_rsa.pub
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: /root/.ssh/id_rsa.pub
+    mode: 0400
+
+- name: Config /root/.ssh/authorized_keys
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: /root/.ssh/authorized_keys
+    mode: 0400
+
+- name: config ssh
+  template:
+    src: config.j2
+    dest: /root/.ssh/config
+    mode: 0600
+
+

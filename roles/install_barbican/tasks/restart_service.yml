@@ -1,0 +1,12 @@
+---
+- name: Restart the Barbican-API service
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-barbican-api
+
+- name: Restart the Apache HTTP service
+  systemd:
+    state: restarted
+    enabled: true
+    name: httpd.service

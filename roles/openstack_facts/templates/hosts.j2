@@ -1,0 +1,6 @@
+#ByAnsible
+127.0.0.1   localhost 
+::1         localhost
+{% for item in groups['all'] %}
+{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }} {{ item }} {{ hostvars[item].inventory_hostname_short }}
+{% endfor %}

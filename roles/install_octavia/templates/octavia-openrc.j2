@@ -1,0 +1,13 @@
+export OS_PROJECT_DOMAIN_NAME=Default
+export OS_USER_DOMAIN_NAME=Default
+export OS_PROJECT_NAME=service
+export OS_USERNAME=octavia
+export OS_PASSWORD={{ octavia_pass }}
+export OS_AUTH_URL={{ keystone_url }}
+export OS_IDENTITY_API_VERSION=3
+export OS_IMAGE_API_VERSION=2
+export OS_VOLUME_API_VERSION=3
+export OS_REGION_NAME={{ REGION }}
+{% if enable_ssl | bool %}
+export OS_CACERT=/etc/ssl/private/{{ cafile_name }}.pem
+{% endif %}

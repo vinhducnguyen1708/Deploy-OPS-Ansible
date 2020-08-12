@@ -1,0 +1,8 @@
+[DEFAULT]
+interface_driver = openvswitch
+external_network_bridge =
+agent_mode = {% if enable_neutron_dvr | bool %}dvr{% else %}legacy{% endif %} 
+
+
+[agent]
+extensions = fip_qos

@@ -1,0 +1,16 @@
+
+<VirtualHost {{ MGNT_IP }}:{{ barbican_api_port }}>
+    ServerName {{ MGNT_IP }}:{{ barbican_api_port }}
+
+    ## Logging
+    ErrorLog "/var/log/httpd/barbican_wsgi_main_error_ssl.log"
+    LogLevel debug
+    ServerSignature Off
+    CustomLog "/var/log/httpd/barbican_wsgi_main_access_ssl.log" combined
+
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIDaemonProcess barbican-api display-name=barbican-api group=barbican processes=2 threads=8 user=barbican
+    WSGIProcessGroup barbican-api
+    WSGIScriptAlias / "/usr/lib/python2.7/site-packages/barbican/api/app.wsgi"
+    WSGIPassAuthorization On
+</VirtualHost>

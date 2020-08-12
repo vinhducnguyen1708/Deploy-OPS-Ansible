@@ -1,0 +1,16 @@
+import multiprocessing
+
+bind = '{{ MGNT_IP }}:{{ barbican_api_port }}'
+user = 'barbican'
+group = 'barbican'
+
+timeout = 30
+backlog = 2048
+keepalive = 2
+
+workers = multiprocessing.cpu_count() * 2
+
+loglevel = 'info'
+errorlog = '-'
+accesslog = '-'
+

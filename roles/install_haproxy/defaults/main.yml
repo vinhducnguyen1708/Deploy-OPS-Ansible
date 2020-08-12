@@ -1,0 +1,12 @@
+---
+IP_VIP: 192.168.10.150
+
+haproxy_depend:
+   - gcc 
+   - pcre-devel
+   - tar 
+   - make 
+   - pcre-static
+   - openssl-devel
+   - unzip
+   

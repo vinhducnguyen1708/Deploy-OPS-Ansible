@@ -1,0 +1,72 @@
+---
+- name: Create user Baribican
+  os_user:
+    name: barbican
+    auth: "{{ openstack_auth }}"
+    password: "{{ barbican_pass }}"
+    domain: default
+    ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Add role admin for user barbican
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: barbican
+    role: admin
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+- name: Create role "Creator"
+  os_keystone_role:
+     state: present
+     auth: "{{ openstack_auth }}"
+     name: creator
+     ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Add role creator for user barbican
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: barbican
+    role: creator
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+- name: Add role creator for user admin
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: admin
+    role: creator
+    project: admin
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+- name: Create the barbican service entities
+  os_keystone_service:
+    name: barbican
+    auth: "{{ openstack_auth }}"
+    service_type: key-manager
+    ca_cert: "{{ openstack_cacert }}"
+    description: Key Manager
+  run_once: true
+
+- name: Create the Key Manager service API endpoints
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: barbican
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:{{ barbican_api_port }}"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+

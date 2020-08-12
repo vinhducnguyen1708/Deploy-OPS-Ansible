@@ -1,0 +1,83 @@
+---
+
+## Nếu giá trị "enable_proxy_cache" là "yes" THực hiện download các packages thông qua proxy cache
+enable_proxy_cache: yes
+### Khai bảo địa chỉ của proxy cache
+packages_proxy_cache: http://172.16.68.18:3142
+
+## Cấu hình network cho cụm OPS
+### Địa chỉ IP VIP cho cụm OPS
+IP_VIP: 192.168.10.50
+IP_VIP_NETMASK: 24
+
+### Network interface trong cụm OPS
+MGNT_IF: eth0
+DATA_IF: eth1
+EXTERNAL_IF: eth2
+## Thư mục này sẽ được tạo ra để chứa các file được tạo ra trong quá trình chạy ansible
+ansible_deploy_files: /root/AnsibleOPSfiles
+
+## Thông tin của site Saigon
+### Tên REGION
+REGION: Saigon
+### thời gian thực hiện rotate key ( tiếng ) nếu thực hiện ở site Saigon thì tham số này phải giống site Hanoi
+token_expiration_keystone: 1
+
+
+### "enable_multisite" có giá trị là "yes" tức là triển khai cho site Saigon
+enable_multisite: "yes"
+
+#### Thông tin của site Hanoi
+##### Region của site Hanoi
+REGION1: Hanoi
+##### IP Của các node controller trên site Hanoi
+IPCON1_SITE1: 192.168.10.51
+IPCON2_SITE1: 192.168.10.52
+IPCON3_SITE1: 192.168.10.53
+##### IP VIP của Cụm OPS site Hanoi
+IP_VIPSITE1: 192.168.10.50
+
+
+
+## Phiên bản Mariadb sử dụng 
+mariadb_version: 10.3.20
+
+## Cấu hình chạy các services( khi được gán giá trị "yes" thì sẽ được cài đặt)
+### HA services
+enable_haproxy: "yes"
+enable_pacemaker: "yes"
+
+### Openstack's services
+enable_openstack_core: "yes"
+enable_cinder: "yes"
+enable_barbican: "yes"
+enable_heat: "yes"
+enable_octavia: "yes"
+
+
+
+## Cấu hình sử dụng Storage Backend
+### LVM backend
+#### Khi "enable_lvm" có giá trị "yes" thì sẽ sử dụng LVM làm backed cho cinder
+enable_lvm: "no"
+#### Tên của group cinder
+cinder_volume_group: cinder-volumes
+### thiết bị sử dụng cấp volume
+lvm_disk: vdb
+
+### CEPH backend
+#### Khi "enable_ceph" có giá trị "yes" thì sẽ sử dụng CEPH làm backend cho cinder
+enable_ceph: "yes"
+#### Địa chỉ IP Management của cụm CEPH sẽ sử dụng
+CEPH_MGR_IP: 192.168.10.40
+
+## Cấu hình sử dụng SSL
+### Khi "enable_ssl" có giá trị là "yes" Thì hệ thống OPS sẽ giao tiếp bằng giao thức HTTPS
+enable_ssl: "yes"  
+
+## ID của external Network dùng để cấp 1 dải network cho service Octavia sử dụng
+id_provider_network: 4065fee8-e6df-4ebd-a54c-7863280487cf
+
+## Service's port
+### Port SSH sử dụng
+ssh_port: 22

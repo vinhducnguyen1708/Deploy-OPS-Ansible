@@ -1,0 +1,143 @@
+---
+- hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+     - import_role:
+         name: openstack_facts
+- hosts:
+    - controller
+    - compute
+  gather_facts: true
+  become: true
+  vars:
+    ceph_openstack_packages:
+         - python-rbd
+         - ceph-common
+  tasks:
+     - name: Install Ceph common
+       yum:
+        name: "{{ ceph_openstack_packages }}"
+  
+- hosts: 
+    - controller
+    - compute
+  gather_facts: false
+  become: true
+  tasks:
+     - name: Read file Keyring on Ceph
+       shell: cat /etc/ceph/ceph.client.{{ item }}.keyring
+       with_items:
+             - "glance"
+             - "cinder"
+             - "cinder-backup"
+       register: _ceph_keyring
+       delegate_to: "{{ CEPH_MGR_IP }}" 
+       run_once: yes
+     - name: Set fact ceph_keyring
+       set_fact:
+          ceph_keyring: "{{ _ceph_keyring.results }}"
+     - name: Copy keyring to openstack node
+       copy:
+         dest: "/etc/ceph/ceph.client.{{ item[0].item }}.keyring"
+         content: "{{ item[0].stdout + '\n' }}"
+       with_nested:
+         - "{{ _ceph_keyring.results }}"
+         - "{{ groups['controller'] }}"
+
+     - name:  Read file ceph config
+       shell: cat /etc/ceph/ceph.conf
+       register: _ceph_conf
+       run_once: yes
+       delegate_to: "{{ CEPH_MGR_IP }}"
+
+     - name: Set fact variable ceph_config
+       set_fact: 
+          ceph_conf: "{{ _ceph_conf.stdout }}"
+
+     - name: Copy ceph.conf to openstack node
+       copy: 
+         dest: "/etc/ceph/ceph.conf"
+         content: "{{ ceph_conf }}"
+     
+
+
+- hosts: controller
+  gather_facts: false
+  become: true
+  tasks:
+    - import_role:
+          name: install_glance
+    - name: Restart Glance-api
+      systemd:
+          state: restarted
+          enabled: true
+          name: openstack-glance-api
+    - import_role:
+          name: install_cinder
+    - name: Restart Nova-api Services
+      systemd:
+         state: restarted
+         enabled: true
+         name: openstack-nova-api.service
+    - name: restart Service Cinder-API
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-cinder-api.service
+
+    - name: restart Service Cinder scheduler
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-cinder-scheduler.service
+
+    - name: restart Service Cinder Volume
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-cinder-volume
+
+    - name: restart service Cinder Backup
+      systemd: 
+        state: restarted
+        enabled: true
+        name: openstack-cinder-backup
+    
+    - name: Restart Apache
+      systemd:
+        state: restarted
+        enabled: true
+        name: httpd
+          
+
+- hosts: compute
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Generate cinder key on Ceph
+      shell: ceph auth get-key client.cinder
+      register: _ceph_key
+      run_once: yes
+      delegate_to: "{{ CEPH_MGR_IP }}"
+   
+    - name: Create Ceph key file
+      copy:
+        dest: /root/client.cinder.key
+        content: "{{ _ceph_key.stdout }}"
+    
+    - import_role:
+          name: install_nova_cell
+    - name: Restart libvirtd
+      systemd:
+        state: restarted
+        enabled: true
+        name: libvirtd
+
+    - name: Restart service openstack-nova-compute
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-nova-compute
+
+
