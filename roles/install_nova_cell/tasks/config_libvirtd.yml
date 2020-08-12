@@ -1,0 +1,42 @@
+---
+- name: Check /etc/libvirt/libvirtd.conf.bak existed
+  stat:
+    path: /etc/libvirt/libvirtd.conf
+  register: libvirtd_conf
+
+- name: Check /etc/sysconfig/libvirtd.bak existed
+  stat:
+    path: /etc/sysconfig/libvirtd.bak
+  register: libvirtd_sysconfig
+
+- name: Backup file /etc/libvirt/libvirtd.conf
+  copy:
+    src: /etc/libvirt/libvirtd.conf
+    dest: /etc/libvirt/libvirtd.conf.bak
+    remote_src: yes
+  when:
+    - not libvirtd_conf.stat.exists
+
+- name: Backup file /etc/sysconfig/libvirtd
+  copy:
+    src: /etc/sysconfig/libvirtd
+    dest: /etc/sysconfig/libvirtd.bak
+    remote_src: yes
+  when:
+    - not libvirtd_sysconfig.stat.exists
+    
+- name: Config Libvirt
+  template:
+      src: libvirtd.conf.j2
+      dest: /etc/libvirt/libvirtd.conf
+
+
+- name: Config /etc/sysconfig/libvirtd
+  template:
+    src: libvirtd_sysconfig.j2
+    dest: /etc/sysconfig/libvirtd
+  notify:
+    - Restart libvirtd
+
+
+  

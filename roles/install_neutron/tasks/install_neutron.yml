@@ -1,0 +1,5 @@
+---
+- name: Install the components for Neutron
+  yum:
+    name: "{{ neutron_packages }}"
+

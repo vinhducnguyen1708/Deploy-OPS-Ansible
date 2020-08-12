@@ -1,0 +1,44 @@
+---
+- name: Create user Nova
+  os_user:
+    name: nova
+    auth: "{{ openstack_auth }}"
+    password: "{{ nova_pass }}"
+    domain: default
+    ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Create role for user Nova
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: nova
+    role: admin
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+- name: Create Compute service
+  os_keystone_service:
+    name: nova
+    auth: "{{ openstack_auth }}"
+    service_type: compute
+    ca_cert: "{{ openstack_cacert }}"
+    description: Openstack Compute
+  run_once: true
+
+- name: Create endpoint for Nova
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: nova
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:{{ nova_api_port }}/v2.1"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+

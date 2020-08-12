@@ -1,0 +1,15 @@
+cafile_name: haproxy
+#     - keystone
+#     - glance
+#     - placement
+#     - nova
+#     - neutron
+#     - cinder
+#     - horizon
+
+country_name: VN
+state_name: HaNoi
+locality_name: HN
+organization_name: VNPT-IT
+unit_name: SI
+email_name: nguyentrongtan@vnpt.vn

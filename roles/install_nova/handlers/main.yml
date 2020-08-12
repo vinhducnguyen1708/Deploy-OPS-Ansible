@@ -1,0 +1,26 @@
+---
+- name: Restart Nova-api Services
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-api.service
+
+- name: Restart Nova-scheduler Services
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-scheduler.service 
+
+
+- name: Restart Nova-condutor Services
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-conductor.service
+
+
+- name: Restart Nova-novncproxy Services
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-novncproxy.service

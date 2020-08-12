@@ -1,0 +1,64 @@
+---
+# - name: Copy file script to remote node
+#   template:
+#     src: keystone_rotate_key.j2
+#     dest: "{{ ansible_deploy_files }}/keystone_rotate_key.sh"
+#     mode: 0777
+#   when: not  enable_multisite | bool
+  
+# - name: Copy file script to remote node ( multi-site )
+#   template:
+#     src: keystone_rotate_key_othersite.sh.j2
+#     dest: "{{ ansible_deploy_files }}/keystone_rotate_key_othersite.sh"
+#     mode: 0777
+#   when: enable_multisite | bool 
+
+- name: Copy file fernet_rotate_cron_generator.py to create crontab 
+  template:
+    src: fernet_rotate_cron_generator.py
+    dest: "{{ ansible_deploy_files }}/fernet_rotate_cron_generator.py"
+
+- name: Copy file script run in  crontab
+  template:
+    src: fernet-rotate.sh.j2
+    dest: "{{ ansible_deploy_files }}/fernet-rotate.sh"
+    mode: 0777
+
+- name: Run script
+  command: python /root/AnsibleOPSfiles/fernet_rotate_cron_generator.py -t {{ token_expired_min }} -i {{ groups['controller'].index(inventory_hostname) }} -n {{ groups['controller'] | length }}
+  register: cron_jobs_json
+  changed_when: false
+    
+- name: Set fact with the generated cron jobs for building the crontab later
+  set_fact:
+    cron_jobs: "{{ (cron_jobs_json.stdout | from_json).cron_jobs }}"
+    
+- name: Config Crontab
+  template:
+    src: keystone.j2
+    dest: "{{ fernet_rotate_crontab_file }}"
+    group: root
+    owner: root
+    mode: 0644
+  notify:
+     - Restart crond
+
+- name: Create keystone-rotate-key-log
+  file:
+    path: "{{ fernet_rotate_log_file }}"
+    group: keystone
+    owner: keystone
+    state: touch
+
+- name: Config cronjob
+  template:
+    src: fernet-rotate.sh.j2
+    dest: /usr/bin/fernet-rotate.sh
+    mode: 0777
+
+- name: Run script create crontab for other site
+  shell: sh {{ ansible_deploy_files }}/keystone_rotate_key_othersite.sh
+  when: enable_multisite | bool 
+
+
+

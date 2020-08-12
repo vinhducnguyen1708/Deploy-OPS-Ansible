@@ -1,0 +1,40 @@
+- name: Checking free port for Octavia API HAProxy
+  wait_for:
+    host: "{{ IP_VIP }}"
+    port: "{{ octavia_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_octavia | bool
+
+
+- name: Checking free port for Octavia API
+  wait_for:
+    host: "{{ MGNT_IP }}"
+    port: "{{ octavia_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+
+- name: Checking free port for Octavia Health Manager
+  wait_for:
+    host: "{{ MGNT_IP }}"
+    port: "5555"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+
+# - name: Checking certificate files exist for octavia
+#   stat:
+#     path: "/etc/octavia/{{ item }}"
+#   delegate_to: localhost
+#   run_once: True
+#   register: result
+#   failed_when: not result.stat.exists
+#   when: inventory_hostname in groups['octavia-worker']
+#   with_items:
+#     - client.cert-and-key.pem
+#     - client_ca.cert.pem
+#     - server_ca.cert.pem
+#     - server_ca.key.pem

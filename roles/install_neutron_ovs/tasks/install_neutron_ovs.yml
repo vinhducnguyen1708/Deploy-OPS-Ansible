@@ -1,0 +1,10 @@
+---
+- name:  Install Neutron services
+  yum:
+   name: "{{ neutron_ovs_packages }}"
+
+
+- name: Install DVR for compute node
+  yum:
+    name: openstack-neutron
+  when: enable_neutron_dvr | bool

@@ -1,0 +1,26 @@
+---
+- name: Check /etc/placement/placement.conf.bak existed
+  stat:
+    path: /etc/placement/placement.conf.bak
+  register: placement_conf_bak
+
+- name: Backup file config placement.conf
+  copy:
+    src: /etc/placement/placement.conf
+    dest: /etc/placement/placement.conf.bak
+    remote_src: yes
+  when:
+    - not placement_conf_bak.stat.exists
+
+- name: Config file placement.conf
+  template:
+    src: placement.conf.j2
+    dest: /etc/placement/placement.conf
+  notify: 
+     - start httpd service
+
+- name: Populate the placement-api database
+  shell: su -s /bin/sh -c "placement-manage db sync" placement
+  run_once: true
+  when: my_action == "deploy"
+
