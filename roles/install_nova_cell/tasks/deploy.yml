@@ -1,4 +1,0 @@
----
-- include_tasks: install_nova_cell.yml
-- include_tasks: config_libvirtd.yml
-- include_tasks: config_nova_cell.yml

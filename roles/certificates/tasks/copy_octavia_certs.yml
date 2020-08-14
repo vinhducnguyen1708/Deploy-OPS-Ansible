@@ -1,5 +1,0 @@
----
-- name: Copy Octavia's Certs to Controller node
-  copy:
-    src: "{{ ansible_deploy_files }}/octavia_certs"
-    dest: "{{ ansible_deploy_files }}/"

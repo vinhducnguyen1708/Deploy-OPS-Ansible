@@ -1,4 +1,0 @@
----
-- include_tasks: install_haproxy.yml
-- include_tasks: config_log_haproxy.yml
-- include_tasks: config_haproxy.yml

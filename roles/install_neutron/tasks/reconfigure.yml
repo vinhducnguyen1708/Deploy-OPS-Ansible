@@ -1,4 +1,0 @@
----
-
-- include_tasks: config_neutron.yml
-- include_tasks: config_network.yml

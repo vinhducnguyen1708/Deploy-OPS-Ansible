@@ -1,3 +1,0 @@
----
-- include_tasks: config_httpd.yml
-- include_tasks: config_placement.yml

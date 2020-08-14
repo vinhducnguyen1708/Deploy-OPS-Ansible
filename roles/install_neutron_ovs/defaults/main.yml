@@ -1,5 +1,0 @@
----
-neutron_ovs_packages:
-    - openstack-neutron-openvswitch
-    - ebtables
-    - ipset
