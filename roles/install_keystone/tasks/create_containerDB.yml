@@ -1,0 +1,37 @@
+---
+# Tao thu muc cau hinh mariadb cho container mariadb
+# Tao file cau hinh cho container mariadb
+# 
+# Run container mariadb
+- name: Create container config directory
+  file:
+    path: /etc/container/hcm-mariadb-{{ inventory_hostname_short }}
+    state: directory
+
+- name: Create file config for container Mariadb
+  template:
+    src: hcm-mariadb-controller.j2
+    dest: /etc/container/hcm-mariadb-{{ inventory_hostname_short }}/server.cnf
+- name: Config iptables
+  shell: iptables -P FORWARD ACCEPT
+
+- name: Create Container Mariadb for Keystone
+  docker_container:
+    name: hcm-mariadb-{{ inventory_hostname_short }}
+    env:
+       DEBUG: "YES"
+       MYSQL_ROOT_PASSWORD: "{{ mariadb_pass }}"
+    ports:
+      - "3305:3306"
+    volumes:
+      - /etc/container/hcm-mariadb-{{ inventory_hostname_short }}/server.cnf:/etc/mysql/conf.d/server.cnf
+    pull: yes
+    image: mariadb:{{ mariadb_version }} 
+
+#- name: Create container mariadb
+#  shell: docker run -d --name hcm-mariadb-{{ inventory_hostname_short }} -e DEBUG=YES -e MYSQL_ROOT_PASSWORD={{ mariadb_pass }} -p 3305:3306 -v /etc/container/hcm-mariadb-{{ inventory_hostname_short }}/server.cnf:/etc/my.cnf.d/server.cnf:ro mariadb:10.2 mysqld --replicate-do-db=keystone --replicate-ignore-db=mysql > /dev/null
+
+- name: sleep for 10s and continue with play
+  wait_for:
+    timeout: 10
+ 

@@ -1,0 +1,27 @@
+---
+- name: Create database for Neutron
+  mysql_db:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3306
+    login_host: "{{ IP_VIP }}"
+    name: neutron
+    state: present
+  run_once: true
+
+- name: Create user for Neutron
+  mysql_user:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3306
+    login_host: "{{ IP_VIP }}"
+    name: neutron
+    host: "{{ item }}"
+    password: "{{ neutrondb_pass }}"
+    priv: 'neutron.*:ALL'
+    state: present
+  with_items:
+    - 'localhost'
+    - '%'
+  run_once: true
+

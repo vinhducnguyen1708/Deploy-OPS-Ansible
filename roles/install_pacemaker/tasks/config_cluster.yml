@@ -1,0 +1,71 @@
+---
+- name: Authorized cluster Only play on Master node
+  shell: pcs cluster auth {%- for item in groups['controller'] %} {{  hostvars[item].inventory_hostname }}{% if not loop.last %} {% endif %}{% endfor %} -u"hacluster" -p"{{ corosync_pass }}"
+  when: 
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+- name: Initialization cluster
+  shell: pcs cluster setup --force --name ha_cluster {%- for item in groups['controller'] %} {{  hostvars[item].inventory_hostname| join('') }}{% if not loop.last %} {% endif %}{% endfor %}
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: Start Cluster
+  shell: pcs cluster start --all
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+- name: Enable Cluster (start with OS)
+  shell: pcs cluster enable --all 
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+- name: Enable stonith
+  shell: pcs property set stonith-enabled=false
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: Ignore Quorum
+  shell: pcs property set no-quorum-policy=ignore
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: Resource config
+  shell: pcs property set default-resource-stickiness="INFINITY"
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: Create Resource IP VIP Cluster
+  shell: pcs resource create vip_public ocf:heartbeat:IPaddr2 ip={{ IP_VIP }} cidr_netmask={{ IP_VIP_NETMASK }}  meta migration-threshold=3 failure-timeout=60 resource-stickiness=1  op monitor interval=5 timeout=20 op start interval=0 timeout=30  op stop interval=0 timeout=30
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: Create resource manage Haproxy
+  shell: pcs resource create p_haproxy systemd:haproxy meta migration-threshold=3 failure-timeout=120 target-role=Started op monitor interval=30 timeout=60 op start interval=0 timeout=60 op stop interval=0 timeout=60  
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: Force resource virtual_Ip start with resource p_haproxy
+  shell: pcs constraint colocation add vip_public with p_haproxy score=INFINITY
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+- name: start vip_public then start p_haproxy
+  shell: pcs constraint order start vip_public then start p_haproxy
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: enable resource vip_public
+  shell: pcs resource enable vip_public
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: enable resource p_haproxy
+  shell: pcs resource enable p_haproxy
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: cleanup resource
+  shell: pcs resource cleanup
+  when:
+    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+
+- name: sleep for 15s and continue with play
+  wait_for:
+    timeout: 15
+  delegate_to: localhost
+  notify:
+     - enable_services haproxy
+
+
+

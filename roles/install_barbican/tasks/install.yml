@@ -1,0 +1,4 @@
+---
+- name: Install Barbican's packages
+  yum:
+    name: openstack-barbican-api

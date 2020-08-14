@@ -1,0 +1,47 @@
+---
+# Cai dat pcsd va ca goi phu tro
+# set password cho user hacluster
+# khoi dong pcsd
+# Su dung script ngon ngu python de check cac hosts dang online trong cum cluster
+## cac gia tri cua bien pcs_status se tra ve la:1,2,3
+# Thuc hien chay task config_cluster.yml khi gia tri pcs_status khac voi tong so hosts trong group controller 
+- name: install pacemaker
+  yum: 
+   name: '{{ pacemaker_packages }}'
+
+- name: set hacluster password
+  shell: echo {{ corosync_pass }} | passwd --stdin hacluster
+  notify:
+    - enable_services corosync
+    - enable_services pacemaker
+    - enable_services haproxy
+    - start_pacemaker
+
+
+- name: start pcsd
+  systemd:
+    state: started
+    enabled: yes
+    name: pcsd
+
+
+- name: Checking if all hosts are in cluster
+  changed_when: false
+  failed_when: false
+  check_mode: no
+  script: pacemakernodes.py
+  register: pcs_status
+
+
+
+- include_tasks: config_cluster.yml
+  when: pcs_status.stdout | int != groups['controller'] | length | int
+#- name: Checking if IP_VIP is not pingable from any node 
+#  command: "ping -c3 {{ IP_VIP }}"
+#  register: ping_output
+#  changed_when: false
+#  failed_when: ping_output.rc != 1
+#  when:
+#    - enable_haproxy | bool
+
+

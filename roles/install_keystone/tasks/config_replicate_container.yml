@@ -1,0 +1,150 @@
+---
+# Delegate den IP cua node controller1 tren site1, Tao user replicate
+# Tao database keystone trong container mariadb
+# Tao user keystone trong container mariadb
+# 
+
+- name: Create user replicate
+  mysql_user:
+    login_port: 3306
+    login_host: "{{ IPCON1_SITE1 }}"
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    name: "{{ replicate_user }}"
+    host: "%"
+    priv: "*.*:REPLICATION SLAVE"
+    password: "{{ replicate_pass }}"
+    state: present
+  delegate_to: "{{ IPCON1_SITE1 }}" 
+  run_once: yes
+
+- name: Create database for Keystone
+  mysql_db:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3305
+    login_host: 127.0.0.1
+    name: keystone
+    state: present
+    
+
+- name: Create user for Keystone
+  mysql_user:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3305
+    login_host: 127.0.0.1
+    name: keystone
+    host: "{{ item }}"
+    password: "{{ keystonedb_pass }}"
+    priv: 'keystone.*:ALL'
+    state: present
+  with_items:
+    - 'localhost'
+    - '%'
+
+#- name: Lock Read Tables
+#  shell: mysql -uroot -p{{ mariadb_pass }} -e "FLUSH TABLES WITH READ LOCK"
+#  delegate_to: "{{ IP_SITE1 }}"
+#  run_once: yes
+
+- name: "Configuration | Replication | Check master replication status"
+  mysql_replication:
+    login_port: 3306
+    login_host: "{{ IPCON1_SITE1 }}"
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    mode: getmaster
+  register: master
+  delegate_to: "{{ IPCON1_SITE1 }}"
+  run_once: yes
+
+- name: Dump Keystone database from Site HN
+  mysql_db:
+    login_port: 3306
+    login_host: "{{ IPCON1_SITE1 }}"
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    name: keystone
+    state: dump
+    target: /tmp/keystone.sql
+  delegate_to: "{{ IPCON1_SITE1 }}"
+  run_once: yes
+
+
+
+- name: Sync databases keystone file to site 2
+  synchronize:
+     src: "{{ item }}"
+     dest: "{{ item }}"
+     mode: push
+  delegate_to: "{{ IPCON1_SITE1 }}"
+  with_items: "/tmp/keystone.sql"
+
+
+- name: Import DB Keystone to container Mariadb
+  mysql_db:
+    login_port: 3305
+    login_host: 127.0.0.1
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    name: keystone
+    state: import
+    target: /tmp/keystone.sql
+
+
+- name: Delete database file
+  file: 
+    path: /tmp/keystone.sql
+    state: absent
+
+
+#- name: import databases
+#  shell: mysql -uroot -p{{ mariadb_pass }} -h 127.0.0.1 -P 3305 keystone < /tmp/AnsibleOPSfiles/controller1.hcm.vnpt/tmp/keystone.sql
+
+#- name: Unlock tables for site 1
+#  shell: mysql -uroot -p{{ mariadb_pass }} -e "UNLOCK TABLES"
+#  delegate_to: "{{ IP_SITE1 }}"
+#  run_once: yes
+
+
+- name: Stop slave
+  mysql_replication:
+    login_port: 3305
+    login_host: 127.0.0.1
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    mode: stopslave
+#- name: Config Replicate for DB
+#  shell: mysql -uroot -p{{ mariadb_pass }} -h 127.0.0.1 -P 3305 -e "CHANGE MASTER TO MASTER_HOST='192.168.10.51', MASTER_USER='rep1', MASTER_PASSWORD='weascafa221f', MASTER_PORT=3306, MASTER_LOG_FILE='{{ master.File }}', MASTER_LOG_POS={{ master.Position }}, MASTER_CONNECT_RETRY=10; START SLAVE;" 
+
+
+- name: Config Replicate for DB container
+  mysql_replication:
+    login_port: 3305
+    login_host: 127.0.0.1
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    mode: changemaster
+    master_host: "{{ IPCON1_SITE1 }}"
+    master_user: "{{ replicate_user }}"
+    master_password: "{{ replicate_pass }}"
+    master_port: 3306
+    master_connect_retry: 10
+    master_log_file: "{{ master.File }}"
+    master_log_pos: "{{ master.Position }}"
+
+- name: Start replication
+  mysql_replication:  
+    login_port: 3305
+    login_host: 127.0.0.1
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    mode: startslave
+
+#- name: Unlock tables for site 1
+#  shell: |
+#     mysql -uroot -p{{ mariadb_pass }} -e "UNLOCK TABLES"
+#  delegate_to: "{{ IP_SITE1 }}"
+#  run_once: yes
+

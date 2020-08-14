@@ -1,0 +1,6 @@
+---
+# Cai dat goi cho nova
+- name: Install and configure components of Nova
+  yum:
+    name: "{{ nova_packages }}"
+

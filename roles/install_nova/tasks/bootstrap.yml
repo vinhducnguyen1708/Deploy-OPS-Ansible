@@ -1,0 +1,34 @@
+---
+# Tao database nova_api, nova, nova_cell0
+# Tao database user nova
+- name: Create database for Nova
+  mysql_db:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3306
+    login_host: "{{ IP_VIP }}"
+    name: "{{ item }}"
+    state: present
+  run_once: true
+  with_items:
+      - 'nova_api'
+      - 'nova'
+      - 'nova_cell0'
+
+- name: Create user for Nova-api
+  mysql_user:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3306
+    login_host: "{{ IP_VIP }}"
+    name: nova
+    host: "{{ item }}"
+    password: "{{ novadb_pass }}"
+    priv: 'nova_api.*:ALL/nova_cell0.*:ALL/nova.*:ALL'
+    state: present
+  run_once: true
+  with_items:
+    - 'localhost'
+    - '%'
+
+

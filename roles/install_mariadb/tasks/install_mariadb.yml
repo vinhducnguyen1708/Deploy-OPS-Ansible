@@ -1,0 +1,125 @@
+---
+# Cau hinh repo Mairadb
+# Upgrade cac goi cai dat 
+# Cai dat Mariadb va cac goi phu tro, ten cac goi duoc khai bao trong install_mariadb/defaults/main.yml
+# Cau hinh Mariadb neu su dung 1 node controller
+# Khoi dong mariadb-server
+# Kiem tra tinh trang cluster cua mariadb, cac gia tri co the tra ve cua mariadb_cluster_status la:0,1,2,3
+# kiem tra su ton tai cua file clustercheck
+# Clone repo clustercheck tu github
+# Copy file clustercheck den thu muc chi dinh de thuc hien healthcheck
+# Cau hinh xinetd
+# Khoi dong lai service xinetd
+# thuc hien chay task config_cluster.yml khi mariadb_cluster_status khong co gia tri bang voi so node controlle trong file inventory
+# Kiem tra xem da truy nhap duoc vao mariadb bang password duoc khai bao trong file passwords.yml 
+# Thuc hien cau hinh password cho mariadb khi khong truy xuat duoc vao mariadb bang {{ mariadb_pass }}
+
+- name: Setup repository
+  ini_file:
+     path: /etc/yum.repos.d/mariadb.repo
+     section: mariadb-main
+     option: "{{ item.key }}"
+     value: "{{ item.value }}"
+  with_dict: '{{ mariadb_repo }}'
+  notify:
+      - Ensure there are no packages mariadb
+
+- meta: flush_handlers
+
+- name: Update packages for Servers
+  yum:
+     name: '*'
+     state: latest
+
+- name: Install mariadb
+  yum: 
+    name: '{{ mariadb_packages }}'
+    
+- name: Config Mariadb if only have one node Controller
+  template:
+    src: openstack.cnf.j2
+    dest: /etc/my.cnf.d/openstack.cnf
+  when:
+     - groups['controller'] | length  < 2 
+
+- name: start mariadb
+  service:
+    name: mariadb
+    enabled: true
+    state: started
+
+- name: check status mariadb
+  shell: mysql -uroot -e "SHOW STATUS LIKE 'wsrep_cluster_size'" | egrep  wsrep_cluster_size | awk '{print $2}'
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: mariadb_cluster_status
+
+- name: check repo healthcheck
+  stat:
+    path: /root/percona-clustercheck/clustercheck
+  register: healthcheck_file
+
+- name: git clone healthcheck
+  shell: git clone https://github.com/TrongTan124/percona-clustercheck
+  ignore_errors: yes
+  when:
+     - not healthcheck_file.stat.exists
+     - groups['controller'] | length  > 1
+
+- name: copy dir to/usr/local/bin
+  copy:
+    src: /root/percona-clustercheck/clustercheck
+    dest: /usr/local/bin/clustercheck
+    remote_src: yes
+    mode: 0777
+#  shell: cp percona-clustercheck/clustercheck /usr/local/bin
+  when:
+     - not healthcheck_file.stat.exists
+     - groups['controller'] | length  > 1
+
+- name: config xinetd 
+  template:
+    src: mysqlchk.j2
+    dest: /etc/xinetd.d/mysqlchk
+  when:
+     - not healthcheck_file.stat.exists
+     - groups['controller'] | length  > 1
+
+- name: config mysqlchk services
+  lineinfile:
+    path: /etc/services
+    line: mysqlchk 9200/tcp # MySQL check
+  when:
+     - not healthcheck_file.stat.exists
+     - groups['controller'] | length  > 1
+
+- name: Restart service xinetd
+  systemd:
+    state: restarted
+    enabled: true
+    name: xinetd
+  when:
+     - not healthcheck_file.stat.exists
+     - groups['controller'] | length  > 1
+
+
+
+- include_tasks: config_cluster.yml
+  when:
+    - mariadb_cluster_status.stdout | int  !=  groups['controller'] | length | int
+    - groups['controller'] | length  > 1
+
+
+- name: Check Mariadb already have Password
+  command: mysql -uroot -p{{ mariadb_pass }} -e"show databases;"
+  register: checkpassmariadb
+  check_mode: no
+  failed_when: false
+  changed_when: false
+
+- include_tasks:  config_access_root.yml
+  when:
+    - checkpassmariadb.rc == 1
+
+

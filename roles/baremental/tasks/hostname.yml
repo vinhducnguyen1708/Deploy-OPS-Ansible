@@ -1,0 +1,17 @@
+---
+#- name: Config file /etc/hosts for all nodes
+#  blockinfile:
+#     dest: /etc/hosts
+#     marker: "# {mark} ANSIBLE GENERATED HOSTS"
+#     block: |
+#        {% for item in groups['all'] %}
+#        {{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }} {{ item }} {{ hostvars[item].inventory_hostname_short }}
+#        {% endfor %}
+#  become: true
+
+#cau hinh hostname dua vai khai bao inventory_hostname trong file inventory
+- name: Set hostname  
+  hostname:
+    name: "{{ inventory_hostname }}"
+  notify:
+     - Reboot host

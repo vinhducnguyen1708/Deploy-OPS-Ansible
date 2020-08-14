@@ -1,0 +1,76 @@
+---
+# tao file .my.cnf de thao tac DB tren cac hosts khong can nhap password mariadb
+# dat password mariadb thanh gia tri cua {{ mariadb_pass }}
+# Xoa user ""
+# Chi de user truy cap qua cac host 'localhost', '127.0.0.1', '::1'
+# Xoa test database
+
+- name: configure_root_access | configuring root my.cnf
+  template:
+    src: "my.cnf.j2"
+    dest: "/root/.my.cnf"
+    owner: "root"
+    group: "root"
+    mode: "u=rw,g=,o="
+  become: true
+  when: ansible_os_family == "RedHat"
+
+
+- name: Set root Password
+  mysql_user: login_password={{ mariadb_pass }} check_implicit_admin=yes name=root host={{ item }} password={{ mariadb_pass }} state=present 
+  with_items:
+    - localhost
+  become: true
+  run_once: true
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+
+- name: Remove anonymous users
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User=''
+
+- name: Remove disallow user
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+
+- name: Remove test database and access to it
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - DROP DATABASE IF EXISTS test
+    - DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%'
+
+- name: Reload privilege tables
+  command: 'mysql -ne "{{ item }}"'
+  with_items:
+    - FLUSH PRIVILEGES
+
+- name: Config user databases
+  mysql_user:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    name: root
+    host: "{{ item }}"
+    priv: "*.*:ALL"
+    password: "{{ mariadb_pass }}"
+    state: present
+  with_items:
+    - "{{ MGNT_IP }}"
+
+- name: Grant the privilege
+  shell: |
+      mysql -uroot -p{{ mariadb_pass }} -e "UPDATE mysql.user SET Grant_priv='Y', Super_priv='Y' WHERE User='root';"
+      mysql -uroot -p{{ mariadb_pass }} -e "FLUSH PRIVILEGES;"
+      mysql -uroot -p{{ mariadb_pass }} -e "GRANT ALL ON *.* TO 'root'@'localhost';"
+  run_once: true
+- name: Config Database cluster check script
+  shell: |
+      mysql -uroot -p{{ mariadb_pass }} -e "GRANT PROCESS ON *.* TO 'clustercheckuser'@'localhost' IDENTIFIED BY 'clustercheckpassword\!';"
+      mysql -uroot -p{{ mariadb_pass }} -e "FLUSH PRIVILEGES;"
+  run_once: true
+  when:
+    - groups['controller'] | length  > 1

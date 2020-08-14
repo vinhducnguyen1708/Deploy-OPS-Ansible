@@ -1,0 +1,3 @@
+---
+# Thuc hien chay task install_mariadb.yml
+- include_tasks: install_mariadb.yml 

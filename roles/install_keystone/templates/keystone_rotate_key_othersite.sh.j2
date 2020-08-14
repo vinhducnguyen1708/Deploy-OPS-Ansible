@@ -1,0 +1,67 @@
+#!/bin/bash
+SSH_PORT='22'
+SSH_PORT_HN='22'
+CTL1_MGNT_IP_HN='{{ IPCON1_SITE1 }}'
+CTL2_MGNT_IP_HN='{{ IPCON2_SITE1 }}'
+CTL3_MGNT_IP_HN='{{ IPCON3_SITE1 }}'
+CTL1_MGNT_IP="{{ hostvars[groups['controller'][0]]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
+CTL2_MGNT_IP="{{ hostvars[groups['controller'][1]]['ansible_' + MGNT_IF]['ipv4']['address'] }}"
+CTL3_MGNT_IP="{{ hostvars[groups['controller'][2]]['ansible_' + MGNT_IF]['ipv4']['address'] }}" 
+function rotate_key ()
+{
+    echo "Edit /usr/bin/fernet-rotate.sh on Controller1 - Hanoi"
+    sleep 5
+    list_old=`ssh root@$CTL1_MGNT_IP_HN -p $SSH_PORT_HN cat /usr/bin/fernet-rotate.sh | sed '2q;d' | sed s'/.$//'`
+    list_new=`echo $list_old $CTL1_MGNT_IP:$SSH_PORT $CTL2_MGNT_IP:$SSH_PORT $CTL3_MGNT_IP:$SSH_PORT\"`
+    cp {{ ansible_deploy_files }}/fernet-rotate.sh tmp-fernet-rotate.sh
+    sed -i "2s/.*/$list_new/" tmp-fernet-rotate.sh
+    ssh -p $SSH_PORT_HN root@$CTL1_MGNT_IP_HN cp /usr/bin/fernet-rotate.sh /usr/bin/fernet-rotate.sh.bka
+    scp -P $SSH_PORT_HN tmp-fernet-rotate.sh root@$CTL1_MGNT_IP_HN:/usr/bin/fernet-rotate.sh
+    rm -f tmp-fernet-rotate.sh
+
+    echo "Edit /usr/bin/fernet-rotate.sh on Controller2 - Hanoi"
+    sleep 5
+    list_old=`ssh root@$CTL2_MGNT_IP_HN -p $SSH_PORT_HN cat /usr/bin/fernet-rotate.sh | sed '2q;d' | sed s'/.$//'`
+    list_new=`echo $list_old $CTL1_MGNT_IP:$SSH_PORT $CTL2_MGNT_IP:$SSH_PORT $CTL3_MGNT_IP:$SSH_PORT\"`
+    cp {{ ansible_deploy_files }}/fernet-rotate.sh tmp-fernet-rotate.sh
+    sed -i "2s/.*/$list_new/" tmp-fernet-rotate.sh
+    ssh -p $SSH_PORT_HN root@$CTL2_MGNT_IP_HN cp /usr/bin/fernet-rotate.sh /usr/bin/fernet-rotate.sh.bka
+    scp -P $SSH_PORT_HN tmp-fernet-rotate.sh root@$CTL2_MGNT_IP_HN:/usr/bin/fernet-rotate.sh
+    rm -f tmp-fernet-rotate.sh
+
+    echo "Edit /usr/bin/fernet-rotate.sh on Controller3 - Hanoi"
+    sleep 5
+    list_old=`ssh root@$CTL3_MGNT_IP_HN -p $SSH_PORT_HN cat /usr/bin/fernet-rotate.sh | sed '2q;d' | sed s'/.$//'`
+    list_new=`echo $list_old $CTL1_MGNT_IP:$SSH_PORT $CTL2_MGNT_IP:$SSH_PORT $CTL3_MGNT_IP:$SSH_PORT\"`
+    cp {{ ansible_deploy_files }}/fernet-rotate.sh tmp-fernet-rotate.sh
+    sed -i "2s/.*/$list_new/" tmp-fernet-rotate.sh
+    ssh -p $SSH_PORT_HN root@$CTL3_MGNT_IP_HN cp /usr/bin/fernet-rotate.sh /usr/bin/fernet-rotate.sh.bka
+    scp -P $SSH_PORT_HN tmp-fernet-rotate.sh root@$CTL3_MGNT_IP_HN:/usr/bin/fernet-rotate.sh
+    rm -f tmp-fernet-rotate.sh
+
+
+}    # ----------  end of function rotate_key  ----------
+
+
+
+function download_fernet_key ()
+{
+    /usr/bin/rsync -azu --delete -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p $SSH_PORT_HN -F /var/lib/keystone/.ssh/config" keystone@$CTL1_MGNT_IP_HN:/etc/keystone/fernet-keys/ /etc/keystone/fernet-keys
+}    # ----------  end of function download_fernet_key  ----------
+
+
+
+token_expired_min=`echo $token_expiration*60 | bc`
+token_expired_sec=`echo $token_expiration*60*60 | bc`
+number_keystone_node={{ groups['controller'] | length }}
+rotation_frequency=`echo $token_expired_sec / $number_keystone_node | bc`
+max_active_keys=`echo $token_expired_sec / $rotation_frequency + 2 | bc`
+
+HOST=`cat /etc/hostname`
+if [ "$HOST" == "{{ hostvars[groups['controller'][0]].inventory_hostname }}" ]; then
+    echo "Config OpenStack Keystone Services on Control"
+    download_fernet_key
+    rotate_key
+else
+    download_fernet_key
+fi

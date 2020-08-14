@@ -1,0 +1,83 @@
+Listen {{ MGNT_IP }}:80
+
+ServerSignature Off
+ServerTokens Prod
+TraceEnable off
+WSGISocketPrefix run/wsgi
+
+<VirtualHost *:80>
+    LogLevel warn
+    ErrorLog /var/log/horizon/horizon.log
+    LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b %D \"%{Referer}i\" \"%{User-Agent}i\"" logformat
+    CustomLog /var/log/horizon/horizon-access.log logformat 
+    WSGIApplicationGroup %{GLOBAL}
+    WSGIDaemonProcess horizon-http
+    WSGIProcessGroup horizon-http
+    WSGIPassAuthorization On
+    WSGIScriptAlias /dashboard /usr/share/openstack-dashboard/openstack_dashboard/wsgi/django.wsgi
+    <Location "/">
+        Require all granted
+    </Location>
+    Alias /dashboard/static /usr/share/openstack-dashboard/static
+    <Location "/static">
+        SetHandler None
+    </Location>
+</VirtualHost>
+{% if enable_ssl | bool %}
+Header edit Location ^http://(.*)$ https://$1
+{% endif %}
+<IfModule mod_deflate.c>
+    # Compress HTML, CSS, JavaScript, Json, Text, XML and fonts
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE application/x-font
+    AddOutputFilterByType DEFLATE application/x-font-opentype
+    AddOutputFilterByType DEFLATE application/x-font-otf
+    AddOutputFilterByType DEFLATE application/x-font-truetype
+    AddOutputFilterByType DEFLATE application/x-font-ttf
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE font/opentype
+    AddOutputFilterByType DEFLATE font/otf
+    AddOutputFilterByType DEFLATE font/ttf
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE image/x-icon
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/xml
+</IfModule>
+
+<IfModule mod_expires.c>
+    <Filesmatch "\.(jpg|jpeg|png|gif|js|css|swf|ico|woff)$">
+        ExpiresActive on
+        ExpiresDefault "access plus 1 month"
+        ExpiresByType application/javascript "access plus 1 year"
+        ExpiresByType text/css "access plus 1 year"
+        ExpiresByType image/x-ico "access plus 1 year"
+        ExpiresByType image/jpg "access plus 1 year"
+        ExpiresByType image/jpeg "access plus 1 year"
+        ExpiresByType image/gif "access plus 1 year"
+        ExpiresByType image/png "access plus 1 year"
+        Header merge Cache-Control public
+        Header unset ETag
+    </Filesmatch>
+</IfModule>
+
+<Directory /usr/share/openstack-dashboard/openstack_dashboard/wsgi>
+  Options All
+  AllowOverride All
+  Require all granted
+</Directory>
+
+<Directory /usr/share/openstack-dashboard/static>
+  Options All
+  AllowOverride All
+  Require all granted
+</Directory>
+
+

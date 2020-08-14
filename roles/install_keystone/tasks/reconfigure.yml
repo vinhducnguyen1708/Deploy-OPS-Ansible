@@ -1,0 +1,6 @@
+--- 
+
+- include_tasks: config_httpd.yml
+- include_tasks: config_rotate_key.yml
+  when: groups['controller'] | length  > 1
+- include_tasks: config_keystone.yml

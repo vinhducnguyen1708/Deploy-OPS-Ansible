@@ -1,0 +1,22 @@
+---
+# Cau hinh sysctl 
+# Tao ra 1 thu muc de chua file ansible tao ra
+
+- name: Modify sysctl entries
+  sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  with_dict: "{{ sysctl_config }}"
+
+- name: Create Ansible-Deploy directory
+  file:
+    path: "{{ ansible_deploy_files }}"
+    state: directory
+  delegate_to: "{{ item }}"
+  run_once: yes
+  with_items:
+     - "{{ groups['all'] }}"
+

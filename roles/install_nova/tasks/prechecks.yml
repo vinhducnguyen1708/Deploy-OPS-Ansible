@@ -1,0 +1,38 @@
+---
+- name: Checking free port for Nova API HAProxy
+  wait_for:
+    host: "{{ IP_VIP }}"
+    port: "{{ nova_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_nova | bool
+    - enable_haproxy | bool 
+
+- name: Checking free port for Nova Metadata HAProxy
+  wait_for:
+    host: "{{ IP_VIP }}"
+    port: "{{ nova_metadata_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_nova | bool
+    - enable_haproxy | bool 
+
+- name: Checking free port for Nova API
+  wait_for:
+    host: "{{ MGNT_IP }}"
+    port: "{{ nova_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+
+- name: Checking free port for Nova Metadata
+  wait_for:
+    host: "{{ MGNT_IP }}"
+    port: "{{ nova_metadata_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped

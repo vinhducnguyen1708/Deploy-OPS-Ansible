@@ -1,0 +1,25 @@
+[DEFAULT]
+
+
+[agent]
+tunnel_types = vxlan,gre
+l2_population = True
+extensions = qos
+arp_responder = true
+{% if enable_neutron_dvr | bool %}
+enable_distributed_routing = True
+{% endif %}
+
+dscp = 8
+dscp_inherit = true
+
+
+[ovs]
+local_ip = {{ DATA_IP }}
+bridge_mappings = physnet1:br-provider
+datapath_type = system
+
+
+[securitygroup]
+firewall_driver = openvswitch
+enable_security_group = true

@@ -1,0 +1,33 @@
+---
+# Cau hinh yum su dung proxy cache khi enable_proxy_cache: "yes"
+# Update cac goi cai dat cho servers
+# Cai dat repo openstack-train
+# Cai dat openstack-client
+# cai dat openstack-selinux
+
+- name: Config yum cache proxy
+  template:
+      src: yum.conf.j2
+      dest: /etc/yum.conf
+      mode: 0644
+      owner: root
+      group: root
+  when: enable_proxy_cache | bool
+  
+- name: Update packages for Servers
+  yum:
+     name: '*'
+     state: latest
+
+- name: Enable the Openstack repository
+  yum:
+     name: "centos-release-openstack-{{ openstack_release }}"
+
+- name: Enable the Openstack client
+  yum:
+     name: 'python-openstackclient'
+
+- name: Enable the Openstack Selinux
+  yum:
+     name: 'openstack-selinux'
+     

@@ -1,0 +1,30 @@
+---
+# Tao database cho glance
+# tao database user cho glance
+
+- name: Create database for Glance
+  mysql_db:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3306
+    login_host: "{{ IP_VIP }}"
+    name: glance
+    state: present
+  run_once: true
+
+- name: Create user for Glance
+  mysql_user:
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    login_port: 3306
+    login_host: "{{ IP_VIP }}"
+    name: glance
+    host: "{{ item }}"
+    password: "{{ glancedb_pass }}"
+    priv: 'glance.*:ALL'
+    state: present
+  with_items:
+    - 'localhost'
+    - '%'
+  run_once: true
+

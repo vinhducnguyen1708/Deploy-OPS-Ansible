@@ -1,0 +1,6 @@
+---
+- name: Restart httpd service
+  systemd:
+     state: restarted
+     enabled: true
+     name: httpd

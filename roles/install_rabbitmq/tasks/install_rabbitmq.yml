@@ -1,0 +1,31 @@
+---
+# Cai dat goi rabbitmq-server
+# Khoi dong service rabbitmq-server
+# Su dung 1 doan script bang python duoc de o install_rabbitmq/files/count_clustered_nodes.py de check so luong host trong cum cluster
+## gia tri tra ve cho bien nodes_count la: 1,2,3
+# Ep kieu bien nodes_count thanh int
+# Chay task config_rabbitmq.yml khi nodes_count < so luong hosts trong group [controller] 
+- name: Install Rabbitmq-server.service
+  yum:
+    name: rabbitmq-server
+  notify:
+    - start rabbitmq-server.service
+
+- name: start rabbitmq-server.service
+  systemd:
+     name: rabbitmq-server.service
+     state: started
+     enabled: yes 
+
+
+- name: check if clustered
+  script: count_clustered_nodes.py
+  register: nodes_count
+  changed_when: False
+
+- name: Set fact status rabbitmq cluster
+  set_fact: 
+      nodes_rabbitmq_count: "{{ nodes_count.stdout | int }}"
+
+- include_tasks: config_rabbitmq.yml
+  when: nodes_rabbitmq_count | int < groups['controller'] | length | int

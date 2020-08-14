@@ -1,0 +1,28 @@
+---
+# Cau hinh file /etc/hosts voi cac host trong groups: controller va compute
+# Kiem tra xem file cau hinh br_provider co ton tai khong, neu co se thuc hien set fact bien "EXTERNAL_IP" va "EXTERNAL_NETMASK" bang cach gather fact tu br_provider
+
+
+- name: Config /etc/hosts
+  template:
+    src: hosts.j2
+    dest: "/etc/hosts"
+  when: not inventory_hostname in groups['deployment']
+
+- name: Check Bridge provider config
+  stat: 
+    path: /etc/sysconfig/network-scripts/ifcfg-br-provider
+  register: br_provider
+
+
+- name: Find EXTERNAL ip 
+  set_fact:
+    EXTERNAL_IP: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
+  when:
+    - br_provider.stat.exists
+- name: Find EXTERNAL netmask
+  set_fact:
+    EXTERNAL_NETMASK: "{{  hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
+  when:
+    - br_provider.stat.exists
+

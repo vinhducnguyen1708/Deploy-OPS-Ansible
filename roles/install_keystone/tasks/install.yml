@@ -1,0 +1,7 @@
+---
+# Cai dat goi can thiet cho keystone
+- name: Install Keystone 
+  yum:
+    name: "{{ keystone_packages }}"
+
+

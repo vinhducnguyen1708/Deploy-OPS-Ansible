@@ -1,0 +1,9 @@
+---
+neutron_packages:
+    - openstack-neutron
+    - openstack-neutron-ml2
+    - openstack-neutron-openvswitch
+    - ebtables
+    - libibverbs
+
+neutron_server_port: 9696

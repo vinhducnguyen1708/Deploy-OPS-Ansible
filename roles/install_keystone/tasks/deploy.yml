@@ -1,0 +1,27 @@
+---
+# Task create_containerDB.yml Tao container Mariadb lam slave cho cum mariadb cluster tren cac node controller site2
+## khi enable_multisite co gia tri la "yes"
+# task config_replicate_container.yml thuc thi viec Cau hinh replicate
+## khi enable_multisite co gia tri la "yes"
+# Task bootstrap.yml thuc hien tao database va user cho keystone khi enable_multisite: "no"
+# Task install.yml thuc hien cai dat cac goi phu tro cho service keystone
+# Task config_httpd.yml thuc hien cau hinh apache
+# Task config_keystone.yml thuc hien cau hinh keystone
+# Task config_rotate_key.yml thuc hien tao crontab rotate fernet-key cho keystone\
+# Task register.yml Thuc hien tao service tren keystone
+- include_tasks: create_containerDB.yml 
+  when: 
+    - enable_multisite | bool
+- include_tasks: config_replicate_container.yml 
+  when:
+    - enable_multisite | bool
+- include_tasks: bootstrap.yml
+  when:
+    - not enable_multisite | bool
+- include_tasks: install.yml
+- include_tasks: config_httpd.yml
+- include_tasks: config_keystone.yml
+- include_tasks: config_rotate_key.yml
+  when: groups['controller'] | length  > 1
+#- include_tasks: restart_service.yml
+- include_tasks: register.yml 

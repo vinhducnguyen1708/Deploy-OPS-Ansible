@@ -1,0 +1,19 @@
+---
+# Thuc hien chay task generate.yml khi enable_ssl: "yes"
+# Check thu muc octavia_certs da duoc tao chua
+# Thuc hien chay task octavia_cert.yml khi chua ton tai thu muc octavia_certs va enable_octavia: "yes"
+# Copy certs cua octavia sang cac node
+- include_tasks: generate.yml
+  when: enable_ssl | bool 
+- name: Check if ocatvia's certs exist
+  stat:
+    path: "{{ ansible_deploy_files }}/octavia_certs"
+  register: octavia_certs
+- include_tasks: octavia_cert.yml 
+  when:
+    - enable_octavia | bool
+    - not octavia_certs.stat.exists
+
+- include_tasks: copy_octavia_certs.yml
+  when:
+    - enable_octavia | bool
