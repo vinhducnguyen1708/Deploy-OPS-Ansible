@@ -1,4 +1,0 @@
----
-- name: Install Horizon
-  yum: 
-   name: openstack-dashboard

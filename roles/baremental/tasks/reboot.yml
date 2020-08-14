@@ -1,7 +1,0 @@
-- name: Reboot all host
-  reboot:
-    connect_timeout: 5
-    reboot_timeout: 3600
-    pre_reboot_delay: 0
-    post_reboot_delay: 0
-    test_command: whoami

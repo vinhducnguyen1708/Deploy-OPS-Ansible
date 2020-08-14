@@ -1,6 +1,0 @@
----
-keystone_packages:
-    - openstack-keystone
-    - httpd
-    - mod_wsgi
-keystone_port: 5000

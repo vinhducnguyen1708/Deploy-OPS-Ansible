@@ -1,4 +1,0 @@
----
-- name: Install Heat's Packages 
-  yum: 
-    name: "{{ heat_packages }}"

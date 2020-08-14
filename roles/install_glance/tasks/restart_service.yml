@@ -1,8 +1,0 @@
----
-- name: Start Image Service Glance-api
-  systemd:
-    state: restarted
-    enabled: true
-    name: openstack-glance-api.service
-
-

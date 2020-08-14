@@ -1,4 +1,0 @@
----
-- name: Install Image Service - Glance
-  yum:
-   name: "{{ glance_packages }}"

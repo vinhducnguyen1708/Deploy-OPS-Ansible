@@ -1,9 +1,0 @@
----
-corosync_pass: b1c1c0e42dae43206781
-
-pacemaker_packages:
-    - pacemaker
-    - corosync
-    - pcs
-    - fence-agents-all
-    - resource-agents
