@@ -1,0 +1,11 @@
+---
+octavia_packages: 
+     - openstack-octavia-common.noarch
+     - openstack-octavia-diskimage-create.noarch
+     - openstack-octavia-housekeeping.noarch
+     - openstack-octavia-api.noarch
+     - openstack-octavia-health-manager.noarch
+     - openstack-octavia-worker.noarch
+     - openstack-octavia-amphora-agent.noarch
+     - openstack-octavia-ui.noarch
+     - python3-octaviaclient.noarch

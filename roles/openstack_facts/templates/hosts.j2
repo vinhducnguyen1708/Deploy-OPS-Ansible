@@ -1,0 +1,11 @@
+#ByAnsible
+127.0.0.1   localhost 
+::1         localhost
+{% for item in groups['controller'] %}
+{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }} {{ item }} {{ hostvars[item].inventory_hostname_short }}
+{% endfor %}
+
+{% for item in groups['compute'] %}
+{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }} {{ item }} {{ hostvars[item].inventory_hostname_short }}
+{% endfor %}
+

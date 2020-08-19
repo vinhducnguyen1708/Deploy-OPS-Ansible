@@ -1,0 +1,215 @@
+---
+- name: Garther_facts
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Group hosts to determine when using --limit
+      setup:
+
+
+- name: Openstack_facts
+  hosts: all
+  gather_facts: false
+  tasks:
+    - import_role:
+        name: openstack_facts
+  tags: always
+
+- name: Apply role baremental
+  gather_facts: false
+  become: true
+  hosts: 
+     - controller
+     - compute
+  roles:
+    - { role: baremental,
+        tags: baremental }
+
+- name: Apply role chrony
+  gather_facts: false
+  become: true
+  hosts: 
+    - controller
+    - compute
+  roles:
+    - { role: install_ntp,
+        tags: install_ntp }
+
+- name: Apply role certificate
+  gather_facts: false
+  become: true
+  hosts:
+     - controller
+     - deployment
+     - compute
+  roles:
+    - { role: certificates,
+        tags: certificates }
+#        when: enable_ssl | bool 
+
+
+- name: Apply role docker
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_docker,
+        tags: install_docker,
+        when: enable_multisite | bool }
+
+
+
+- name: Apply role Mariadb
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_mariadb,
+        tags: install_mariadb }
+
+- name: Apply role Rabbimq
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_rabbitmq,
+        tags: install_rabbitmq }
+
+- name: Apply role Memcache
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_memcached,
+        tags: install_memcached }
+
+
+
+- name: Apply role HAproxy
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_haproxy,
+        tags: always, 
+        when: enable_haproxy | bool }
+
+- name: Apply role Pacemaker
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_pacemaker,
+        tags: install_pacemaker, 
+        when: enable_pacemaker | bool }
+
+- name: Apply role Keystone
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_keystone,
+        tags: install_keystone,
+        when: enable_keystone | bool }
+
+- name: Apply role Glance
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_glance,
+        tags: install_glance,
+        when: enable_glance | bool }
+
+- name: Apply role Placement
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_placement,
+        tags: install_placement,
+        when: enable_placement | bool }
+
+- name: Apply role Nova
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_nova,
+        tags: install_nova,
+        when: enable_nova | bool }
+
+- name: Apply role Nova_cell
+  become: true
+  gather_facts: false
+  hosts: compute
+  roles: 
+    - { role: install_nova_cell,
+        tags: install_nova_cell,
+        when: enable_nova | bool }
+
+- name: Apply role Neutron
+  gather_facts: false
+  become: true  
+  hosts: controller
+  roles:
+    - { role: install_neutron,
+        tags: install_neutron,
+        when: enable_neutron |bool }
+
+- name: Apply role Neutron_openvswitch
+  become: true
+  gather_facts: false
+  hosts: compute
+  roles:
+    - { role: install_neutron_ovs,
+        tags: install_neutron_ovs,
+        when: enable_neutron | bool }
+
+- name: Apply role Cinder
+  become: true
+  gather_facts: yes
+  hosts: controller
+  roles: 
+    - { role: install_cinder,
+        tags: install_cinder,
+        when: enable_cinder | bool }
+
+
+- name: Apply role Heat
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_heat,
+        tags: install_heat,
+        when: enable_heat | bool }
+
+- name: Apply role Barbican
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_barbican,
+        tags: install_barbican,
+        when: enable_barbican | bool }
+
+- name: Apply role Octavia
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_octavia,
+        tags: install_octavia,
+        when: enable_octavia | bool }
+
+- name: Apply role Horizon
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_horizon,
+        tags: install_horizon,
+        when: enable_horizon | bool }
+
+

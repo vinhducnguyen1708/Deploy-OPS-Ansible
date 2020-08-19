@@ -1,0 +1,9 @@
+---
+nova_packages:
+    - openstack-nova-api
+    - openstack-nova-conductor
+    - openstack-nova-novncproxy
+    - openstack-nova-scheduler
+
+nova_api_port: 8774
+nova_metadata_port: 8775

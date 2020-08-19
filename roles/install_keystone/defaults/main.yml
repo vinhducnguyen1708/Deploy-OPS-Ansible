@@ -1,0 +1,7 @@
+---
+keystone_packages:
+    - openstack-keystone
+    - httpd
+    - python3-mod_wsgi
+    - python3-oauth2client
+keystone_admin_port: 5000

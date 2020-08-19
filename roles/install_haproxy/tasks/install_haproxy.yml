@@ -1,0 +1,92 @@
+---
+- name: Install haproxy
+  yum:
+    name: haproxy
+
+# - name: prerequisites to download and compile the Haproxy
+#   yum: 
+#     name: "{{ haproxy_depend }}"
+#   notify:
+#     - Compile Haproxy with Systemd
+#     - Compile Haproxy with System
+
+
+# - name: Download Haproxy packages
+#   get_url:
+#     url: http://www.haproxy.org/download/2.0/src/haproxy-2.0.7.tar.gz
+#     dest: "{{ ansible_deploy_files }}/haproxy.tar.gz"
+#     mode: 777
+
+# - name: extract the Haproxy's files
+#   unarchive:
+#     src: "{{ ansible_deploy_files }}/haproxy.tar.gz"
+#     dest: "{{ ansible_deploy_files }}/"
+#     remote_src: yes
+
+# - meta: flush_handlers
+
+
+# - name: Create config directory for Haproxy
+#   file:
+#     path: /etc/haproxy
+#     state: directory
+#     owner: root
+#     group: root
+#     mode: '744'
+
+# - name: Create Haproxy library
+#   file:
+#     path: /var/lib/haproxy 
+#     state: directory
+#     owner: root
+#     group: root
+#     mode: '744'
+
+# - name: Create status file for Haproxy
+#   file:
+#     path: /var/lib/haproxy/stats
+#     state: touch
+#     owner: root
+#     group: root
+#     mode: '744'
+
+# - name: Check haproxy link existed
+#   stat:
+#     path: /usr/sbin/haproxy
+#   register: haproxy_sbin
+
+# - name: Create a symbolic link
+#   file:
+#     src: /usr/local/sbin/haproxy
+#     dest: /usr/sbin/haproxy
+#     owner: root
+#     group: root
+#     state: link
+#   when:
+#     - not haproxy_sbin.stat.exists
+
+# - name: add the proxy as a service to the system
+#   copy:
+#     src: "{{ ansible_deploy_files }}/haproxy-2.0.7/examples/haproxy.init"
+#     dest: /etc/init.d/haproxy
+#     remote_src: yes
+#     owner: root
+#     group: root
+#     mode: '755'
+
+# - name: Insert a line at the end of a file /etc/sysconfig/network.
+#   lineinfile:
+#        path: /etc/sysconfig/network
+#        line: NETWORKING=yes
+
+# - name: Create system user for haproxy
+#   user:
+#     name: haproxy
+#     system: yes
+
+# - name: Enable Haproxy Service
+#   systemd:
+#      state: stopped
+#      name: haproxy
+#      enabled: yes
+#      daemon_reload: yes

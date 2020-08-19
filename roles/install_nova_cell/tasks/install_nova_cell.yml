@@ -1,0 +1,6 @@
+---
+- name: Install Nova-Compute services
+  yum:
+    name: "{{ nova_compute_packages }}"
+
+

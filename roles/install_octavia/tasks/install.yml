@@ -1,0 +1,5 @@
+---
+- name: Install Octavia's packages
+  yum:
+    name: "{{ octavia_packages }}"
+

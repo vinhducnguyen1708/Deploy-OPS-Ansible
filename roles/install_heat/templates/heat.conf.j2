@@ -1,0 +1,97 @@
+[DEFAULT]
+log_dir = /var/log/heat
+server_keystone_endpoint_type = public
+num_engine_workers = 2
+region_name_for_services = {{ REGION }}
+stack_domain_admin = heat_domain_admin
+stack_domain_admin_password = {{ heat_pass }}
+stack_user_domain_name = heat
+heat_stack_user_role = heat_stack_user
+heat_metadata_server_url = {{ keystone_protocol }}://{{ IP_VIP }}:8000
+heat_waitcondition_server_url = {{ keystone_protocol }}://{{ IP_VIP }}:8000/v1/waitcondition
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+[auth_password]
+[keystone_authtoken]
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = heat
+password = {{ heat_pass }}
+cafile = {{ openstack_cacert }}
+
+[clients]
+endpoint_type = internalURL
+ca_file = {{ openstack_cacert }}
+[clients_aodh]
+[clients_barbican]
+[clients_cinder]
+[clients_designate]
+[clients_glance]
+[clients_heat]
+[clients_keystone]
+#auth_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+#insecure = true
+#ca_file = {{ openstack_cacert }}
+[clients_magnum]
+[clients_manila]
+[clients_mistral]
+[clients_monasca]
+[clients_neutron]
+[clients_nova]
+[clients_octavia]
+[clients_sahara]
+[clients_senlin]
+[clients_swift]
+[clients_trove]
+[clients_zaqar]
+[cors]
+[database]
+connection = mysql+pymysql://heat:{{ heatdb_pass }}@{{ IP_VIP }}/heat
+[ec2authtoken]
+auth_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000/v3
+[eventlet_opts]
+[healthcheck]
+[heat_api]
+bind_host = {{ MGNT_IP }}
+bind_port = 8004
+[heat_api_cfn]
+bind_host = {{ MGNT_IP }}
+bind_port = 8000
+[heat_api_cloudwatch]
+[noauth]
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+driver = noop
+[oslo_messaging_rabbit]
+rabbit_ha_queues = true
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+[oslo_middleware]
+enable_proxy_headers_parsing = True
+[oslo_policy]
+[paste_deploy]
+[profiler]
+[revision]
+[ssl]
+{% if enable_ssl | bool %}
+enable = True 
+certfile = {{ openstack_cacert }}
+keyfile = {{ openstack_cacert }}
+{% endif %}
+[trustee]
+auth_type = password
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+username = heat
+password = {{ heat_pass }}
+user_domain_name = default
+[volumes]

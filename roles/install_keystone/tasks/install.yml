@@ -1,0 +1,7 @@
+---
+- name: Install Keystone 
+  yum:
+    name: "{{ keystone_packages }}"
+#  with_items:
+#    - "{{ keystone_packages }}"
+

@@ -1,0 +1,21 @@
+---
+- name: Config /etc/selinux/config
+  template:
+   src: selinuxconfig.j2
+   dest: /etc/selinux/config
+   mode: 0644
+
+- name: Config /etc/sysconfig/selinux
+  template:
+    src: selinux.j2
+    dest: /etc/sysconfig/selinux
+    mode: 0777
+  notify:
+     - disable firewalld
+
+- name: disable firewalld
+  systemd:
+    name: firewalld.service
+    state: stopped
+    enabled: no
+

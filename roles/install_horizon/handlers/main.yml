@@ -1,0 +1,12 @@
+---
+- name: restart HTTPD
+  systemd:
+    state : restarted
+    enabled: true
+    name: httpd.service
+
+- name: restart memcached
+  systemd:
+    state : restarted
+    enabled: true
+    name: memcached.service

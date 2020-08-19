@@ -1,0 +1,22 @@
+---
+- name: Checking free port for Glance API
+  wait_for:
+    host: "{{ MGNT_IP }}"
+    port: "{{ glance_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+
+
+
+- name: Checking free port for Glance API HAProxy
+  wait_for:
+    host: "{{ IP_VIP }}"
+    port: "{{ glance_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_glance | bool
+    - enable_haproxy | bool
+    

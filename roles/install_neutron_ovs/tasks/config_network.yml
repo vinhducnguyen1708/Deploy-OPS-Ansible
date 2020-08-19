@@ -1,0 +1,59 @@
+---
+- name: Start OpenvSwitch
+  systemd:
+    state: started
+    enabled: true
+    name: openvswitch
+
+
+- name: Create OVS bridge
+  openvswitch_bridge:
+    bridge: br-provider
+    state: present
+    fail_mode: secure
+  register: br_provider
+
+- name: Add port for bridge
+  openvswitch_port:
+    bridge: br-provider
+    port: "{{ EXTERNAL_IF }}"
+    state: present
+
+
+#- name: Configure OpenvSwitch
+#  shell: |
+#     ovs-vsctl add-port br-provider {{ EXTERNAL_IF }}
+#  when:
+#     - br_provider.status == "started"
+- name: config EXTERNAL interface
+  template:
+    src: ifcfg-external.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{ EXTERNAL_IF }}
+  notify:
+     - Restart network
+
+- name: Check Bridge provider config
+  stat: 
+    path: /etc/sysconfig/network-scripts/ifcfg-br-provider
+  register: br_provider
+
+- name: Find External ip 
+  set_fact:
+    EXTERNAL_IP: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
+  when:
+    - br_provider.stat.exists
+- name: Find External netmask
+  set_fact:
+    EXTERNAL_NETMASK: "{{  hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
+  when:
+    - br_provider.stat.exists
+
+- name: Config network bridge Provider
+  template:
+    src: ifcfg-external.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-br-provider
+  notify:
+     - Restart network
+
+
+

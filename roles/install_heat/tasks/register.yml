@@ -1,0 +1,126 @@
+---
+- name: Create user Heat
+  os_user:
+    name: heat
+    auth: "{{ openstack_auth }}"
+    password: "{{ heat_pass }}"
+    domain: default
+    ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Add role for user Heat
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: heat
+    role: admin
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+- name: Create Heat service
+  os_keystone_service:
+    name: heat
+    auth: "{{ openstack_auth }}"
+    service_type: orchestration
+    ca_cert: "{{ openstack_cacert }}"
+    description: Orchestration
+  run_once: true
+
+- name: Create Heat-cfn service
+  os_keystone_service:
+    name: heat-cfn
+    auth: "{{ openstack_auth }}"
+    service_type: cloudformation
+    ca_cert: "{{ openstack_cacert }}"
+    description: Orchestration
+  run_once: true
+
+
+- name: Create the Orchestration service API endpoints
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: heat 
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8004/v1/%(tenant_id)s"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+
+
+- name: Create Heat-cfn endpoints
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: heat-cfn  
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8000/v1"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+
+
+- name: Creat Domain for Heat
+  os_keystone_domain:
+     auth: "{{ openstack_auth }}"
+     state: present
+     name: heat
+     region_name: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     description: Stack projects and users
+  run_once: true
+
+
+- name: Create user heat_domain_admin
+  os_user:
+     name: heat_domain_admin
+     auth: "{{ openstack_auth }}"
+     password: "{{ heat_pass }}"
+     domain: heat
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  run_once: true
+
+- name: User to manage projects and users in the heat domain
+  os_user_role:
+     auth: "{{ openstack_auth }}"
+     user: heat_domain_admin  
+     role: admin
+     domain: heat 
+     ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Create role heat_stack_owner
+  os_keystone_role:
+     state: present
+     auth: "{{ openstack_auth }}"
+     name: heat_stack_owner
+     ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Apply role for demo user
+  os_user_role:
+     auth: "{{ openstack_auth }}"
+     user: demo 
+     role: heat_stack_owner
+     project: demo
+     ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Create role heat_stack_user
+  os_keystone_role:
+     state: present
+     auth: "{{ openstack_auth }}"
+     name: heat_stack_user
+     ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+  

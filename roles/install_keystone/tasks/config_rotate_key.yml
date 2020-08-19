@@ -1,0 +1,71 @@
+---
+# Tạo file script python generate crontab o cac node controller
+# Chay file script để lấy tham số cấu hình crontab
+# Set fact bien cron_jobs la tham so cau hinh crontab cua cac node controller
+# Tao file Cau hinh crontab
+# Tao file ghi log trong qua trinh chay cronjob
+# Tao cronjobs den node target
+# Tao lai file cau hinh cronjob khi add them 1 site
+
+
+- name: Copy file fernet_rotate_cron_generator.py to create crontab 
+  template:
+    src: fernet_rotate_cron_generator.py
+    dest: "{{ ansible_deploy_files }}/fernet_rotate_cron_generator.py"
+  when: not enable_multisite | bool 
+
+
+- name: Run script
+  command: python3 /root/AnsibleOPSfiles/fernet_rotate_cron_generator.py -t {{ token_expired_min }} -i {{ groups['controller'].index(inventory_hostname) }} -n {{ groups['controller'] | length }}
+  register: cron_jobs_json
+  changed_when: false
+  when: not enable_multisite | bool 
+    
+- name: Set fact with the generated cron jobs for building the crontab later
+  set_fact:
+    cron_jobs: "{{ (cron_jobs_json.stdout | from_json).cron_jobs }}"
+  when: not enable_multisite | bool 
+    
+- name: Config Crontab
+  template:
+    src: keystone_crontab.j2
+    dest: /var/spool/cron/keystone
+    group: keystone
+    mode: 0644
+  notify:
+     - Restart crond
+  when: not enable_multisite | bool 
+
+- name: Create keystone-rotate-key-log
+  file:
+    path: /var/log/keystone/keystone-fernet-rotate.log
+    group: keystone
+    owner: keystone
+    state: touch
+  when: not enable_multisite | bool 
+
+- name: Config cronjob
+  template:
+    src: fernet-rotate.sh.j2
+    dest: /usr/bin/fernet-rotate.sh
+    mode: 0777
+  when: not enable_multisite | bool 
+
+- name: Add another site to list rotate key
+  template:
+    src: keystone_crontab.j2
+    dest: "{{ fernet_rotate_crontab_file }}"
+    group: root
+    owner: root
+    mode: 0644
+  notify:
+     - Restart crond
+  delegate_to: "{{ item }}"
+  with_items:
+        - "{{ IPCON1_SITE1 }}"
+        - "{{ IPCON2_SITE1 }}"
+        - "{{ IPCON3_SITE1 }}"
+  when: enable_multisite | bool 
+
+
+

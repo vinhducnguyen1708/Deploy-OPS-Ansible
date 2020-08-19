@@ -1,0 +1,36 @@
+---
+- name: Check /etc/octavia/octavia.conf.bak existed
+  stat:
+    path: /etc/octavia/octavia.conf.bak
+  register: octavia_conf_bak
+
+- name: Backup file config /etc/octavia/octavia.conf
+  copy:
+   src: /etc/octavia/octavia.conf
+   dest: /etc/octavia/octavia.conf.bak
+   remote_src: yes
+  when:
+    - not  octavia_conf_bak.stat.exists
+
+- name: Config file octavia.conf
+  template:
+    src: octavia.conf.j2
+    dest: /etc/octavia/octavia.conf
+  notify:
+    - Restart Octavia-api Services
+    - Restart Octavia-health manager Services
+    - Restart Octavia-housekeeping Services
+    - Restart Octavia-worker Services
+
+- name: Add code to verify Barbican when use HTTPS 
+  copy:
+    src: barbican_acl.py
+    dest: /usr/lib/python3.6/site-packages/octavia/certificates/common/auth/barbican_acl.py
+  when: enable_ssl | bool
+
+
+- name: Populate the octavia database
+  shell: |
+      octavia-db-manage --config-file /etc/octavia/octavia.conf upgrade head
+  run_once: true
+  when: my_action == "deploy"

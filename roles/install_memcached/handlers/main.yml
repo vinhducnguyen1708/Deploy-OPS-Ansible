@@ -1,0 +1,6 @@
+---
+- name: restart_memcached
+  systemd: 
+    state: started
+    enabled: yes
+    name: memcached.service

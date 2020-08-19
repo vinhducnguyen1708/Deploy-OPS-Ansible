@@ -1,0 +1,26 @@
+---
+- name: Restart ovs
+  systemd:
+    state: restarted
+    enabled: true
+    name: openvswitch
+
+
+- name: Restart neutron service
+  systemd:
+    state: restarted
+    enabled: true
+    name: neutron-openvswitch-agent
+
+- name: Restart service libvirtd
+  systemd:
+    state: restarted
+    enabled: true
+    name: libvirtd
+
+- name: Restart service openstack-nova-compute
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-compute
+

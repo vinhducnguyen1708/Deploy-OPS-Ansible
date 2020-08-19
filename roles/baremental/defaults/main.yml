@@ -1,0 +1,30 @@
+---
+openstack_release: ussuri
+
+ops_train_packages:
+     - centos-release-openstack-train
+     - python-openstackclient
+     - openstack-selinux
+  
+sysctl_config:
+     - net.ipv4.ip_nonlocal_bind: 1
+     - net.ipv4.tcp_keepalive_time: 3
+     - net.ipv4.tcp_keepalive_intvl: 30
+     - net.ipv4.tcp_keepalive_probes: 8
+
+tools_packages:
+     - epel-release
+     - crudini
+     - wget
+     - vim
+     - net-tools
+     - telnet
+     - network-scripts
+
+
+powertools_repo:
+     - name: CentOS-$releasever - PowerTools
+     - mirrorlist: http://mirrorlist.centos.org/?release=$releasever&arch=$basearch&repo=PowerTools&infra=$infra
+     - gpgcheck: 1
+     - enabled: 1
+     - gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial

@@ -1,0 +1,22 @@
+[mysqld]
+binlog_format=ROW
+default-storage-engine=innodb
+innodb_autoinc_lock_mode=2
+bind-address={{ MGNT_IP }}
+wsrep_on=1
+wsrep_provider=/usr/lib64/galera/libgalera_smm.so
+wsrep_cluster_name="Openstack"
+wsrep_cluster_address="gcomm://{%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}{% if not loop.last %},{% endif %}{% endfor %}"
+wsrep_node_address="{{ MGNT_IP }}"
+wsrep_slave_threads=1
+wsrep_certify_nonPK=1
+wsrep_max_ws_rows=0
+wsrep_max_ws_size=2147483647
+wsrep_debug=0
+wsrep_convert_LOCK_to_trx=0
+wsrep_retry_autocommit=1
+wsrep_auto_increment_control=1
+wsrep_drupal_282555_workaround=0
+wsrep_causal_reads=0
+wsrep_notify_cmd=
+wsrep_sst_method=rsync

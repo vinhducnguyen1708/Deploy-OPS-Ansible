@@ -1,0 +1,39 @@
+[DEFAULT]
+bind_host = {{ MGNT_IP }}
+interface_driver = openvswitch
+auth_strategy = keystone
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address']  }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+core_plugin = ml2
+[cors]
+[database]
+[keystone_authtoken]
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = neutron
+password = {{ neutron_pass }}
+region_name = {{ REGION }}
+cafile = {{ openstack_cacert }}
+insecure = false
+
+[oslo_concurrency]
+lock_path = /var/lib/neutron/tmp
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+[oslo_messaging_notifications]
+[oslo_messaging_rabbit]
+rabbit_ha_queues = true
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+amqp_durable_queues = true
+[oslo_middleware]
+[oslo_policy]
+[privsep]
+[ssl]
+

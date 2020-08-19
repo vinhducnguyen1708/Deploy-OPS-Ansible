@@ -1,0 +1,46 @@
+[DEFAULT]
+debug = True
+log_dir = /var/log/barbican
+api_paste_config = barbican-api-paste.ini
+bind_port = 9311
+bind_host = {{ MGNT_IP }}
+host_href = {{ keystone_protocol }}://{{ IP_VIP }}:9311
+backlog = 4096
+max_allowed_secret_in_bytes = 10000
+max_allowed_request_size_in_bytes = 1000000
+db_auto_create = False
+sql_connection = mysql+pymysql://barbican:{{ barbicandb_pass }}@{{ IP_VIP }}:3306/barbican
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+[secretstore]
+#namespace = barbican.secretstore.plugin
+#enabled_secretstore_plugins = store_crypto
+
+[crypto]
+#namespace = barbican.crypto.plugin
+#enabled_crypto_plugins = simple_crypto
+
+[simple_crypto_plugin]
+#kek = UP-KEooVz8scCem-rXdZ-KjnYJAimMr2ks4k23BMBSk=
+
+[keystone_notifications]
+enable = True
+topic = barbican_notifications
+
+[keystone_authtoken]
+www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+project_domain_id = default
+project_name = service
+user_domain_id = default
+username = barbican
+password = {{ barbican_pass }}
+auth_type = password
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+
+cafile = {{ openstack_cacert }}
+[oslo_messaging_notifications]
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+
+[oslo_middleware]
+enable_proxy_headers_parsing = True

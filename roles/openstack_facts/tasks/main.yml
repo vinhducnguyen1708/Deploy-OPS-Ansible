@@ -1,0 +1,64 @@
+---
+- name: Config /etc/hosts
+  template:
+    src: hosts.j2
+    dest: "/etc/hosts"
+  when: not inventory_hostname in groups['deployment']
+
+- name: Check Bridge provider config
+  stat: 
+    path: /etc/sysconfig/network-scripts/ifcfg-br-provider
+  register: br_provider
+
+
+- name: Find External ip 
+  set_fact:
+    EXTERNAL_IP: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
+  when:
+    - br_provider.stat.exists
+- name: Find External netmask
+  set_fact:
+    EXTERNAL_NETMASK: "{{  hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
+  when:
+    - br_provider.stat.exists
+
+# - name: is libivirt running already?
+#   command: "virsh secret-list"
+#   changed_when: false
+#   failed_when: false
+#   check_mode: no
+#   register: libvirt_status
+#   when: 
+#     - inventory_hostname in groups['compute']
+#   run_once: yes
+
+# - name: Find current uuid
+#   shell: "virsh secret-list | egrep client.cinder | awk '{print $1}'"
+#   changed_when: false
+#   failed_when: false
+#   register: _openstack_uuid
+#   when: 
+#     - inventory_hostname in groups['compute']
+#     - libvirt_status.rc == 0
+
+# - name: Set fact current openstack uuid
+#   set_fact:
+#      openstack_uuid: "{{ _openstack_uuid.stdout }}"
+#   delegate_to: "{{ item }}"
+#   with_items: "{{ play_hosts }}"
+#   run_once: yes
+#   when: 
+#     - inventory_hostname in groups['compute']
+#     - libvirt_status.rc == 0
+
+
+# - name: Generate new uuid
+#   shell: uuidgen
+#   register: _uuid
+#   run_once: yes
+#   when: libvirt_status.rc != 0
+
+# - name: Set openstack_uuid variable
+#   set_fact:
+#      openstack_uuid: "{{ _uuid.stdout }}"
+#   when: libvirt_status.rc != 0

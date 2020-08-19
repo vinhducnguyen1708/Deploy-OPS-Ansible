@@ -1,0 +1,67 @@
+---
+- name: Create user Cinder
+  os_user:
+    name: cinder
+    auth: "{{ openstack_auth }}"
+    password: "{{ cinder_pass }}"
+    domain: default
+    ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Create role for user cinder
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: cinder
+    role: admin
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+- name: Create Block Storage service v2
+  os_keystone_service:
+    name: cinderv2
+    auth: "{{ openstack_auth }}"
+    service_type: volumev2
+    ca_cert: "{{ openstack_cacert }}"
+    description: OpenStack Block Storage
+  run_once: true
+
+- name: Create Block Storage service v3
+  os_keystone_service:
+    name: cinderv3
+    auth: "{{ openstack_auth }}"
+    service_type: volumev3
+    ca_cert: "{{ openstack_cacert }}"
+    description: OpenStack Block Storage
+  run_once: true
+
+- name: Create endpoint for cinderv2
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: cinderv2
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8776/v2/%(project_id)s"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+
+- name: Create endpoint for cinderv3
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: cinderv3
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8776/v3/%(project_id)s"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true

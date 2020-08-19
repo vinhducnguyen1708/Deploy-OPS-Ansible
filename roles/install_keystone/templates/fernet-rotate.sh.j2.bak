@@ -1,0 +1,43 @@
+#!/bin/bash
+host_list="controller1:7777 controller2:7777 172.16.69.60:7778"
+log_file=/var/log/keystone/keystone-fernet-rotate.log
+date=`date`
+
+function check_result ()
+{
+    if ! [ $1 -eq 0 ]; then
+        echo "ERROR -- $date -- Failed to distributed Fernet keys to $2" >> $log_file
+        echo "Rollback old key" >> $log_file
+        rm /etc/keystone/fernet-keys/*
+        cp /tmp/$ran/fernet-keys/* /etc/keystone/fernet-keys/
+        chown keystone:keystone /etc/keystone/fernet-keys/*
+        for host in $host_list; do
+            host_name=`echo $host | cut -d: -f1`
+            ssh_port=`echo $host | cut -d: -f2`
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p $ssh_port -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@$host_name:/etc/keystone/fernet-keys
+        done
+        exit
+    else 
+        echo "INFO -- $date -- Distributed Fernet keys to $2 success" >> $log_file
+    fi
+}    # ----------  end of function check_result  ----------
+
+
+ran=`openssl rand -hex 5`
+mkdir -p /tmp/$ran
+cp -r /etc/keystone/fernet-keys/ /tmp/$ran
+
+keystone-manage --config-file /etc/keystone/keystone.conf fernet_rotate --keystone-user keystone --keystone-group keystone
+
+for host in $host_list; do
+    host_name=`echo $host | cut -d: -f1`
+    ssh_port=`echo $host | cut -d: -f2`
+    /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p $ssh_port -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+        --delete /etc/keystone/fernet-keys/ keystone@$host_name:/etc/keystone/fernet-keys
+    check_result $? $host_name
+done
+
+rm -rf /tmp/$ran
+
+

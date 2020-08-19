@@ -1,0 +1,45 @@
+---
+- name: Create user Placement
+  os_user:
+    name: placement
+    auth: "{{ openstack_auth }}"
+    password: "{{ placement_pass }}"
+    domain: default
+    ca_cert: "{{ openstack_cacert }}"
+  run_once: true
+
+- name: Create role for user Placement
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: placement
+    role: admin
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    state: present
+  run_once: true
+
+- name: Create Placement service
+  os_keystone_service:
+    name: placement
+    auth: "{{ openstack_auth }}"
+    service_type: placement
+    ca_cert: "{{ openstack_cacert }}"
+    description: Placement API
+  run_once: true
+
+- name: Create endpoint for Placement
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: placement
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8778"
+     region: "{{ REGION }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+
+

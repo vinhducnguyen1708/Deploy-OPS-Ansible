@@ -1,0 +1,12 @@
+---
+- name: Restart libvirtd
+  systemd:
+    state: restarted
+    enabled: true
+    name: libvirtd
+
+- name: Restart service openstack-nova-compute
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-nova-compute
