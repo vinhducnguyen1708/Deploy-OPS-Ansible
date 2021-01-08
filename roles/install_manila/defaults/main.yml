@@ -1,0 +1,5 @@
+---
+manila_packages: 
+       - openstack-manila
+       - python3-manilaclient
+       - openstack-manila-share

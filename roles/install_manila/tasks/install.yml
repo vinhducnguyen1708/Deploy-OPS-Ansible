@@ -1,0 +1,4 @@
+---
+- name: Install Manila's Packages 
+  yum: 
+    name: "{{ manila_packages }}"

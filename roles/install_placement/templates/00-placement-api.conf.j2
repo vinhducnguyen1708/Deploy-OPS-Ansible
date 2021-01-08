@@ -1,6 +1,6 @@
-Listen {{ MGNT_IP }}:8778
+Listen {{ management_ip_address }}:{{ placement_port }}
 
-<VirtualHost {{ MGNT_IP }}:8778>
+<VirtualHost {{ management_ip_address }}:{{ placement_port }}>
   WSGIProcessGroup placement-api
   WSGIApplicationGroup %{GLOBAL}
   WSGIPassAuthorization On

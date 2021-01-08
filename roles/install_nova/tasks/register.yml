@@ -6,7 +6,9 @@
     password: "{{ nova_pass }}"
     domain: default
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create role for user Nova
   os_user_role:
@@ -15,8 +17,10 @@
     role: admin
     project: service
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     state: present
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create Compute service
   os_keystone_service:
@@ -24,16 +28,19 @@
     auth: "{{ openstack_auth }}"
     service_type: compute
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     description: Openstack Compute
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create endpoint for Nova
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: nova
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8774/v2.1"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ nova_api_port }}/v2.1"
+     region: "{{ region_name }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -41,4 +48,24 @@
     - admin
     - internal
   run_once: true
+  when: region_name == region_main_site
 
+- name: Create endpoint for Nova other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: nova
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ nova_api_port }}/v2.1"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site

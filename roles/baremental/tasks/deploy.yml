@@ -1,0 +1,20 @@
+---
+- include_tasks: kernel.yml
+
+- include_tasks: disable_services.yml
+
+- include_tasks: add_repo.yml
+
+- include_tasks: install_tools.yml
+
+- include_tasks: hostname.yml
+
+- include_tasks: config_ssh.yml
+
+- include_tasks: copy_cert.yml
+  when:
+    - enable_ssl | bool
+- include_tasks: copy_octavia_certs.yml
+  when:
+    - enable_ssl | bool
+    - enable_octavia | bool

@@ -1,0 +1,96 @@
+- name: collect facts about system services
+  service_facts:
+  register: services_status
+
+- name: Wait for port 3306 to become open on the host, don't start checking for 10 seconds
+  wait_for:
+      host: "{{ management_ip_address }}"
+      port: 3306
+      delay: 10
+      msg: "  Please check Mariadb-server"
+      timeout: 15
+  ignore_errors: True
+
+- name: Wait for port 4567 to become open on the host, don't start checking for 10 seconds
+  wait_for:
+      host: "{{ management_ip_address }}"
+      port: 4567
+      delay: 10
+      msg: " Please check Mariadb-server"
+      timeout: 15
+  ignore_errors: True
+
+- name: Show status Mariadb-server
+  debug:
+    msg: "Mariadb-server status is {{ services_status.ansible_facts.services['mariadb.service'].state }}"
+
+- name: Put all Node has mariadb status Error to a list
+  set_fact:
+      mariadb_status: "{{ hostvars[item].services_status.ansible_facts.services['mariadb.service'].state }}" 
+  run_once: yes
+  register: show_all_mariadb_status
+  with_items: 
+      - "{{ groups['controller'] }}"   
+
+
+- name: Set fact list of all Node has mariadb status Error
+  set_fact:
+    list_error_status: "{{ show_all_mariadb_status.results | map(attribute='ansible_facts.mariadb_status') | reject('search', 'running')  | list }}"
+
+- name: Show list_error_status
+  debug:
+    var: list_error_status
+
+- name: Mariadb-server has problem
+  fail:
+    msg: "Mariadb-server status is {{ services_status.ansible_facts.services['mariadb.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['mariadb.service'].state != "running"
+  ignore_errors: True
+
+
+############################################################################------two nodes down---------###########################
+
+- name: Set rebuild Cluster after reboot
+  lineinfile:
+    path: /var/lib/mysql/grastate.dat
+    regexp: '^safe_to_bootstrap: 0'
+    insertafter: '^#safe_to_bootstrap: 0'
+    line: 'safe_to_bootstrap: 1'
+  when: 
+      - list_error_status is defined
+      - list_error_status | length | int == 2 
+      - services_status.ansible_facts.services['mariadb.service'].state == "running"
+
+- name: Create Galera Cluster
+  shell: /usr/bin/galera_new_cluster
+  when: 
+      - list_error_status is defined
+      - list_error_status | length | int == 2
+      - services_status.ansible_facts.services['mariadb.service'].state == "running"
+
+
+############################################################################------three nodes down---------###########################
+- name: Set rebuild Cluster after reboot
+  lineinfile:
+    path: /var/lib/mysql/grastate.dat
+    regexp: '^safe_to_bootstrap: 0'
+    insertafter: '^#safe_to_bootstrap: 0'
+    line: 'safe_to_bootstrap: 1'
+  when: 
+      - list_error_status is defined
+      - list_error_status | length | int == 3 
+
+- name: Create Galera Cluster
+  shell: /usr/bin/galera_new_cluster
+  run_once: yes
+  when: 
+      - list_error_status is defined
+      - list_error_status | length | int == 3 
+
+
+- name: Start mariadb 
+  systemd:
+    state: started
+    enabled: true
+    name: mariadb
+  throttle: 1 

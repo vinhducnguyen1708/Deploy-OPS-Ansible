@@ -1,0 +1,21 @@
+---
+- name: Checking the api_interface is present
+  fail: "msg='Please check the api_interface property - interface {{ management_interface }} not found'"
+  when: management_interface not in ansible_interfaces
+
+- name: Checking the api_interface is active
+  fail: "msg='Please check the api_interface settings - interface {{ management_interface }} is not active'"
+  when: not hostvars[inventory_hostname]['ansible_' + management_interface]['active']
+
+- name: Checking the api_interface ip address configuration
+  fail: "msg='Please check the api_interface settings - interface {{ management_interface }} ip address problem'"
+  when: management_ip_address is not defined
+
+- name: Checking empty passwords in passwords.yml. Run "python genpassword.py" if this task fails
+  command:
+    cmd: grep '^[^#].*:\s*$' "passwords.yml"
+  delegate_to: localhost
+  run_once: True
+  register: result
+  changed_when: false
+  failed_when: result.stdout | regex_replace('(.*ssh_key.*)', '')  is search(":")

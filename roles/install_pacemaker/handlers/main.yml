@@ -4,18 +4,33 @@
     state: started
     enabled: true
     name: pacemaker
+
 - name: enable_services corosync
   systemd:
     state: started
     enabled: true
     name: corosync
-- name: enable_services haproxy
+
+- name: Start haproxy
+  systemd:
+    state: started
+    enabled: true
+    name: haproxy
+
+- name: Restart haproxy
   systemd:
     state: restarted
     enabled: true
     name: haproxy
+
 - name: start_pacemaker
   systemd:
     state: started
     enabled: true
     name: pcsd
+
+- name: stop_haproxy
+  systemd:
+    state: stopped
+    enabled: true
+    name: haproxy

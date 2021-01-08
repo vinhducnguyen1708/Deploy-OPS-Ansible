@@ -3,4 +3,51 @@
   yum:
     name: "{{ nova_compute_packages }}"
 
+- name: Add user 'nova' with a bash shell
+  user:
+    name: nova
+    shell: /bin/bash
 
+- name: Create SSH config directory for nova
+  file:
+    path: /var/lib/nova/.ssh
+    state: directory
+
+- name: Config SSH key for user Nova
+  copy:
+    src: /root/.ssh/id_rsa
+    dest: /var/lib/nova/.ssh/id_rsa
+    owner: nova
+    group: nova
+    mode: 0600
+
+- name: Config user nova id_rsa.pub
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: /var/lib/nova/.ssh/id_rsa.pub
+    owner: nova
+    group: nova
+    mode: 0600
+
+- name: Config user nova authorized_keys
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: /var/lib/nova/.ssh/authorized_keys
+    owner: nova
+    group: nova
+    mode: 0600
+
+- name: config ssh for user nova
+  template:
+    src: config-ssh.j2
+    dest: /var/lib/nova/.ssh/config
+    owner: nova
+    group: nova
+    mode: 0600
+
+- name: Chown ssh nova
+  file:
+    path: /var/lib/nova/.ssh
+    owner: nova
+    group: nova
+    mode: 0700

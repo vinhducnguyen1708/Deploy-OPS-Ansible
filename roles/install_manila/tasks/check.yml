@@ -1,0 +1,35 @@
+---
+- name: Show status Openstack-manila-api
+  debug:
+    msg: "openstack-manila-api status is {{ services_status.ansible_facts.services['openstack-manila-api.service'].state }}"
+
+- name: Openstack-manila-api has problem
+  fail:
+    msg: "Openstack-manila-api status is {{ services_status.ansible_facts.services['openstack-manila-api.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-manila-api.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Show status Openstack-manila-scheduler
+  debug:
+    msg: "openstack-manila-scheduler status is {{ services_status.ansible_facts.services['openstack-manila-scheduler.service'].state }}"
+
+- name: Openstack-manila-scheduler has problem
+  fail:
+    msg: "Openstack-manila-scheduler status is {{ services_status.ansible_facts.services['openstack-manila-scheduler.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-manila-scheduler.service'].state != "running"
+  ignore_errors: True
+
+
+
+- name: Show status Openstack-manila-share
+  debug:
+    msg: "openstack-manila-share status is {{ services_status.ansible_facts.services['openstack-manila-share.service'].state }}"
+
+- name: Openstack-manila-share has problem
+  fail:
+    msg: "Openstack-manila-share status is {{ services_status.ansible_facts.services['openstack-manila-share.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-manila-share.service'].state != "running"
+  ignore_errors: True
+
+

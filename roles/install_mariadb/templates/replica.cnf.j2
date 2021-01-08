@@ -1,12 +1,17 @@
+[server]
 [mysqld]
-#GTID giong nhau o 3 node
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+log-error=/var/log/mariadb/mariadb.log
+pid-file=/run/mariadb/mariadb.pid
 gtid_domain_id=1
-#Server ID khac nhau o 3 node
-server_id="{{ 600 | random(seed=inventory_hostname) }}"
-#binlog-do-db=keystone
-binlog_format=ROW
+server-id={{ 600 | random(seed=inventory_hostname) }}
 log_slave_updates=1
 log_bin=binlog
 log_bin_index=binlog.index
-report-host={{ inventory_hostname }}
-report-port=3306
+report-port={{ mysql_cluster_port }}
+report-host={{ management_ip_address }}
+[galera]
+[embedded]
+[mariadb]
+[mariadb-10.3]

@@ -1,0 +1,33 @@
+---
+- name: Checking if ip_vip_address are not pingable from any node
+  command: "{{ item.command }} -c 3 {{ item.address }}"
+  register: ping_output
+  changed_when: false
+  failed_when: ping_output.rc != 1
+  with_items:
+    - address: "{{ ip_vip_address }}"
+      command: "{{ 'ping' if ip_vip_address|ipv4 else 'ping6' }}"
+  when:
+    - enable_haproxy | bool
+
+- name: Checking if ip_vip_address is in the same network as MGNT interface on all nodes
+  become: true
+  command: ip -o addr show dev {{ management_interface }}
+  register: ip_addr_output
+  changed_when: false
+  failed_when: >-
+    ( ip_addr_output is failed or
+     ip_vip_address | ipaddr(ip_addr_output.stdout.split()[3]) is none)
+  when:
+    - enable_haproxy | bool
+
+- name: Checking free port for HAProxy stats
+  wait_for:
+    host: "{{ ip_vip_address }}"
+    port: "8080"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_haproxy | bool
+

@@ -1,16 +1,18 @@
 [DEFAULT]
-bind_host = {{ MGNT_IP }}
+bind_host = {{ management_ip_address }}
 interface_driver = openvswitch
 auth_strategy = keystone
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address']  }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address']  }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 core_plugin = ml2
+advertise_mtu = true
+global_physnet_mtu = 1550
 [cors]
 [database]
 [keystone_authtoken]
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[inventory_hostname]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[inventory_hostname]['ansible_' + management_interface]['ipv4']['address']  }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_name = default
@@ -18,22 +20,28 @@ user_domain_name = default
 project_name = service
 username = neutron
 password = {{ neutron_pass }}
-region_name = {{ REGION }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+region_name = {{ region_name }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
 [oslo_concurrency]
 lock_path = /var/lib/neutron/tmp
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
+
 [oslo_messaging_rabbit]
+{% if groups['controller'] | length == 1 %}
 rabbit_ha_queues = true
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
+rabbit_max_retries = 0
 amqp_durable_queues = true
+{% endif %}
+
+
 [oslo_middleware]
 [oslo_policy]
 [privsep]
 [ssl]
-

@@ -1,0 +1,10 @@
+---
+- name: Show status openstack-glance-api
+  debug:
+    msg: "Glance-api status is {{ services_status.ansible_facts.services['openstack-glance-api.service'].state }}"
+
+- name: Openstack-glance-api has problem
+  fail:
+    msg: "Glance-api status is {{ services_status.ansible_facts.services['openstack-glance-api.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-glance-api.service'].state != "running"
+  ignore_errors: True

@@ -1,0 +1,53 @@
+---
+- hosts: compute
+  become: yes
+  gather_facts: yes
+     #   ip_something: "{{ ansible_facts[management_interface]['ipv4']['address'] }}"
+  tasks:
+    #  - name: fghjk  
+    #    debug: 
+    #      msg: "{{ item[1] }}" 
+    #    delegate_to: "{{ item[0] }}"
+    #    with_together:
+    #         - "{{ groups }}"
+    #         - "{{ nodes }}"
+      #  run_once: yes
+    #  - name: show me
+    #    debug:
+    #      var: item
+    #    loop:
+    #       - "{{ server }}"
+    #    register: abc
+    #  - name: Setfact
+    #    set_fact:
+    #        name: name
+    #  - name: show something
+    #    debug:
+    #       var: item.controller01_ntl2 | map(attribute='name') |list
+    #    with_items:
+    #      - "{{ nodes | default([]) }}"
+    # - name: Disable ssh password root
+    #   lineinfile:
+    #     path: /etc/ssh/sshd_config
+    #     regexp: 'PermitRootLogin yes'
+    #     line: 'PermitRootLogin prohibit-password'
+    #  - name: Login Docker
+    #    docker_login:
+    #      username: 
+    #      password: vinhducnguyen1998
+    #      - name: copy to a block
+    #    blockinfile:
+    #      block: >
+    #          export PROMPT_COMMAND='RETRN_VAL=$?;
+    #          logger -p local6.debug -t bash "$(whoami) [$$]:
+    #          $(history 1 | sed "s/^[ ]*[0-9]\+[ ]*//" ) [$RETRN_VAL]"'
+    #      path: /etc/bashrc
+        - name: Show me var
+          debug:
+                  # var: hostvars[inventory_hostname]['ansible_bond2']['ipv4']['address']
+                  # var: ansible_facts
+             var: management_network_address
+                  #     - data_ip_address
+          #msg: "{{ management_ip_address }} and {{ management_network_address }} and {{ management_cidr }}"
+
+          

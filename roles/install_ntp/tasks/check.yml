@@ -1,0 +1,10 @@
+---
+- name: Show status Chronyd
+  debug:
+    msg: "Chronyd status is {{ services_status.ansible_facts.services['chronyd.service'].state }}"
+
+- name: Chronyd has problem
+  fail:
+    msg: "Chronyd status is {{ services_status.ansible_facts.services['chronyd.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['chronyd.service'].state != "running"
+  ignore_errors: True

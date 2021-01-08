@@ -4,23 +4,19 @@
     state: restarted
     enabled: true
     name: openvswitch
+  throttle: 1 
 
-
-- name: Restart neutron service
+- name: Restart neutron-openvswitch-agent service
   systemd:
     state: restarted
     enabled: true
     name: neutron-openvswitch-agent
+  throttle: 1 
 
-- name: Restart service libvirtd
+- name: Restart neutron-l3-agent service
   systemd:
     state: restarted
     enabled: true
-    name: libvirtd
-
-- name: Restart service openstack-nova-compute
-  systemd:
-    state: restarted
-    enabled: true
-    name: openstack-nova-compute
-
+    name: neutron-l3-agent
+  throttle: 1 
+  when: enable_neutron_dvr | bool

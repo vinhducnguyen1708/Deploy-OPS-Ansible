@@ -1,3 +1,5 @@
 ---
 glance_packages:
    - openstack-glance 
+
+glance_api_port: 9292

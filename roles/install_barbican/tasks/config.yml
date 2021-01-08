@@ -9,7 +9,6 @@
     path: /etc/barbican/barbican-api-paste.ini.bak
   register: barbican_api_paste_bak
 
-
 - name: Backup file config /etc/barbican/barbican-api-paste.ini
   copy:
    src: /etc/barbican/barbican-api-paste.ini
@@ -24,12 +23,15 @@
    dest: /etc/barbican/barbican.conf.bak
    remote_src: yes
   when:
-    - not  barbican_conf_bak.stat.exists
+    - not barbican_conf_bak.stat.exists
 
 - name: Config file barbican.conf
   template:
     src: barbican.conf.j2
     dest: /etc/barbican/barbican.conf
+    mode: 0640
+    group: barbican
+    owner: root
   notify:
       - restart Barbican-API service
       - restart HTTP service
@@ -38,16 +40,37 @@
   template:
     src: barbican-api-paste.ini.j2
     dest: /etc/barbican/barbican-api-paste.ini
+    mode: 0640
+    group: barbican
+    owner: root
   notify:
       - restart Barbican-API service
       - restart HTTP service
 
+- name: Chown group, user barbican
+  file:
+    path: /etc/barbican
+    owner: root
+    group: barbican
+    mode: u=rwX,g=rX
+    recurse: yes
+    state: directory
+
+- name: Check if table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `barbican` LIKE 'container_secret';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: barbicandb_table
+  run_once: yes
 
 - name: Populate the Key Manager service database
   shell: |
        su -s /bin/sh -c "barbican-manage db upgrade" barbican
   run_once: true
-  when: my_action == "deploy"
+  when:
+    - my_action == "deploy"
+    - barbicandb_table.stdout == ""
 
 - name: Config HTTP for barbican
   template:
@@ -62,7 +85,17 @@
       path: /etc/barbican/gunicorn-config.py
       regexp: '^bind '
       insertafter: '^#bind '
-      line: "bind = '{{ MGNT_IP }}:9311'"
+      line: "bind = '{{ management_ip_address }}:{{ barbican_api_port }}'"
   notify:
       - restart Barbican-API service
       - restart HTTP service
+
+- meta: flush_handlers
+
+- name: Wait until listening on Port {{ keystone_port }}
+  wait_for:
+    host: "{{ ip_vip_address }}"
+    port: "{{ keystone_port }}"
+    delay: 10
+    msg: " Please check Resource IP VIP"
+    timeout: 15

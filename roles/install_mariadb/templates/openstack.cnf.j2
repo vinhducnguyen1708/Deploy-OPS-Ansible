@@ -1,8 +1,17 @@
+[server]
 [mysqld]
-bind-address = {{ MGNT_IP }}
-
+max_connections = 102400
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+log-error=/var/log/mariadb/mariadb.log
+pid-file=/run/mariadb/mariadb.pid
+bind-address = {{ management_ip_address }}
 default-storage-engine = innodb
 innodb_file_per_table = on
 max_connections = 4096
 collation-server = utf8_general_ci
 character-set-server = utf8
+[galera]
+[embedded]
+[mariadb]
+[mariadb-10.3]

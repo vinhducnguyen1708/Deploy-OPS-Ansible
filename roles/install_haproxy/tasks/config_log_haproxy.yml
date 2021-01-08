@@ -1,21 +1,45 @@
 ---
-- name: Ucommenting a line in /etc/rsyslog.conf.
-  replace:
-      path: /etc/rsyslog.conf
-      regexp: '#\$ModLoad imudp'
-      replace: '$ModLoad imudp'
-- name: Ucommenting a line in /etc/rsyslog.conf.
-  replace:
-      path: /etc/rsyslog.conf
-      regexp: '#\$UDPServerRun 514'
-      replace: '$UDPServerRun 514' 
-- name: Insert a line at the end of a file /etc/rsyslog.conf.
-  lineinfile:
-       path: /etc/rsyslog.conf
-       line: $UDPServerAddress 127.0.0.1
-- name: Config rsyslog for haproxy
+- name: Install Rsyslog
+  yum:
+    name: rsyslog
+
+- name: Create the /var/lib/haproxy/dev directory 
+  file:
+    path: /var/lib/haproxy/dev
+    state: directory
+
+- name: Check /etc/rsyslog.conf existed
+  stat:
+    path: /etc/rsyslog.conf.bak
+  register: rsyslog_conf_bak
+
+- name: Backup file config rsyslog
+  copy:
+   src: /etc/rsyslog.conf
+   dest: /etc/rsyslog.conf.bak
+   remote_src: yes
+  when:
+    - not rsyslog_conf_bak.stat.exists
+
+- name: Config Rsyslog
   template:
-    src: haproxy.cnf.j2
-    dest: /etc/rsyslog.d/haproxy.conf
+    src: rsyslog.conf.j2
+    dest: /etc/rsyslog.conf
+    mode: 0644
   notify:
-     - restart_rsyslog 
+     - Restart rsyslog
+
+- name: Config Log for Haproxy
+  template:
+     src: 99-haproxy.conf.j2
+     dest: /etc/rsyslog.d/99-haproxy.conf
+     mode: 0644
+  notify:
+     - Restart rsyslog
+
+- name: Config Rorate Haproxy Logs
+  template:
+      src: rotate-haproxy.j2
+      dest: /etc/logrotate.d/haproxy
+      mode: 0644
+

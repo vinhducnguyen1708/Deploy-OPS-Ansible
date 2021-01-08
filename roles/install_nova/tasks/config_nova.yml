@@ -10,17 +10,37 @@
    dest: /etc/nova/nova.conf.bak
    remote_src: yes
   when:
-    - not  nova_conf_bak.stat.exists
+    - not nova_conf_bak.stat.exists
 
 - name: Config file nova.conf
   template:
     src: nova.conf.j2
     dest: /etc/nova/nova.conf
+    mode: 0640
+    group: nova
+    owner: root
   notify:
     - Restart Nova-api Services
     - Restart Nova-scheduler Services
     - Restart Nova-condutor Services
     - Restart Nova-novncproxy Services
+
+- name: Chown group, user nova
+  file:
+    path: /etc/nova
+    owner: root
+    group: nova
+    mode: u=rwX,g=rX
+    recurse: yes
+    state: directory
+
+- name: Check if instances table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `nova` LIKE 'instances';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: novadb_table
+  run_once: yes 
 
 - name: Populate the nova-api database
   shell: |
@@ -29,4 +49,6 @@
     su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
     su -s /bin/sh -c "nova-manage db sync" nova
   run_once: true
-  when: my_action == "deploy"
+  when:
+    - my_action == "deploy"
+    - novadb_table.stdout == ""

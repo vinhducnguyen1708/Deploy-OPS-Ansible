@@ -1,0 +1,24 @@
+---
+- name: Show status Neutron-openvswitch-agent
+  debug:
+    msg: "Neutron-openvswitch-agent status is {{ services_status.ansible_facts.services['neutron-openvswitch-agent.service'].state }}"
+
+- name: Neutron-openvswitch-agent has problem
+  fail:
+    msg: "Neutron-openvswitch-agent status is {{ services_status.ansible_facts.services['neutron-openvswitch-agent.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['neutron-openvswitch-agent.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Show status Neutron-l3-agent
+  debug:
+    msg: "Neutron-l3-agent status is {{ services_status.ansible_facts.services['neutron-l3-agent.service'].state }}"
+  when: enable_neutron_dvr | bool
+  
+- name: Neutron-l3-agent has problem
+  fail:
+    msg: "Neutron-l3-agent status is {{ services_status.ansible_facts.services['neutron-l3-agent.service'].state }} please check your system"
+  when:
+   - services_status.ansible_facts.services['neutron-l3-agent.service'].state != "running"
+   - enable_neutron_dvr | bool
+  ignore_errors: True

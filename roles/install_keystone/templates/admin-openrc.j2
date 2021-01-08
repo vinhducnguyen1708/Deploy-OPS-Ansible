@@ -6,8 +6,7 @@ export OS_PASSWORD={{ admin_pass }}
 export OS_AUTH_URL={{ keystone_url }}
 export OS_IDENTITY_API_VERSION=3
 export OS_IMAGE_API_VERSION=2
-export OS_REGION_NAME={{ REGION }}
+export OS_REGION_NAME={{ region_name }}
 {% if enable_ssl | bool %}
 export OS_CACERT=/etc/ssl/private/{{ cafile_name }}.pem
 {% endif %}
-

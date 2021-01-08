@@ -2,3 +2,15 @@
 - name: Install the components for Neutron
   yum:
     name: "{{ neutron_packages }}"
+
+- name:  Install the FWaaS packages
+  yum:
+    name: "{{ neutron_fwaas_packages }}"
+  when:
+     - enable_neutron_fwaas | bool
+
+- name: Install VPNaaS packages
+  yum:
+    name: "{{ neutron_vpnaas_packages }}"
+  when: 
+     - enable_neutron_vpnaas | bool

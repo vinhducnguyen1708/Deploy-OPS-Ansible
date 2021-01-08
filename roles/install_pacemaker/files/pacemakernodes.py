@@ -1,15 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
-import commands
+import subprocess
 
-
-out = commands.getstatusoutput("pcs status")
+out = subprocess.getstatusoutput("pcs status")
 begin = out[1].index('Online')
-end = out[1].index('Full list of resources')
+end = out[1].index('Full List of Resources')
 
 data = out[1][begin:end].strip("Online: [ ")
 
 nodes = data[:-5].strip('[').strip(']').split(' ')
 
-print len(nodes)
-
+print (len(nodes))

@@ -4,14 +4,11 @@
     state: restarted
     enabled: true
     name: httpd
+  throttle: 1
+  
 
-- name: sleep for 10s and continue with play
-  wait_for:
-    timeout: 10
-  delegate_to: localhost
-
-- name: Create script test system
-  template:
-    src: script-test.sh.j2
-    dest: /root/script-test.sh
-    mode: 0751
+- name: Restart crond
+  systemd:
+     state: restarted
+     enabled: true
+     name: crond

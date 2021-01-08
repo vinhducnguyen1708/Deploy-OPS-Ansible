@@ -1,10 +1,20 @@
 [DEFAULT]
-my_ip = {{ MGNT_IP }}
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address']  }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+my_ip = {{ management_ip_address }}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address']  }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 enabled_apis = osapi_compute,metadata
 use_neutron = True
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
+compute_driver = libvirt.LibvirtDriver
+resume_guests_state_on_host_boot = True
+ram_allocation_ratio = {{ ram_ratio }}
+allow_resize_to_same_host = True
+allow_migrate_to_same_host = True
+instance_usage_audit = True
+instance_usage_audit_period = hour
+notify_on_state_change = vm_and_task_state
+notification_driver = messagingv2
+
 [api]
 auth_strategy = keystone
 [api_database]
@@ -13,55 +23,82 @@ verify_ssl = false
 [cache]
 {% if enable_cinder | bool %}
 [cinder]
-os_region_name = {{ REGION }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+os_region_name = {{ region_name }}
+catalog_info = volumev3:cinderv3:internalURL
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/
+auth_type = password
+project_domain_name = default
+user_domain_id = default
+project_name = service
+username = cinder
+password = {{ cinder_pass }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}true{% else %}false{% endif %}
+
 {% endif %}
 [compute]
+
 [conductor]
+
 [console]
+
 [consoleauth]
+
 [cors]
+
 [database]
+
 [devices]
+
 [ephemeral_storage_encryption]
+
 [filter_scheduler]
+
 [glance]
-api_servers = {{ keystone_protocol }}://{{ IP_VIP }}:9292
-{% if enable_ssl | bool %}
-protocol = https
-insecure = True
-{% endif %}
+api_servers = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ glance_api_port }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+os_region_name = {{ region_name }}
+
 [guestfs]
+
 [healthcheck]
+
 [hyperv]
+
 [ironic]
+
 {% if enable_barbican | bool %}
 [key_manager]
 backend = barbican
 api_class = castellan.key_manager.barbican_key_manager.BarbicanKeyManager
 {% endif %}
+
 [keystone]
+
 [keystone_authtoken]
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
 auth_type = password
 project_domain_name = default
 user_domain_name = default
 project_name = service
 username = nova
+region_name = {{ region_name }}
 password = {{ nova_pass }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
 [libvirt]
-{% if enable_ceph | bool %}
+virt_type = kvm
+{% if enable_cinder_backend_ceph | bool %}
 rbd_user = cinder
 rbd_secret_uuid = {{ openstack_uuid }}
-images_type = rbd
-images_rbd_pool = images
-images_rbd_ceph_conf = /etc/ceph/ceph.conf
+#images_type = rbd
+#images_rbd_pool = vms
+#images_rbd_ceph_conf = /etc/ceph/ceph.conf
 {% endif %}
 inject_partition = -2
 inject_password = false
@@ -69,72 +106,112 @@ live_migration_flag = VIR_MIGRATE_UNDEFINE_SOURCE,VIR_MIGRATE_PEER2PEER,VIR_MIGR
 inject_key = false
 disk_cachemodes = "network=writeback"
 hw_disk_discard = unmap
+#cpu_mode = custom
+#cpu_model=Broadwell
 [metrics]
+
 [mks]
+
 [neutron]
-url = {{ keystone_protocol }}://{{ IP_VIP }}:9696
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ neutron_server_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
 auth_type = password
 project_domain_name = default
 user_domain_name = default
-region_name = {{ REGION }}
+region_name = {{ region_name }}
 project_name = service
 username = neutron
 password = {{ neutron_pass }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+cafile = {{ openstack_cacert }}
 service_metadata_proxy = true
 metadata_proxy_shared_secret = {{ metadata_secret }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
 [notifications]
+
 [osapi_v21]
+
 [oslo_concurrency]
 lock_path = /var/lib/nova/tmp
+
 [oslo_messaging_amqp]
+
 [oslo_messaging_kafka]
+
 [oslo_messaging_notifications]
+
 [oslo_messaging_rabbit]
+{% if groups['controller'] | length == 1 %}
 rabbit_ha_queues = true
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
+rabbit_max_retries = 0
 amqp_durable_queues = true
+{% endif %}
+
+
 [oslo_middleware]
+
 [oslo_policy]
+
 [pci]
+
 [placement]
-os_region_name = {{ REGION }}
+os_region_name = {{ region_name }}
 project_domain_name = Default
 project_name = service
 auth_type = password
 user_domain_name = Default
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000/v3
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3
 username = placement
+region_name = {{ region_name }}
 password = {{ placement_pass }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
 [powervm]
+
 [privsep]
+
 [profiler]
+
 [quota]
+
 [rdp]
+
 [remote_debug]
+
 [scheduler]
+
 [serial_console]
+
 [service_user]
+
 [spice]
+
 [upgrade_levels]
+
 [vault]
+
 [vendordata_dynamic_auth]
+
 [vmware]
+
 [vnc]
 enabled = True
 server_listen = 0.0.0.0
-server_proxyclient_address = {{ MGNT_IP }}
-novncproxy_base_url = http://{{ IP_VIP }}:6080/vnc_auto.html
+server_proxyclient_address = {{ management_ip_address }}
+novncproxy_base_url = {{ keystone_protocol }}://{{ novavnc_domain }}:{{ vnc_port }}/vnc_auto.html
+
 [workarounds]
+
 [wsgi]
+
 [xenserver]
+
 [xvp]
+
 [zvm]
 

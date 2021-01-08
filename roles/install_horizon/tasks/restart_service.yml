@@ -4,9 +4,11 @@
     state : restarted
     enabled: true
     name: httpd.service
+  throttle: 1
 
 - name: restart memcached
   systemd:
     state : restarted
     enabled: true
     name: memcached.service
+  throttle: 1

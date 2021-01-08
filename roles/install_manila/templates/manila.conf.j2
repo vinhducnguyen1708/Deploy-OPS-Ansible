@@ -1,0 +1,140 @@
+[DEFAULT]
+use_forwarded_for = true
+my_ip = {{ management_ip_address }}
+osapi_share_listen = {{ management_ip_address }}
+osapi_share_listen_port = {{ manila_api_port }}
+rootwrap_config = /etc/manila/rootwrap.conf
+api_paste_config = /etc/manila/api-paste.ini
+auth_strategy = keystone
+os_region_name = {{ region_name }}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+default_share_type = default_share_type
+enabled_share_protocols = NFS,CIFS
+enabled_share_backends = generic
+
+[cephfsnative1]
+driver_handles_share_servers = False
+share_backend_name = CEPHFSNATIVE1
+share_driver = manila.share.drivers.cephfs.driver.CephFSDriver
+cephfs_conf_path = /etc/ceph/ceph.conf
+cephfs_protocol_helper_type = CEPHFS
+cephfs_auth_id = manila
+cephfs_cluster_name = ceph
+cephfs_enable_snapshots = false
+
+
+[cinder]
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = {{ region_name }}
+project_name = service
+username = cinder
+password = {{ cinder_pass }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
+[cors]
+
+[database]
+connection = mysql+pymysql://manila:{{ maniladb_pass }}@{{ ip_vip_address }}/manila
+max_retries = -1
+
+[healthcheck]
+
+[keystone_authtoken]
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = default
+user_domain_name = default
+project_name = service
+username = manila
+region_name = {{ region_name }}
+password = {{ manila_pass }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
+[neutron]
+url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = {{ region_name }}
+project_name = service
+username = neutron
+password = {{ neutron_pass }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
+[nova]
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+region_name = {{ region_name }}
+project_name = service
+username = nova
+password = {{ nova_pass }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
+
+
+[oslo_concurrency]
+[oslo_messaging_amqp]
+[oslo_messaging_kafka]
+
+[oslo_messaging_notifications]
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+
+[oslo_messaging_rabbit]
+{% if groups['controller'] | length == 1 %}
+rabbit_ha_queues = true
+rabbit_retry_interval = 1
+rabbit_retry_backoff = 2
+rabbit_max_retries = 0
+amqp_durable_queues = true
+{% endif %}
+
+
+[oslo_middleware]
+enable_proxy_headers_parsing = True
+max_request_body_size = 114688
+
+
+[oslo_policy]
+[ssl]
+
+[generic]
+share_backend_name = GENERIC
+share_driver = manila.share.drivers.generic.GenericShareDriver
+driver_handles_share_servers = True
+service_instance_flavor_id = 100
+service_image_name = manila-service-image
+service_instance_user = manila
+service_instance_password = manila
+interface_driver = manila.network.linux.interface.OVSInterfaceDriver
+
+
+
+
+
+

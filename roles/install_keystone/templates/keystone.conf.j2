@@ -1,7 +1,7 @@
 [DEFAULT]
-{% if enable_ssl | bool %}
-secure_proxy_ssl_header = HTTP_X_FORWARDED_PROTO
-{% endif %}
+admin_token = 
+insecure_debug = false
+
 [application_credential]
 [assignment]
 [auth]
@@ -9,16 +9,20 @@ secure_proxy_ssl_header = HTTP_X_FORWARDED_PROTO
 [catalog]
 [cors]
 [credential]
+
 [database]
-connection = mysql+pymysql://keystone:{{ keystonedb_pass }}@{{ IP_VIP }}{%- if enable_multisite | bool %}:3305{% endif %}/keystone
+connection = mysql+pymysql://keystone:{{ keystonedb_pass }}@{{ ip_vip_address }}{%- if region_name != region_main_site %}:{{ mysql_container_slave_port }}{% endif %}/keystone
+
 [domain_config]
-[endpoint_filter]
+[endpoint_filtr]
 [endpoint_policy]
 [eventlet_server]
 [federation]
 [fernet_receipts]
+
 [fernet_tokens]
 max_active_keys = {{ max_active_keys }}
+
 [healthcheck]
 [identity]
 [identity_mapping]
@@ -30,7 +34,9 @@ max_active_keys = {{ max_active_keys }}
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
 [oslo_messaging_rabbit]
+
 [oslo_middleware]
+max_request_body_size = 114688
 [oslo_policy]
 [policy]
 [profiler]
@@ -41,9 +47,12 @@ max_active_keys = {{ max_active_keys }}
 [saml]
 [security_compliance]
 [shadow_users]
+
 [token]
+hash_algorithm = SHA256
 provider = fernet
 expiration = {{ token_expired_sec }}
+
 [tokenless_auth]
 [totp]
 [trust]

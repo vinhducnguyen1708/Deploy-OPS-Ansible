@@ -1,0 +1,9 @@
+---
+- name: Apply role certificate
+  gather_facts: true
+  become: true
+  hosts: deployment
+  roles:
+    - { role: certificates,
+        tags: certificates }
+

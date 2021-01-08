@@ -1,0 +1,27 @@
+---
+- name: Show status Rabbitmq-server
+  debug:
+    msg: "Rabbitmq-server status is {{ services_status.ansible_facts.services['rabbitmq-server.service'].state }}"
+
+- name: Rabbitmq-server has problem
+  fail:
+    msg: "Rabbitmq-server status is {{ services_status.ansible_facts.services['rabbitmq-server.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['rabbitmq-server.service'].state != "running"
+  ignore_errors: True
+
+- name: Check if clustered
+  command: "python3 {{ deploy_directory }}/count_clustered_nodes.py"
+  register: nodes_count
+  changed_when: False
+
+- name: Check all node added to cluster
+  debug: 
+    msg: "All node are in Rabbitmq cluster"
+  when: nodes_count.stdout | int == groups['controller'] | length | int
+  ignore_errors: True
+
+- name: Check cluster failed
+  fail:
+    msg: "Some node are not in Rabbitmq cluster"
+  when: nodes_count.stdout | int != groups['controller'] | length | int
+  ignore_errors: True

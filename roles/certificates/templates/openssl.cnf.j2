@@ -2,17 +2,19 @@
 prompt = no
 distinguished_name = req_distinguished_name
 req_extensions = v3_req
-[ req_distinguished_name ]
+
+[req_distinguished_name]
 countryName                     = {{ country_name }}
 stateOrProvinceName             = {{ state_name }}
 localityName                    = {{ locality_name }}
 0.organizationName              = {{ organization_name }}
 organizationalUnitName          = {{ unit_name }}
-commonName                      = {{ IP_VIP }}
+commonName                      = {{ ip_vip_address }}
 emailAddress                    = {{ email_name }}
 
 [v3_req]
 subjectAltName = @alt_names
 
 [alt_names]
-IP.1 = {{ IP_VIP }}
+IP.1 = {{ ip_vip_address }}
+

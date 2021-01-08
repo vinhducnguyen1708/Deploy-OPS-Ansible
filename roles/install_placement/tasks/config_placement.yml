@@ -16,9 +16,44 @@
   template:
     src: placement.conf.j2
     dest: /etc/placement/placement.conf
+    mode: 0640
+    group: placement
+    owner: root
+  notify: 
+     - start httpd service
+
+- name: Chown group, user placement
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: placement
+    mode: u=rwX,g=rX
+    recurse: yes
+    state: directory
+  with_items:
+     - /etc/placement
+
+- name: Check if placement_aggregates table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `placement` LIKE 'placement_aggregates';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: placementdb_table
+  run_once: yes
 
 - name: Populate the placement-api database
   shell: su -s /bin/sh -c "placement-manage db sync" placement
   run_once: true
-  when: my_action == "deploy"
+  when:
+    - my_action == "deploy"
+    - placementdb_table.stdout == ""
 
+- meta: flush_handlers
+
+- name: Wait until listening on Port {{ placement_port }}
+  wait_for:
+    host: "{{ ip_vip_address }}"
+    port: "{{ placement_port }}"
+    delay: 10
+    msg: " Please check Resource Placement"
+    timeout: 15

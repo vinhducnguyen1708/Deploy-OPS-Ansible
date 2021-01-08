@@ -1,0 +1,15 @@
+#!/bin/bash
+
+installed=`yum list --installed | egrep -v "Installed" | awk '{print $1}'`
+lockedcount=`yum versionlock list | sed '1d' | wc -l`
+installedcount=`yum list --installed | egrep -v "Installed" | awk '{print $1}'| wc -l`
+
+if [ $lockedcount == $installedcount ];
+ then
+   echo "------------- All packages have been locked -------------"
+ else
+   echo "------------- Cleaning versionlock list -------------"
+   yum versionlock clear
+   echo "------------- Locking version of all  packages -------------"
+   yum versionlock add $installed
+  fi

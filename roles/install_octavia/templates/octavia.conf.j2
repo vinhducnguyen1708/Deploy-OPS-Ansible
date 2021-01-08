@@ -1,60 +1,63 @@
 [DEFAULT]
-host = {{ inventory_hostname }}
 log_dir = /var/log/octavia
 debug = True
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
-
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 [api_settings]
-bind_host = {{ MGNT_IP }}
-bind_port = 9876
-api_handler = queue_producer
+api_base_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ octavia_api_port }}
+bind_host = {{ management_ip_address }}
+bind_port = {{ octavia_api_port }}
 auth_strategy = keystone
 healthcheck_enabled = True
 allow_tls_terminated_listeners = True
 
 [database]
-connection = mysql+pymysql://octavia:{{ octaviadb_pass }}@{{ IP_VIP }}/octavia
+connection = mysql+pymysql://octavia:{{ octaviadb_pass }}@{{ ip_vip_address }}/octavia
+max_retries = -1
+
 [health_manager]
 bind_port = 5555
-bind_ip = {{ MGNT_IP }}
-controller_ip_port_list = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5555{% if not loop.last %},{% endif %}{% endfor %}
+bind_ip = {{ management_ip_address }}
+#bind_ip = 0.0.0.0
+controller_ip_port_list = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:5555{% if not loop.last %}, {% endif %}{% endfor %}
 
 heartbeat_key = insecure
 
 [keystone_authtoken]
-service_token_roles_required = true
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+service_token_roles_required = True
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+region_name = {{ region_name }}
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
-project_domain_name = default
-user_domain_name = default
+project_domain_name = Default
+user_domain_name = Default
 project_name = service
 username = octavia
 password = {{ octavia_pass }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}false{% endif %}
 
 [certificates]
-#cert_generator = local_cert_generator
+cert_generator = local_cert_generator
 #server_certs_key_passphrase = insecure-key-do-not-use-this-key
 ca_private_key_passphrase = {{ octavia_pass }}
 ca_private_key = /etc/octavia/certs/server_ca.key.pem
 ca_certificate = /etc/octavia/certs/server_ca.cert.pem
 {% if enable_barbican | bool %}
-region_name = {{ REGION }}
-insecure = True
+region_name = {{ region_name }}
 ca_certificates_file = {{ openstack_cacert }}
 endpoint_type = internal
 {% endif %}
 
 [networking]
+#allow_vip_network_id = True
+#allow_vip_subnet_id = True
+#allow_vip_port_id = True
 
 [haproxy_amphora]
-bind_port = 9443
+#bind_port = 9443
 server_ca = /etc/octavia/certs/server_ca.cert.pem
 client_cert = /etc/octavia/certs/client.cert-and-key.pem
 base_path = /var/lib/octavia
@@ -67,12 +70,13 @@ amp_image_tag = amphora
 amp_ssh_key_name = octavia
 amp_secgroup_list = {{ id_lb_sec_group }} 
 amp_boot_network_list = {{ id_provider_network }}
+
 amp_flavor_id = 200
 network_driver = allowed_address_pairs_driver
 compute_driver = compute_nova_driver
 amphora_driver = amphora_haproxy_rest_driver
 client_ca = /etc/octavia/certs/client_ca.cert.pem
-loadbalancer_topology = SINGLE
+loadbalancer_topology = ACTIVE_STANDBY
 amp_active_retries = 9999
 
 [task_flow]
@@ -80,56 +84,48 @@ amp_active_retries = 9999
 topic = octavia_prov
 rpc_thread_pool_size = 2
 
-[oslo_middleware]
-enable_proxy_headers_parsing = True
-
 [house_keeping]
 [amphora_agent]
 [keepalived_vrrp]
 
 [service_auth]
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
-
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
 auth_type = password
-project_domain_name = Default
-user_domain_name = Default
-project_name = service
-username = octavia
-password = {{ octavia_pass }}
-{% if enable_ssl | bool %}
-insecure = True
-# cafile = {{ openstack_cacert }}
-{% endif %}
+project_domain_name = default
+user_domain_name = default
+project_name = admin
+username = admin
+password = {{ admin_pass }}
+cafile = {{ openstack_cacert }}
+region_name = {{ region_name }}
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+insecure = {% if enable_insecure | bool %}True{% else %}false{% endif %}
 
 [glance]
-{% if enable_ssl | bool %}
-insecure = true
 ca_certificates_file = {{ openstack_cacert }}
-{% endif %}
-region_name = {{ REGION }}
+region_name = {{ region_name }}
 endpoint_type = internal
 
 [neutron]
-{% if enable_ssl | bool %}
-insecure = true
 ca_certificates_file = {{ openstack_cacert }}
-{% endif %}
-region_name = {{ REGION }}
+region_name = {{ region_name }}
+endpoint_type = internal
+
+[cinder]
+ca_certificates_file = {{ openstack_cacert }}
+region_name = {{ region_name }}
 endpoint_type = internal
 
 [nova]
-{% if enable_ssl | bool %}
-insecure = true
 ca_certificates_file = {{ openstack_cacert }}
-{% endif %}
-region_name = {{ REGION }}
+region_name = {{ region_name }}
 endpoint_type = internal
 
-[quotas]
-[audit]
-[audit_middleware_notifications]
-[driver_agent]
-
 [oslo_policy]
-policy_file = /etc/octavia/policy.json
+#policy_file = /etc/octavia/policy.json
+
+[oslo_messaging_notifications]
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+

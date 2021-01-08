@@ -1,0 +1,20 @@
+--- 
+- name: Garther_facts
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Group hosts to determine when using --limit
+      setup:
+
+- name: Restart Services
+  hosts: all
+  gather_facts: false
+  become: yes
+  tasks:
+    - name: Restart {{ service_name_restart }} service
+      systemd:
+        name: "{{ service_name_restart }}"
+        state: restarted
+        enabled: yes
+      throttle: 1
+      when: service_name_restart is defined

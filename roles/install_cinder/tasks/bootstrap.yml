@@ -2,9 +2,10 @@
 - name: Create database for Cinder
   mysql_db:
     login_user: root
+    login_unix_socket: /var/lib/mysql/mysql.sock
     login_password: "{{ mariadb_pass }}"
-    login_port: 3306
-    login_host: "{{ IP_VIP }}"
+    login_port: "{{ mysql_cluster_port }}"
+    login_host: "{{ ip_vip_address }}"
     name: cinder
     state: present
   run_once: true
@@ -12,9 +13,10 @@
 - name: Create user for Cinder
   mysql_user:
     login_user: root
+    login_unix_socket: /var/lib/mysql/mysql.sock
     login_password: "{{ mariadb_pass }}"
-    login_port: 3306
-    login_host: "{{ IP_VIP }}"
+    login_port: "{{ mysql_cluster_port }}"
+    login_host: "{{ ip_vip_address }}"
     name: cinder
     host: "{{ item }}"
     password: "{{ cinderdb_pass }}"
@@ -24,4 +26,3 @@
     - 'localhost'
     - '%'
   run_once: true
-

@@ -1,0 +1,40 @@
+---
+- name: Show status octavia-api
+  debug:
+    msg: "octavia-api status is {{ services_status.ansible_facts.services['octavia-api.service'].state }}"
+
+- name: octavia-api has problem
+  fail:
+    msg: "octavia-api status is {{ services_status.ansible_facts.services['octavia-api.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['octavia-api.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status octavia-health-manager
+  debug:
+    msg: "octavia-health-manager status is {{ services_status.ansible_facts.services['octavia-health-manager.service'].state }}"
+
+- name: octavia-health-manager has problem
+  fail:
+    msg: "octavia-health-manager status is {{ services_status.ansible_facts.services['octavia-health-manager.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['octavia-health-manager.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status octavia-housekeeping
+  debug:
+    msg: "octavia-housekeeping status is {{ services_status.ansible_facts.services['octavia-housekeeping.service'].state }}"
+
+- name: octavia-housekeeping has problem
+  fail:
+    msg: "octavia-housekeeping status is {{ services_status.ansible_facts.services['octavia-housekeeping.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['octavia-housekeeping.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status octavia-worker
+  debug:
+    msg: "octavia-worker status is {{ services_status.ansible_facts.services['octavia-worker.service'].state }}"
+
+- name: octavia-worker has problem
+  fail:
+    msg: "octavia-worker status is {{ services_status.ansible_facts.services['octavia-worker.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['octavia-worker.service'].state != "running"
+  ignore_errors: True

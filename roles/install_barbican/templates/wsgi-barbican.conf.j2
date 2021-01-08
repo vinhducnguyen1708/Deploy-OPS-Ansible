@@ -1,6 +1,6 @@
 
-<VirtualHost {{ MGNT_IP }}:9311>
-    ServerName {{ MGNT_IP }}:9311
+<VirtualHost {{ management_ip_address }}:{{ barbican_api_port }}>
+    ServerName {{ management_ip_address }}:{{ barbican_api_port }}
 
     ## Logging
     ErrorLog "/var/log/httpd/barbican_wsgi_main_error_ssl.log"

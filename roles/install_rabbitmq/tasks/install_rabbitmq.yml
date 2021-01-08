@@ -5,11 +5,22 @@
   notify:
     - start rabbitmq-server.service
 
-- meta: flush_handlers
+- name: Add LimitNOFILE=infinity
+  lineinfile:
+    dest: "/usr/lib/systemd/system/rabbitmq-server.service"
+    insertafter: 'Type=notify'
+    line: "LimitNOFILE=infinity"
 
+- name: Copy script check
+  copy:
+   src: count_clustered_nodes.py
+   dest: "{{ deploy_directory }}/" 
+   mode: '0777'
 
-- name: check if clustered
-  script: count_clustered_nodes.py
+- name: Check if clustered
+  command: "python3 {{ deploy_directory }}/count_clustered_nodes.py"
+  check_mode: no
+  failed_when: false
   register: nodes_count
   changed_when: False
 

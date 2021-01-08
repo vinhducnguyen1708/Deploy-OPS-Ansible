@@ -1,0 +1,33 @@
+---
+- name: Show status Openstack-heat-api-cfn
+  debug:
+    msg: "Openstack-heat-api status is {{ services_status.ansible_facts.services['openstack-heat-api-cfn.service'].state }}"
+
+- name: Openstack-heat-api-cfn has problem
+  fail:
+    msg: "Openstack-heat-api-cfn status is {{ services_status.ansible_facts.services['openstack-heat-api-cfn.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-heat-api-cfn.service'].state != "running"
+  ignore_errors: True
+
+
+
+- name: Show status Openstack-heat-api
+  debug:
+    msg: "Openstack-heat-api status is {{ services_status.ansible_facts.services['openstack-heat-api.service'].state }}"
+
+- name: Openstack-heat-api has problem
+  fail:
+    msg: "Openstack-heat-api status is {{ services_status.ansible_facts.services['openstack-heat-api.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-heat-api.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Show status Openstack-heat-engine
+  debug:
+    msg: "Openstack-heat-engine status is {{ services_status.ansible_facts.services['openstack-heat-engine.service'].state }}"
+
+- name: Openstack-heat-engine has problem
+  fail:
+    msg: "Openstack-heat-engine status is {{ services_status.ansible_facts.services['openstack-heat-engine.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-heat-engine.service'].state != "running"
+  ignore_errors: True

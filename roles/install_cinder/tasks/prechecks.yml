@@ -1,0 +1,19 @@
+---
+- name: Checking free port for Cinder API
+  wait_for:
+    host: "{{ management_ip_address }}"
+    port: "{{ cinder_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+
+- name: Checking free port for Cinder API HAProxy
+  wait_for:
+    host: "{{ ip_vip_address }}"
+    port: "{{ cinder_api_port }}"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped
+  when:
+    - enable_cinder | bool
+    - enable_haproxy | bool

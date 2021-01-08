@@ -1,0 +1,10 @@
+DEVICE=bond1
+ONBOOT=yes
+DEVICETYPE=ovs
+TYPE=OVSBond
+OVS_BRIDGE=br-provider
+BOOTPROTO=none
+MTU=9000
+BOND_IFACES="{% for interface in item %}{{ interface }}{% if not loop.last %} {% endif %}{% endfor %}"
+OVS_OPTIONS="bond_mode=balance-tcp lacp=active"
+HOTPLUG=no

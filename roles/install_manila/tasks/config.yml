@@ -1,0 +1,50 @@
+---
+- name: Check /etc/manila/manila.conf.bak existed
+  stat:
+    path: /etc/manila/manila.conf.bak
+  register: manila_conf_bak
+
+- name: Backup file config /etc/manila/manila.conf
+  copy:
+   src: /etc/manila/manila.conf
+   dest: /etc/manila/manila.conf.bak
+   remote_src: yes
+  when:
+    - not manila_conf_bak.stat.exists
+
+- name: Config file manila.conf
+  template:
+    src: manila.conf.j2
+    dest: /etc/manila/manila.conf
+    mode: 0640
+    group: manila
+    owner: root
+  notify: 
+    - Restart manila-api Services
+    - Restart manila-scheduler Services
+    - Restart manila-share Services
+
+- name: Chown group, user manila
+  file:
+    path: "/etc/manila"
+    owner: root
+    group: manila
+    mode: u=rwX,g=rX
+    recurse: yes
+    state: directory
+
+- name: Check if table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `manila` LIKE 'shares';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: maniladb_table
+  run_once: yes
+
+- name: Populate the Shared File Systems database
+  shell: |
+     su -s /bin/sh -c "manila-manage db sync" manila
+  run_once: true
+  when:
+    - my_action == "deploy"
+    - maniladb_table.stdout == ""

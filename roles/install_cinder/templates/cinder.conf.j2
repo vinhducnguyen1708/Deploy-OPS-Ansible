@@ -1,24 +1,31 @@
 [DEFAULT]
-my_ip = {{ MGNT_IP }}
+my_ip = {{ management_ip_address }}
+host = controller
 use_forwarded_for = true
-osapi_volume_listen = {{ MGNT_IP }}
-osapi_volume_listen_port = 8776
-glance_api_servers = {{ keystone_protocol }}://{{ IP_VIP }}:9292
+osapi_volume_listen = {{ management_ip_address }}
+osapi_volume_listen_port = {{ cinder_api_port }}
+glance_api_servers = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ glance_api_port }}
 glance_api_version = 2
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 log_dir = /var/log/cinder
+state_path = /var/lib/cinder
 auth_strategy = keystone
 volume_name_template = volume-%s
 api_paste_config = /etc/cinder/api-paste.ini
 rootwrap_config = /etc/cinder/rootwrap.conf
+default_volume_type = {{ default_volume_type_ceph }}
 {% if enable_ssl | bool %}
 allowed_direct_url_schemes = cinder
-glance_api_insecure = true
+glance_api_insecure = {% if enable_insecure | bool %}true{% else %}False{% endif %}
+
 glance_ca_certificates_file = /etc/ssl/private/haproxy.pem
 {% endif %}
-{% if enable_ceph | bool %}
-enabled_backends = ceph
+
+enabled_backends = {{ cinder_enabled_backends|map(attribute='name') | join(',') }}
+
+
+{% if enable_cinder_backend_ceph | bool %}
 
 backup_driver = cinder.backup.drivers.ceph.CephBackupDriver
 backup_ceph_conf = /etc/ceph/ceph.conf
@@ -30,13 +37,16 @@ backup_ceph_stripe_count = 0
 restore_discard_excess_bytes = true
 {% endif %}
 
-{% if  enable_lvm | bool %}
-glance_api_version = 2
-enabled_backends = lvm
-{% endif %}
-{% if  enable_lvm | bool %}
+quota_backups = -1
+quota_driver = cinder.quota.DbQuotaDriver
+quota_gigabytes = -1
+quota_snapshots = -1
+quota_volumes = -1
+use_default_quota_class = False
+
+{% if enable_cinder_backend_lvm | bool %}
 [lvm]
-iscsi_ip_address = {{ MGNT_IP }}
+iscsi_ip_address = {{ management_ip_address }}
 volumes_dir = /var/lib/cinder/volumes
 volume_driver = cinder.volume.drivers.lvm.LVMVolumeDriver
 volume_group = {{ cinder_volume_group }}
@@ -45,11 +55,12 @@ target_helper = lioadm
 target_protocol = iscsi
 {% endif %}
 
-{% if enable_ceph | bool %}
-[ceph]
+{% if enable_cinder_backend_ceph | bool %}
+{% for backend in ceph_backend %}
+[{{ backend.name }}]
 volume_driver = cinder.volume.drivers.rbd.RBDDriver
-volume_backend_name = ceph
-rbd_pool = volumes
+volume_backend_name = {{ backend.name }}
+rbd_pool = {{ backend.pool }}
 rbd_ceph_conf = /etc/ceph/ceph.conf
 rbd_flatten_volume_from_snapshot = false
 rbd_max_clone_depth = 5
@@ -59,27 +70,38 @@ rbd_user = cinder
 rbd_secret_uuid = {{ openstack_uuid }}
 report_discard_supported = True
 image_upload_use_cinder_backend = True
+{% endfor %}
 {% endif %}
-
+ 
 [backend]
+
 [backend_defaults]
+
 [brcd_fabric_example]
+
 [cisco_fabric_example]
+
 [coordination]
+
 [cors]
+
 [database]
-connection = mysql+pymysql://cinder:{{ cinderdb_pass }}@{{ IP_VIP }}/cinder
+connection = mysql+pymysql://cinder:{{ cinderdb_pass }}@{{ ip_vip_address }}/cinder
+
 [fc-zone-manager]
+
 [healthcheck]
+
 {% if enable_barbican | bool %}
 [key_manager]
 api_class = castellan.key_manager.barbican_key_manager.BarbicanKeyManager
 backend = barbican
 {% endif %}
+
 [keystone_authtoken]
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+memcached_servers = {% for item in groups['controller'] %}{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_id = default
@@ -87,50 +109,71 @@ user_domain_id = default
 project_name = service
 username = cinder
 password = {{ cinder_pass }}
-region_name = {{ REGION }}
+region_name = {{ region_name }}
 cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
 
 [matchmaker_redis]
+
 [nova]
 interface = internal
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
 auth_type = password
 project_domain_name = default
 user_domain_name = default
-region_name = {{ REGION }}
+region_name = {{ region_name }}
 project_name = service
 username = nova
 password = {{ nova_pass }}
 cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
 
 [oslo_concurrency]
 lock_path = /var/lib/cinder/tmp
+
 [oslo_messaging_amqp]
+
 [oslo_messaging_kafka]
+
 [oslo_messaging_notifications]
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 [oslo_messaging_rabbit]
+{% if groups['controller'] | length == 1 %}
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
+rabbit_max_retries = 0
 amqp_durable_queues = true
 rabbit_ha_queues = true
+{% endif %}
+
+
 [oslo_messaging_zmq]
+
 [oslo_middleware]
 {% if enable_ssl | bool %}
+max_request_body_size = 114688
 enable_proxy_headers_parsing = true 
 {% endif %}
+
 [oslo_policy]
+
 {% if enable_barbican | bool %}
 [barbican]
-barbican_endpoint = {{ keystone_protocol }}://{{ IP_VIP }}:9311
-auth_endpoint = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+barbican_endpoint = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ barbican_api_port }}
+auth_endpoint = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
 barbican_endpoint_type = admin
 verify_ssl = false
 {% endif %}
+
 [oslo_reports]
+
 [oslo_versionedobjects]
+
 [profiler]
+
 [service_user]
+
 [ssl]
+
 [vault]

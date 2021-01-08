@@ -1,4 +1,2 @@
 ---
 - include_tasks: "{{ my_action }}.yml"
-
-

@@ -1,0 +1,119 @@
+---
+- name: Create user Manila
+  os_user:
+    name: manila
+    auth: "{{ openstack_auth }}"
+    password: "{{ manila_pass }}"
+    domain: default
+    ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_main_site }}"
+  run_once: true
+  when: region_name == region_main_site
+
+- name: Add role for user Manila 
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: manila
+    role: admin
+    project: service
+    ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_main_site }}"
+    state: present
+  run_once: true
+  when: region_name == region_main_site
+
+- name: Create Manila service
+  os_keystone_service:
+    name: manila
+    auth: "{{ openstack_auth }}"
+    service_type: share
+    ca_cert: "{{ openstack_cacert }}"
+    description: OpenStack Shared File Systems
+    region_name: "{{ region_main_site }}"
+  run_once: true
+  when: region_name == region_main_site
+
+- name: Create Manila-v2 service
+  os_keystone_service:
+    name: manilav2
+    auth: "{{ openstack_auth }}"
+    service_type: sharev2
+    ca_cert: "{{ openstack_cacert }}"
+    description: OpenStack Shared File Systems V2
+    region_name: "{{ region_main_site }}"
+  run_once: true
+  when: region_name == region_main_site
+
+- name: Create the Share service API endpoints
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: manila
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ manila_api_port }}/v1/%(tenant_id)s"
+     region: "{{ region_name }}"
+     ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_main_site }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  when: region_name == region_main_site
+
+- name: Create Sharev2 endpoints
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: manilav2
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ manila_api_port }}/v2/%(tenant_id)s"
+     region: "{{ region_name }}"
+     ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_main_site }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  when: region_name == region_main_site
+
+- name: Create the Share service API endpoints other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: manila
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ manila_api_port }}/v1/%(tenant_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site
+
+- name: Create Sharev2 endpoints other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: manilav2
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ manila_api_port }}/v2/%(tenant_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site

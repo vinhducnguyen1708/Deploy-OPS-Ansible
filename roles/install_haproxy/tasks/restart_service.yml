@@ -1,0 +1,8 @@
+---
+- name: Restart Haproxy
+  systemd:
+     name: haproxy
+     state: restarted
+     enabled: yes
+  throttle: 1
+     

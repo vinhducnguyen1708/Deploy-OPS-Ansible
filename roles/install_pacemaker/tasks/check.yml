@@ -1,0 +1,49 @@
+---
+- name: Show status PCS
+  debug:
+    msg: "PCS status is {{ services_status.ansible_facts.services['pcsd.service'].state }}"
+
+- name: PCS has problem
+  fail:
+    msg: "PCS status is {{ services_status.ansible_facts.services['pcsd.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['pcsd.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status Corosync
+  debug:
+    msg: "Corosync status is {{ services_status.ansible_facts.services['corosync.service'].state }}"
+
+- name: Corosync has problem
+  fail:
+    msg: "Corosync status is {{ services_status.ansible_facts.services['corosync.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['corosync.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status Pacemaker
+  debug:
+    msg: "Pacemaker status is {{ services_status.ansible_facts.services['pacemaker.service'].state }}"
+
+- name: Pacemaker has problem
+  fail:
+    msg: "Pacemaker status is {{ services_status.ansible_facts.services['pacemaker.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['pacemaker.service'].state != "running"
+  ignore_errors: True
+
+- name: Checking if all hosts are in cluster
+  changed_when: false
+  failed_when: false
+  check_mode: no
+  script: pacemakernodes.py
+  register: pcs_status
+
+- name: Check all node added to cluster
+  debug:
+    msg: "All node are in cluster"
+  when: pcs_status.stdout | int == groups['controller'] | length | int
+  ignore_errors: True
+
+- name: Check cluster failed
+  fail:
+   msg: "Some node are not in cluster"
+  when: pcs_status.stdout | int != groups['controller'] | length | int
+  ignore_errors: True

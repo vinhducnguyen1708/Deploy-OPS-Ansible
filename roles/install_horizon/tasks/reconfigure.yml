@@ -1,3 +1,2 @@
 ---
-
 - include_tasks: config_horizon.yml

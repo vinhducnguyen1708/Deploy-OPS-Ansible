@@ -1,34 +1,30 @@
 ---
-#- name: Config Mirror Queue
-#  shell: |    
-#      rabbitmqctl add_user openstack {{ rabbitmq_pass }}
-#      rabbitmqctl set_permissions openstack ".*" ".*" ".*"
-#      rabbitmqctl set_user_tags openstack administrator
-#  when:
-#    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+- name: Check user openstack exist
+  shell: rabbitmqctl list_users | grep openstack
+  register: user_openstack_rabbitmq
+  check_mode: no
+  failed_when: false
+  changed_when: false
 
-
+# - name: Debug
+#   debug: var=user_openstack_rabbitmq
 
 - name: Add user for OpenStack
   rabbitmq_user:
     user: openstack
     password: '{{ rabbitmq_pass }}'
     permissions:
-      - vhost: /
-        configure_priv: .*
-        read_priv: .*
-        write_priv: .*
+     - vhost: /
+       configure_priv: .*
+       read_priv: .*
+       write_priv: .*
     state: present
     tags: administrator
   when:
-    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - user_openstack_rabbitmq.stdout == ""
 
-#- name: Config Policy
-#  shell: |    
-#      rabbitmqctl set_policy ha-all '^(?!amq\.).*' '{"ha-mode": "all"}'   
-#  when:
-#    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
-#    - groups['controller'] | length  > 1
+
 - name: ensure the default vhost contains the HA policy via a dict
   rabbitmq_policy:
     name: ha-all
@@ -37,5 +33,5 @@
     tags:
       ha-mode: all
   when:
-    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
-    - groups['controller'] | length  > 1
+    - inventory_hostname_short == hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - groups['controller'] | length > 1

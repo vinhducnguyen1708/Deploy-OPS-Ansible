@@ -1,4 +1,17 @@
 ---
+- name: Set root Password
+  mysql_user:
+    login_host: localhost
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    login_user: root
+    login_password: "{{ mariadb_pass }}"
+    user: root
+    check_implicit_admin: true
+    password: "{{ mariadb_pass }}"
+    host_all: yes
+  become: true
+  run_once: true
+
 - name: configure_root_access | configuring root my.cnf
   template:
     src: "my.cnf.j2"
@@ -8,18 +21,6 @@
     mode: "u=rw,g=,o="
   become: true
   when: ansible_os_family == "RedHat"
-
-- name: Set root Password
-  mysql_user: login_password={{ mariadb_pass }} check_implicit_admin=yes name=root host={{ item }} password={{ mariadb_pass }} state=present 
-  with_items:
-    - localhost
-  become: true
-  run_once: true
-
-- name: Reload privilege tables
-  command: 'mysql -ne "{{ item }}"'
-  with_items:
-    - FLUSH PRIVILEGES
 
 - name: Remove anonymous users
   command: 'mysql -ne "{{ item }}"'
@@ -44,6 +45,7 @@
 
 - name: Config user databases
   mysql_user:
+    login_unix_socket: /var/lib/mysql/mysql.sock
     login_user: root
     login_password: "{{ mariadb_pass }}"
     name: root
@@ -52,7 +54,7 @@
     password: "{{ mariadb_pass }}"
     state: present
   with_items:
-    - "{{ MGNT_IP }}"
+    - "{{ management_ip_address }}"
 
 - name: Grant the privilege
   shell: |
@@ -60,6 +62,7 @@
       mysql -uroot -p{{ mariadb_pass }} -e "FLUSH PRIVILEGES;"
       mysql -uroot -p{{ mariadb_pass }} -e "GRANT ALL ON *.* TO 'root'@'localhost';"
   run_once: true
+
 - name: Config Database cluster check script
   shell: |
       mysql -uroot -p{{ mariadb_pass }} -e "GRANT PROCESS ON *.* TO 'clustercheckuser'@'localhost' IDENTIFIED BY 'clustercheckpassword\!';"

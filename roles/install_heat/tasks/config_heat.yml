@@ -10,19 +10,41 @@
    dest: /etc/heat/heat.conf.bak
    remote_src: yes
   when:
-    - not  heat_conf_bak.stat.exists
+    - not heat_conf_bak.stat.exists
 
 - name: Config file heat.conf
   template:
     src: heat.conf.j2
     dest: /etc/heat/heat.conf
+    mode: 0640
+    group: heat
+    owner: root
   notify: 
     - restart Heat-api Services
     - restart Heat-CFN Services
     - restart Heat-Engine Services
 
+- name: Chown group, user heat
+  file:
+    path: /etc/heat
+    owner: root
+    group: heat
+    mode: u=rwX,g=rX
+    recurse: yes
+    state: directory
+
+- name: Check if table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `heat` LIKE 'stack';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: heatdb_table
+  run_once: yes
+
 - name: Populate the  Orchestration database
   shell: |
      su -s /bin/sh -c "heat-manage db_sync" heat
   run_once: true
-  when: my_action == "deploy"
+  when:
+    - my_action == "deploy"
+    - heatdb_table.stdout == ""

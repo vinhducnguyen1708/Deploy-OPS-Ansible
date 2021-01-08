@@ -1,34 +1,71 @@
 ---
-- name: Copy file script to remote node
-  template:
-    src: keystone_rotate_key.j2
-    dest: "{{ ansible_deploy_files }}/keystone_rotate_key.sh"
-    mode: 0777
-  when: not  enable_multisite | bool
-  
-- name: Copy file script to remote node ( multi-site )
-  template:
-    src: keystone_rotate_key_othersite.sh.j2
-    dest: "{{ ansible_deploy_files }}/keystone_rotate_key_othersite.sh"
-    mode: 0777
-  when: enable_multisite | bool 
+# Tạo file script python generate crontab o cac node controller
+# Chay file script để lấy tham số cấu hình crontab
+# Set fact bien cron_jobs la tham so cau hinh crontab cua cac node controller
+# Tao file Cau hinh crontab
+# Tao file ghi log trong qua trinh chay cronjob
+# Tao cronjobs den node target
+# Tao lai file cau hinh cronjob khi add them 1 site
 
-- name: Copy file fernet_rotate_cron_generator.py to create crontab 
+- name: Copy file fernet_rotate_cron_generator.py to create crontab
   template:
     src: fernet_rotate_cron_generator.py
-    dest: "{{ ansible_deploy_files }}/fernet_rotate_cron_generator.py"
+    dest: "{{ deploy_directory }}/fernet_rotate_cron_generator.py"
 
-- name: Copy file script run in  crontab
+- name: Run script
+  command: python3 {{ deploy_directory }}/fernet_rotate_cron_generator.py -t {{ token_expired_min }} -i {{ groups['controller'].index(inventory_hostname) }} -n {{ groups['controller'] | length }}
+  register: cron_jobs_json
+  changed_when: false
+
+- name: Set fact with the generated cron jobs for building the crontab later
+  set_fact:
+    cron_jobs: "{{ (cron_jobs_json.stdout | from_json).cron_jobs }}"
+
+- name: Config Crontab
+  template:
+    src: keystone_crontab.j2
+    dest: "{{ fernet_rotate_crontab_file }}"
+    group: keystone
+    mode: 0644
+  notify:
+     - Restart crond
+  when: region_name == region_main_site
+
+- name: check file  log rotate exist
+  stat:
+    path: "{{ fernet_rotate_log_file }}"
+  register: fernet_rotate_log_file_stat
+
+- name: Create keystone-rotate-key-log
+  file:
+    path: "{{ fernet_rotate_log_file }}"
+    group: keystone
+    owner: keystone
+    state: touch
+  when:
+  - region_name == region_main_site
+  - not fernet_rotate_log_file_stat.stat.exists
+
+- name: Config cronjob
   template:
     src: fernet-rotate.sh.j2
-    dest: "{{ ansible_deploy_files }}/fernet-rotate.sh"
+    dest: /usr/bin/fernet-rotate.sh
     mode: 0777
-- name: Run script create crontab 
-  shell: sh {{ ansible_deploy_files }}/keystone_rotate_key.sh
-  when: not enable_multisite | bool
+  when: region_name == region_main_site
 
-- name: Run script create crontab for other site
-  shell: sh {{ ansible_deploy_files }}/keystone_rotate_key_othersite.sh
-  when: enable_multisite | bool 
-
-
+- name: Add another site to list rotate key
+  template:
+    src: fernet-rotate.sh.j2
+    dest: "/usr/bin/fernet-rotate.sh"
+    group: root
+    owner: root
+    mode: 0777
+  notify:
+     - Restart crond
+  delegate_to: "{{ item }}"
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  with_items:
+         - "{{ other_site_ip_list }}"
+  run_once: yes
+  when: region_name != region_main_site

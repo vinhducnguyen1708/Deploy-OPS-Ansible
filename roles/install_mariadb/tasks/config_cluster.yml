@@ -1,33 +1,15 @@
 ---
+# - name: Add LimitNOFILE=infinity
+#   lineinfile:
+#     dest: "/usr/lib/systemd/system/mariadb.service"
+#     insertafter: 'Type=simple'
+#     line: "LimitNOFILE=infinity"
+
 - name: Ensure mariadb stopped
   systemd:
     name: mariadb
     state: stopped
-- name: Config Mariadb Cluster
-  template:
-     src: cluster.cnf.j2
-     dest: /etc/my.cnf.d/cluster.cnf
-  when:
-     - groups['controller'] | length  > 1 
-- name: Config file replica.cnf
-  template:
-    src: replica.cnf.j2
-    dest: /etc/my.cnf.d/replica.cnf
-  when:
-    - groups['controller'] | length  > 1
-
-- name: Create Galera Cluster
-  shell: /usr/bin/galera_new_cluster
-  when:
-    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
-    - groups['controller'] | length  > 1
-    
-- name: Start mariadb 
-  systemd:
-    state: started
-    enabled: true
-    name: mariadb
-
+    daemon_reload: yes
 
 - name: Set rebuild Cluster after reboot
   lineinfile:
@@ -35,4 +17,36 @@
      regexp: '^safe_to_bootstrap: 0'
      insertafter: '^#safe_to_bootstrap: 0'
      line: 'safe_to_bootstrap: 1'
- 
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  when:
+    - groups['controller'] | length > 1
+
+- name: Config Mariadb Cluster
+  template:
+     src: cluster.cnf.j2
+     dest: /etc/my.cnf.d/galera.cnf
+  when:
+     - groups['controller'] | length  > 1 
+
+- name: Create Galera Cluster
+  shell: /usr/bin/galera_new_cluster
+  run_once: yes
+
+- name: Start mariadb 
+  systemd:
+    state: started
+    enabled: true
+    name: mariadb
+
+- name: Config file replica.cnf
+  template:
+    src: replica.cnf.j2
+    dest: /etc/my.cnf.d/mariadb-server.cnf
+  when:
+    - groups['controller'] | length > 1
+  notify:
+     - Restart mariadb
+
+- meta: flush_handlers

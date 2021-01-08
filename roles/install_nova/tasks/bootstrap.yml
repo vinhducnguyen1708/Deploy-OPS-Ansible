@@ -2,9 +2,10 @@
 - name: Create database for Nova
   mysql_db:
     login_user: root
+    login_unix_socket: /var/lib/mysql/mysql.sock
     login_password: "{{ mariadb_pass }}"
-    login_port: 3306
-    login_host: "{{ IP_VIP }}"
+    login_port: "{{ mysql_cluster_port }}"
+    login_host: "{{ ip_vip_address }}"
     name: "{{ item }}"
     state: present
   run_once: true
@@ -16,9 +17,10 @@
 - name: Create user for Nova-api
   mysql_user:
     login_user: root
+    login_unix_socket: /var/lib/mysql/mysql.sock
     login_password: "{{ mariadb_pass }}"
-    login_port: 3306
-    login_host: "{{ IP_VIP }}"
+    login_port: "{{ mysql_cluster_port }}"
+    login_host: "{{ ip_vip_address }}"
     name: nova
     host: "{{ item }}"
     password: "{{ novadb_pass }}"
@@ -28,5 +30,3 @@
   with_items:
     - 'localhost'
     - '%'
-
-

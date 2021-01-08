@@ -1,96 +1,85 @@
 ---
-- name: Setup repository
-  ini_file:
-     path: /etc/yum.repos.d/MariaDB.repo
-     section: mariadb
-     option: "{{ item.key }}"
-     value: "{{ item.value }}"
-  with_dict: '{{ mariadb_repo }}'
-  notify:
-      - Ensure there are no packages mariadb
-
-- meta: flush_handlers
-
 - name: Update packages for Servers
   yum:
      name: '*'
      state: latest
 
 - name: install mariadb
+  dnf:
+    name: '@mariadb:10.3'
+
+- name: Install mariadb-galera
+  dnf:
+    name: mariadb-server-galera
+  when:
+     - groups['controller'] | length  > 1
+    
+- name: Install depend packages
   yum: 
     name: '{{ mariadb_packages }}'
     
-- name: Config Mariadb if only have one node Controller
+- name: Config Mariadb if only have one node controller
   template:
     src: openstack.cnf.j2
-    dest: /etc/my.cnf.d/openstack.cnf
+    dest: /etc/my.cnf.d/mariadb-server.cnf
   when:
      - groups['controller'] | length  < 2 
 
-- name: start mariadb
-  service:
+- name: Comment bind-address
+  replace:
+    dest: /etc/my.cnf.d/galera.cnf
+    regexp: '^bind-address=0.0.0.0'
+    replace: 'bind-address={{ management_ip_address }}'
+  when:
+     - groups['controller'] | length  > 1
+
+- name: Add LimitNOFILE=infinity
+  lineinfile:
+    dest: "/usr/lib/systemd/system/mariadb.service"
+    insertafter: 'Type=simple'
+    line: "LimitNOFILE=infinity"
+
+- name: Start mariadb
+  systemd:
     name: mariadb
     enabled: true
     state: started
+    daemon_reload: yes
 
 - name: check status mariadb
-  shell: mysql -uroot -e "SHOW STATUS LIKE 'wsrep_cluster_size'" | egrep  wsrep_cluster_size | awk '{print $2}'
+  shell: mysql -uroot -p{{ mariadb_pass }} -e "SHOW STATUS LIKE 'wsrep_cluster_size'" | egrep  wsrep_cluster_size | awk '{print $2}'
   check_mode: no
   failed_when: false
   changed_when: false
   register: mariadb_cluster_status
 
-- name: check repo healthcheck
-  stat:
-    path: /root/percona-clustercheck/clustercheck
-  register: healthcheck_file
+- name: Config HealthCheck for Mariadb
+  block:
+   - name: copy file to /usr/local/bin
+     copy:
+       src: clustercheck
+       dest: /usr/local/bin/clustercheck
+       mode: 0777
 
-- name: git clone healthcheck
-  shell: git clone https://github.com/TrongTan124/percona-clustercheck
-  ignore_errors: yes
+   - name: config xinetd
+     template:
+       src: mysqlchk.j2
+       dest: /etc/xinetd.d/mysqlchk
+     notify:
+       - Restart service xinetd
+
+   - name: config mysqlchk services
+     lineinfile:
+       path: /etc/services
+       line: mysqlchk 9200/tcp # MySQL check
   when:
-     - not healthcheck_file.stat.exists
-     - groups['controller'] | length  > 1
-
-- name: copy dir to/usr/local/bin
-  copy:
-    src: /root/percona-clustercheck/clustercheck
-    dest: /usr/local/bin/clustercheck
-    remote_src: yes
-#  shell: cp percona-clustercheck/clustercheck /usr/local/bin
-  when:
-     - not healthcheck_file.stat.exists
-     - groups['controller'] | length  > 1
-
-- name: config xinetd 
-  template:
-    src: mysqlchk.j2
-    dest: /etc/xinetd.d/mysqlchk
-  when:
-     - not healthcheck_file.stat.exists
-     - groups['controller'] | length  > 1
-
-- name: config mysqlchk services
-  lineinfile:
-    path: /etc/services
-    line: mysqlchk 9200/tcp # MySQL check
-  when:
-     - not healthcheck_file.stat.exists
-     - groups['controller'] | length  > 1
-- name: Restart service xinetd
-  systemd:
-    state: restarted
-    enabled: true
-    name: xinetd
-  when:
-     - not healthcheck_file.stat.exists
-     - groups['controller'] | length  > 1
-
-
+      - groups['controller'] | length > 1
 
 - include_tasks: config_cluster.yml
   when:
-    - mariadb_cluster_status.stdout | int  !=  groups['controller'] | length | int
+    - mariadb_cluster_status.stdout | int != groups['controller'] | length | int
+    - groups['controller'] | length > 1
+
 
 - name: Check Mariadb already have Password
   command: mysql -uroot -p{{ mariadb_pass }} -e"show databases;"
@@ -99,8 +88,15 @@
   failed_when: false
   changed_when: false
 
-- include_tasks:  config_access_root.yml
+- include_tasks: config_access_root.yml
   when:
     - checkpassmariadb.rc == 1
 
-
+- name: Set rebuild Cluster after reboot
+  lineinfile:
+     path: /var/lib/mysql/grastate.dat
+     regexp: '^safe_to_bootstrap: 0'
+     insertafter: '^#safe_to_bootstrap: 0'
+     line: 'safe_to_bootstrap: 1'
+  when:
+    - groups['controller'] | length > 1

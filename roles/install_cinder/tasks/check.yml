@@ -1,0 +1,45 @@
+---
+- name: Show status cinder-api
+  debug:
+    msg: "Cinder-api status is {{ services_status.ansible_facts.services['openstack-cinder-api.service'].state }}"
+
+- name: Openstack-Cinder-api has problem
+  fail:
+    msg: "Cinder-api status is {{ services_status.ansible_facts.services['openstack-cinder-api.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-cinder-api.service'].state == "stopped"
+  ignore_errors: True
+
+- name: Show status Cinder-scheduler
+  debug:
+    msg: "Cinder-scheduler status is {{ services_status.ansible_facts.services['openstack-cinder-scheduler.service'].state }}"
+  
+
+- name: Openstack-Cinder-scheduler has problem
+  fail:
+    msg: "Cinder-scheduler status is {{ services_status.ansible_facts.services['openstack-cinder-scheduler.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-cinder-scheduler.service'].state == "stopped"
+  ignore_errors: True
+
+
+- name: Show status cinder-volume
+  debug:
+    msg: "Cinder-volume status is {{ services_status.ansible_facts.services['openstack-cinder-volume.service'].state }}"
+
+
+- name: Openstack-Cinder-volume has problem
+  fail:
+    msg: "Cinder-volume status is {{ services_status.ansible_facts.services['openstack-cinder-volume.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-cinder-volume.service'].state == "stopped"
+  ignore_errors: True
+  
+
+- name: Show status cinder-backup
+  debug:
+    msg: "Cinder-backup status is {{ services_status.ansible_facts.services['openstack-cinder-backup.service'].state }}"
+
+
+- name: Openstack-Cinder-backup has problem
+  fail:
+    msg: "Cinder-backup status is {{ services_status.ansible_facts.services['openstack-cinder-backup.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-cinder-backup.service'].state == "stopped"
+  ignore_errors: True

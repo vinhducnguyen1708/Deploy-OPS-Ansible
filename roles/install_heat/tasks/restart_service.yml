@@ -4,18 +4,18 @@
     state: restarted
     enabled: true
     name: openstack-heat-api.service
-
+  throttle: 1
 
 - name: Enable and Restart Heat-CFN Services
   systemd:
      state: restarted
      enabled: true
      name: openstack-heat-api-cfn.service
+  throttle: 1
 
 - name: Enable and Restart Heat-Engine Services
   systemd:
       state: restarted
       enabled: true
       name: openstack-heat-engine.service
-
-
+  throttle: 1

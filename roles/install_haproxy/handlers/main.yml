@@ -5,8 +5,15 @@
     enabled: true
     name: haproxy
 
-- name: restart_rsyslog
+- name: restart_haproxy
   systemd:
     state: restarted
     enabled: true
-    name: rsyslog
+    name: haproxy
+  throttle: 1
+
+- name: Restart rsyslog
+  systemd: 
+     state: restarted
+     enabled: true
+     name: rsyslog

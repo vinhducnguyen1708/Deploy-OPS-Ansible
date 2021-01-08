@@ -2,15 +2,15 @@
 debug = True
 log_dir = /var/log/barbican
 api_paste_config = barbican-api-paste.ini
-bind_port = 9311
-bind_host = {{ MGNT_IP }}
-host_href = {{ keystone_protocol }}://{{ IP_VIP }}:9311
+bind_port = {{ barbican_api_port }}
+bind_host = {{ management_ip_address }}
+host_href = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ barbican_api_port }}
 backlog = 4096
 max_allowed_secret_in_bytes = 10000
 max_allowed_request_size_in_bytes = 1000000
 db_auto_create = False
-sql_connection = mysql+pymysql://barbican:{{ barbicandb_pass }}@{{ IP_VIP }}:3306/barbican
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+sql_connection = mysql+pymysql://barbican:{{ barbicandb_pass }}@{{ ip_vip_address }}:{{ mysql_cluster_port }}/barbican
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 [secretstore]
 #namespace = barbican.secretstore.plugin
@@ -28,19 +28,22 @@ enable = True
 topic = barbican_notifications
 
 [keystone_authtoken]
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
 project_domain_id = default
 project_name = service
 user_domain_id = default
 username = barbican
 password = {{ barbican_pass }}
 auth_type = password
-memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+region_name = {{ region_name }}
+memcached_servers = {% for item in groups['controller'] %}{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}true{% else %}False{% endif %}
+
 [oslo_messaging_notifications]
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 [oslo_middleware]
 enable_proxy_headers_parsing = True

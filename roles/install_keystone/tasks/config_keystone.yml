@@ -18,38 +18,83 @@
     dest: /etc/keystone/keystone.conf
   notify:
     - restart service httpd
-    - sleep for 10s and continue with play
-    - Create script test system
+
+- name: Check if table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `keystone` LIKE 'endpoint';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: keystonedb_table
+  run_once: yes
 
 - name: Sync databases
   shell: su -s /bin/sh -c "keystone-manage db_sync" keystone
   run_once: true
-  when: my_action == "deploy"
+  when:
+    - region_name == region_main_site
+    - my_action == "deploy"
+    - keystonedb_table.stdout == ""
 
 - name: Initialize Fernet key repositories
   shell: |
     keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
     keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  run_once: true
   when:
-    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']
+     - my_action == "deploy"
 
-- name: Copy Fernet key to other node
-  shell: |
-    scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@{{ hostvars[groups['controller'][1]]['inventory_hostname_short'] }}:/etc/keystone/
-    scp -r /etc/keystone/credential-keys /etc/keystone/fernet-keys root@{{ hostvars[groups['controller'][2]]['inventory_hostname_short'] }}:/etc/keystone/
-  when: 
-    - inventory_hostname_short ==  hostvars[groups['controller'][0]]['inventory_hostname_short']        
-    - groups['controller'] | length  > 1  
-
-- name: Chown group, user keystone fernet_key
-  file:
-    path: "{{ item }}"
-    owner: keystone
-    group: keystone
-    recurse: yes
+- name: Copy credential key to other node
+  synchronize:
+     src: /etc/keystone/credential-keys
+     dest: /etc/keystone/
+     mode: pull
+  delegate_to: "{{ item }}"
   with_items:
-     - /etc/keystone/credential-keys/
-     - /etc/keystone/fernet-keys/
-  when:
-    - inventory_hostname_short !=  hostvars[groups['controller'][0]]['inventory_hostname_short'] 
-    - groups['controller'] | length  > 1
+    - "{{ groups['controller'] }}"
+  run_once: yes 
+  when: 
+    - my_action == "deploy"
+
+- name: Copy fernet key to other node
+  synchronize:
+     src: /etc/keystone/fernet-keys
+     dest: /etc/keystone/
+     mode: pull
+  delegate_to: "{{ item }}"
+  with_items:
+    - "{{ groups['controller'] }}"
+  run_once: yes 
+  when: 
+    - my_action == "deploy"
+
+# - name: Chown group, user keystone
+#   file:
+#     path: "{{ item }}"
+#     owner: keystone
+#     group: keystone
+#     mode: u=rwX,g=rX
+#     recurse: yes
+#     state: directory
+#   with_items:
+#      - /etc/keystone
+
+- name: Start service httpd
+  systemd:
+    state: started
+    enabled: true
+    name: httpd
+
+- meta: flush_handlers
+
+
+- name: Wait until listening on Port {{ keystone_port }}
+  wait_for:
+    host: "{{ ip_vip_address }}"
+    port: "{{ keystone_port }}"
+    delay: 10
+    msg: " Please check Resource IP VIP"
+    timeout: 15
+

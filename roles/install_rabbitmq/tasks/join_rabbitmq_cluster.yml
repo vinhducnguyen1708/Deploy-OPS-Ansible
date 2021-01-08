@@ -2,17 +2,23 @@
 - name: Stop rabbitmq app
   command: rabbitmqctl stop_app
   when:
-    - inventory_hostname_short !=  hostvars[groups['controller'][0]]['inventory_hostname_short']
-    - groups['controller'] | length  > 1
+    - inventory_hostname_short != hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - groups['controller'] | length > 1
+
+- name: Waiting for a while to nodes stabilize themselves
+  wait_for:
+      timeout: 5
+
 - name: Add this node to cluster
   command: rabbitmqctl join_cluster rabbit@{{ hostvars[groups['controller'][0]]['inventory_hostname_short'] }}
   register: join_cluster_output
   ignore_errors: True
   when:
-    - inventory_hostname_short !=  hostvars[groups['controller'][0]]['inventory_hostname_short']
-    - groups['controller'] | length  > 1
+    - inventory_hostname_short != hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - groups['controller'] | length > 1
+
 - name: Start rabbitmq app
   command: rabbitmqctl start_app
   when:
-    - inventory_hostname_short !=  hostvars[groups['controller'][0]]['inventory_hostname_short']
-    - groups['controller'] | length  > 1
+    - inventory_hostname_short != hostvars[groups['controller'][0]]['inventory_hostname_short']
+    - groups['controller'] | length > 1

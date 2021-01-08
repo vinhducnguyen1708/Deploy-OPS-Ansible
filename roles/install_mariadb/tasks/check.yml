@@ -1,0 +1,27 @@
+---
+- name: Show status Mariadb
+  debug:
+    msg: "Mariadb status is {{ services_status.ansible_facts.services['mariadb.service'].state }}"
+
+- name: Mariadb has problem
+  fail:
+    msg: "Mariadb status is {{ services_status.ansible_facts.services['mariadb.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['mariadb.service'].state != "running"
+  ignore_errors: True
+
+- name: Check Mariadb Cluster
+  shell: mysql -uroot -p{{ mariadb_pass }} -e "SHOW STATUS LIKE 'wsrep_cluster_size'" | egrep wsrep_cluster_size | awk '{print $2}'
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: mariadb_cluster_status
+  when:
+    - groups['controller'] | length > 1
+
+- name: Show if Mariadb Cluster failed
+  fail:
+    msg: "Please Check all node in your cluster then rebuild your cluster by 'my_action: deploy'"
+  when:
+    - groups['controller'] | length > 1
+    - mariadb_cluster_status.stdout | int != groups['controller'] | length | int
+  ignore_errors: True

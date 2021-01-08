@@ -4,5 +4,4 @@
     state: restarted
     enabled: true
     name: openstack-glance-api.service
-
-
+  throttle: 1

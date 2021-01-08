@@ -1,0 +1,28 @@
+---
+- name: Create database for Manila
+  mysql_db:
+    login_user: root
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    login_password: "{{ mariadb_pass }}"
+    login_port: "{{ mysql_cluster_port }}"
+    login_host: "{{ ip_vip_address }}"
+    name: manila
+    state: present
+  run_once: true
+
+- name: Create user for Manila
+  mysql_user:
+    login_user: root
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    login_password: "{{ mariadb_pass }}"
+    login_port: "{{ mysql_cluster_port }}"
+    login_host: "{{ ip_vip_address }}"
+    name: manila
+    host: "{{ item }}"
+    password: "{{ maniladb_pass }}"
+    priv: 'manila.*:ALL'
+    state: present
+  with_items:
+    - 'localhost'
+    - '%'
+  run_once: true

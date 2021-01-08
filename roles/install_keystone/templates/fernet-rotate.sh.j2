@@ -1,5 +1,4 @@
 #!/bin/bash
-host_list="controller1:7777 controller2:7777 172.16.69.60:7778"
 log_file=/var/log/keystone/keystone-fernet-rotate.log
 date=`date`
 
@@ -11,12 +10,36 @@ function check_result ()
         rm /etc/keystone/fernet-keys/*
         cp /tmp/$ran/fernet-keys/* /etc/keystone/fernet-keys/
         chown keystone:keystone /etc/keystone/fernet-keys/*
-        for host in $host_list; do
-            host_name=`echo $host | cut -d: -f1`
-            ssh_port=`echo $host | cut -d: -f2`
-            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p $ssh_port -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
-                --delete /etc/keystone/fernet-keys/ keystone@$host_name:/etc/keystone/fernet-keys
-        done
+
+{% if not enable_multisite | bool %}
+{% for host in groups['controller'] %}
+{% if inventory_hostname != host %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ hostvars[host]['ansible_' + management_interface]['ipv4']['address'] }}:/etc/keystone/fernet-keys
+
+{% endif %}
+{% endfor %}
+{% else %}
+{% if region_name == region_main_site %}
+{% for host in groups['controller'] %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ hostvars[host]['ansible_' + management_interface]['ipv4']['address'] }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% for item in other_site_ip_list %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port_other_site }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ item }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% else %}
+{% for item in other_site_ip_list %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port_other_site }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ item }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% for host in groups['controller'] %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ hostvars[host]['ansible_' + management_interface]['ipv4']['address'] }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% endif %}
+{% endif %}
         exit
     else 
         echo "INFO -- $date -- Distributed Fernet keys to $2 success" >> $log_file
@@ -30,14 +53,56 @@ cp -r /etc/keystone/fernet-keys/ /tmp/$ran
 
 keystone-manage --config-file /etc/keystone/keystone.conf fernet_rotate --keystone-user keystone --keystone-group keystone
 
-for host in $host_list; do
-    host_name=`echo $host | cut -d: -f1`
-    ssh_port=`echo $host | cut -d: -f2`
-    /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p $ssh_port -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
-        --delete /etc/keystone/fernet-keys/ keystone@$host_name:/etc/keystone/fernet-keys
-    check_result $? $host_name
-done
+{% if not enable_multisite | bool %}
+{% for host in groups['controller'] %}
+{% if inventory_hostname != host %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ hostvars[host]['ansible_' + management_interface]['ipv4']['address'] }}:/etc/keystone/fernet-keys
 
+{% endif %}
+{% endfor %}
+{% else %}
+{% if region_name == region_main_site %}
+{% for host in groups['controller'] %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ hostvars[host]['ansible_' + management_interface]['ipv4']['address'] }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% for item in other_site_ip_list %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port_other_site }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ item }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% else %}
+{% for item in other_site_ip_list %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port_other_site }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ item }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% for host in groups['controller'] %}
+            /usr/bin/rsync -az -e "ssh -i /var/lib/keystone/.ssh/id_rsa -p {{ ssh_port }} -o ConnectTimeout=15 -F /var/lib/keystone/.ssh/config" \
+                --delete /etc/keystone/fernet-keys/ keystone@{{ hostvars[host]['ansible_' + management_interface]['ipv4']['address'] }}:/etc/keystone/fernet-keys
+{% endfor %}
+{% endif %}
+{% endif %}
+
+{% if enable_multisite | bool %}
+{% if region_name == region_main_site %}
+{% for ip in list_management_ip %}
+check_result $? {{ ip }}
+{% endfor %}
+{% for otherip in other_site_ip_list | list %}
+check_result $? {{ otherip }}
+{% endfor %}
+{% else %}
+{% for otherip in other_site_ip_list | list %}
+check_result $? {{ otherip }}
+{% endfor %}
+{% for ip in list_management_ip %}
+check_result $? {{ ip }}
+{% endfor %}
+{% endif %}
+{% else %}
+{% for m in groups['controller'] | list %}
+check_result $? {{ m }}
+{% endfor %}
+{% endif %}
 rm -rf /tmp/$ran
-
 

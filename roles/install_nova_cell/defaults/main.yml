@@ -3,4 +3,4 @@ nova_compute_packages:
       - openstack-nova-compute
       - libvirt-client 
 
-
+ram_ratio: 1.7

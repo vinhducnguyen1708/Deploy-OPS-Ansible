@@ -1,0 +1,10 @@
+---
+- name: Show status Docker
+  debug:
+    msg: "Docker status is {{ services_status.ansible_facts.services['docker.service'].state }}"
+
+- name: Docker has problem
+  fail:
+    msg: "Docker status is {{ services_status.ansible_facts.services['docker.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['docker.service'].state != "running"
+  ignore_errors: True

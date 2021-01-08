@@ -16,13 +16,34 @@
   template:
     src: glance-api.conf.j2
     dest: /etc/glance/glance-api.conf
+    mode: 0640
+    group: glance
+    owner: root
   notify:
     - restart Image Service Glance-api
 
+# - name: Chown group, user glance
+#   file:
+#     path: /etc/glance
+#     owner: root
+#     group: glance
+#     mode: u=rwX,g=rX
+#     recurse: yes
+#     state: directory
+
+
+- name: Check if table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `glance` LIKE 'images';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: glancedb_table
+  run_once: yes
+  
 - name: Populate the Image service database
   shell: 
      su -s /bin/sh -c "glance-manage db_sync" glance
   run_once: true
-  when: my_action == "deploy"
-
-
+  when:
+    - my_action == "deploy"
+    - glancedb_table.stdout == ""

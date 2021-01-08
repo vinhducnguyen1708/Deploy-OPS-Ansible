@@ -5,8 +5,10 @@
     auth: "{{ openstack_auth }}"
     password: "{{ neutron_pass }}"
     domain: default
+    region_name: "{{ region_name }}"
     ca_cert: "{{ openstack_cacert }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create role for user Neutron
   os_user_role:
@@ -14,26 +16,31 @@
     user: neutron
     role: admin
     project: service
+    region_name: "{{ region_name }}"
     ca_cert: "{{ openstack_cacert }}"
     state: present
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create Network service
   os_keystone_service:
     name: neutron
     auth: "{{ openstack_auth }}"
     service_type: network
+    region_name: "{{ region_name }}"
     ca_cert: "{{ openstack_cacert }}"
     description: OpenStack Networking
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create endpoint for Neutron
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: neutron
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:9696"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ neutron_server_port }}"
+     region: "{{ region_name }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -41,4 +48,24 @@
     - admin
     - internal
   run_once: true
+  when: region_name == region_main_site
 
+- name: Create endpoint for Neutron other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: neutron
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ neutron_server_port }}"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site

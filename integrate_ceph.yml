@@ -1,0 +1,218 @@
+---
+- hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+     - import_role:
+         name: openstack_facts
+
+- hosts:
+    - controller
+    - compute
+  gather_facts: true
+  become: true
+  vars:
+    ceph_openstack_packages:
+         - python3-rbd
+         - ceph-common
+  tasks:
+    - name: configure red hat ceph community repository stable key
+      rpm_key:
+        key: "https://download.ceph.com/keys/release.asc"
+        state: present
+      register: result
+      until: result is succeeded
+
+    - name: configure red hat ceph stable community repository
+      yum_repository:
+        name: ceph_stable
+        description: Ceph Stable $basearch repo
+        gpgcheck: yes
+        state: present
+        gpgkey: "https://download.ceph.com/keys/release.asc"
+        baseurl: "http://download.ceph.com/rpm-octopus/el8/$basearch"
+        file: ceph_stable
+        priority: 2
+      register: result
+      until: result is succeeded
+
+    - name: configure red hat ceph stable noarch community repository
+      yum_repository:
+        name: ceph_stable_noarch
+        description: Ceph Stable noarch repo
+        gpgcheck: yes
+        state: present
+        gpgkey: "https://download.ceph.com/keys/release.asc"
+        baseurl: "http://download.ceph.com/rpm-octopus/el8/noarch"
+        file: ceph_stable
+        priority: 2
+      register: result
+      until: result is succeeded
+
+    - name: Update all Packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install Ceph common
+      yum:
+        name: "{{ ceph_openstack_packages }}"
+  
+- hosts: 
+    - controller
+    - compute
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Read file Keyring on Ceph
+      vars:
+         ansible_port: "{{ ssh_port_ceph_mgr }}"
+      shell: cat /etc/ceph/ceph.client.{{ item }}.keyring
+      with_items:
+             - "glance"
+             - "cinder"
+             - "cinder-backup"
+      register: _ceph_keyring
+      delegate_to: "{{ ip_ceph_mgr_address }}" 
+      run_once: yes
+
+    - name: Set fact ceph_keyring
+      set_fact:
+         ceph_keyring: "{{ _ceph_keyring.results }}"
+
+    - name: Copy keyring to openstack node
+      copy:
+        dest: "/etc/ceph/ceph.client.{{ item[0].item }}.keyring"
+        content: "{{ item[0].stdout + '\n' }}"
+      with_nested:
+         - "{{ _ceph_keyring.results }}"
+         - "{{ groups['controller'] }}"
+         
+    - name:  Read file ceph config
+      vars:
+        ansible_port: "{{ ssh_port_ceph_mgr }}"
+      command: cat /etc/ceph/ceph.conf
+      register: _ceph_conf
+      run_once: yes
+      delegate_to: "{{ ip_ceph_mgr_address }}"
+
+    - name: Copy ceph.conf to openstack node
+      copy: 
+        dest: "/etc/ceph/ceph.conf"
+        content: |
+             {{ _ceph_conf.stdout }}
+ 
+
+- hosts: controller
+  gather_facts: false
+  become: true
+  tasks:
+    - import_role:
+          name: install_glance
+
+    - name: Restart Glance-api
+      systemd:
+          state: restarted
+          enabled: true
+          name: openstack-glance-api
+
+    - import_role:
+          name: install_cinder
+
+    - name: Restart Nova-api Services
+      systemd:
+         state: restarted
+         enabled: true
+         name: openstack-nova-api.service
+
+    - name: restart Service Cinder-API
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-cinder-api.service
+
+    - name: restart Service Cinder scheduler
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-cinder-scheduler.service
+
+    - name: restart Service Cinder Volume
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-cinder-volume
+
+    - name: restart service Cinder Backup
+      systemd: 
+        state: restarted
+        enabled: true
+        name: openstack-cinder-backup
+
+- hosts: compute
+  gather_facts: false
+  become: true
+  tasks:
+    - name: Generate cinder key on Ceph
+      vars:
+         ansible_port: "{{ ssh_port_ceph_mgr }}"
+      shell: ceph auth get-key client.cinder
+      register: _ceph_key
+      run_once: yes
+      delegate_to: "{{ ip_ceph_mgr_address }}"
+   
+    - name: Create Ceph key file
+      copy:
+        dest: /root/client.cinder.key
+        content: "{{ _ceph_key.stdout }}"
+    
+    - import_role:
+          name: install_nova_cell
+
+    - name: Create secret file key
+      template:
+        src: roles/install_nova_cell/templates/secret.xml.j2
+        dest: secret.xml
+
+    - name: Find existed key
+      shell: virsh secret-list | egrep client.cinder | awk '{print $1}'
+      register: secret_list
+      changed_when: false
+
+    - name: Delete existed key
+      command: virsh secret-undefine "{{ secret_list.stdout }}"
+      changed_when: false
+      when:
+        - secret_list.stdout != ""
+
+    - name: Virsh file secret.xml
+      shell: virsh secret-define --file secret.xml
+      changed_when: false
+      when:
+        - enable_cinder_backend_ceph | bool
+
+    - name: Check cinder keyring file exist
+      stat:
+        path: /root/client.cinder.key
+      register: client_cinder_key
+      when:
+        - enable_cinder_backend_ceph | bool
+
+    - name: Combine secret key with Ceph key
+      shell: virsh secret-set-value --secret {{ openstack_uuid }} --base64 $(cat client.cinder.key)
+      changed_when: false
+      when:
+        - enable_cinder_backend_ceph | bool
+        - client_cinder_key.stat.exists
+
+    - name: Restart libvirtd
+      systemd:
+        state: restarted
+        enabled: true
+        name: libvirtd
+
+    - name: Restart service openstack-nova-compute
+      systemd:
+        state: restarted
+        enabled: true
+        name: openstack-nova-compute

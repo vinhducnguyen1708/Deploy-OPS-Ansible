@@ -4,9 +4,11 @@
     state: restarted
     enabled: true
     name: openstack-barbican-api
+  throttle: 1
 
 - name: Restart the Apache HTTP service
   systemd:
     state: restarted
     enabled: true
     name: httpd.service
+  throttle: 1

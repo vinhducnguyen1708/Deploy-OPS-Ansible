@@ -1,0 +1,10 @@
+---
+- name: Show status Memcache
+  debug:
+    msg: "Memcache status is {{ services_status.ansible_facts.services['memcached.service'].state }}"
+
+- name: Memcache has problem
+  fail:
+    msg: "Memcache status is {{ services_status.ansible_facts.services['memcached.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['memcached.service'].state != "running"
+  ignore_errors: True

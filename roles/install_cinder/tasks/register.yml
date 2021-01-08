@@ -6,7 +6,9 @@
     password: "{{ cinder_pass }}"
     domain: default
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create role for user cinder
   os_user_role:
@@ -15,8 +17,10 @@
     role: admin
     project: service
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     state: present
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create Block Storage service v2
   os_keystone_service:
@@ -24,8 +28,10 @@
     auth: "{{ openstack_auth }}"
     service_type: volumev2
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     description: OpenStack Block Storage
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create Block Storage service v3
   os_keystone_service:
@@ -33,16 +39,19 @@
     auth: "{{ openstack_auth }}"
     service_type: volumev3
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     description: OpenStack Block Storage
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create endpoint for cinderv2
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: cinderv2
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8776/v2/%(project_id)s"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ cinder_api_port }}/v2/%(project_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -50,14 +59,16 @@
     - admin
     - internal
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create endpoint for cinderv3
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: cinderv3
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8776/v3/%(project_id)s"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ cinder_api_port }}/v3/%(project_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -65,3 +76,44 @@
     - admin
     - internal
   run_once: true
+  when: region_name == region_main_site
+
+- name: Create endpoint for cinderv2 other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: cinderv2
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ cinder_api_port }}/v2/%(project_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site
+
+- name: Create endpoint for cinderv3 other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: cinderv3
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ cinder_api_port }}/v3/%(project_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site

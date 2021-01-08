@@ -1,18 +1,16 @@
-Listen {{ MGNT_IP }}:80
-
 ServerSignature Off
 ServerTokens Prod
 TraceEnable off
 WSGISocketPrefix run/wsgi
+WSGIApplicationGroup %{GLOBAL}
+WSGIDaemonProcess dashboard
+WSGIProcessGroup dashboard
 
 <VirtualHost *:80>
     LogLevel warn
     ErrorLog /var/log/horizon/horizon.log
     LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b %D \"%{Referer}i\" \"%{User-Agent}i\"" logformat
     CustomLog /var/log/horizon/horizon-access.log logformat 
-    WSGIApplicationGroup %{GLOBAL}
-    WSGIDaemonProcess horizon-http
-    WSGIProcessGroup horizon-http
     WSGIPassAuthorization On
     WSGIScriptAlias /dashboard /usr/share/openstack-dashboard/openstack_dashboard/wsgi/django.wsgi
     <Location "/">
@@ -23,7 +21,6 @@ WSGISocketPrefix run/wsgi
         SetHandler None
     </Location>
 </VirtualHost>
-Header edit Location ^http://(.*)$ https://$1
 
 <IfModule mod_deflate.c>
     # Compress HTML, CSS, JavaScript, Json, Text, XML and fonts

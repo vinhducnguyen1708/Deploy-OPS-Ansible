@@ -1,28 +1,10 @@
 ---
-- name: restart nova services
-  systemd:
-    state: restarted
-    enabled: true
-    name: openstack-nova-api.service
-
-- name: restart nova-scheduler services
-  systemd:
-    state: restarted
-    enabled: true
-    name: openstack-nova-scheduler.service
-
-- name: restart nova-conductor services
-  systemd:
-    state: restarted
-    enabled: true
-    name: openstack-nova-conductor.service
-
-
 - name: Restart neutron-server
   systemd:
     state: restarted
     enabled: true
     name: neutron-server.service
+  throttle: 1 
 
 - name: Restart neutron-metadata-agent.service
   systemd:
@@ -42,10 +24,8 @@
     enabled: true
     name: neutron-openvswitch-agent.service
 
-
-- name: Restart  neutron-l3-agent.service
+- name: Restart neutron-l3-agent.service
   systemd:
     state: restarted
     enabled: true
     name:  neutron-l3-agent.service
-

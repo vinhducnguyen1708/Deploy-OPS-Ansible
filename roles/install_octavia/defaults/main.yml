@@ -8,4 +8,4 @@ octavia_packages:
      - openstack-octavia-worker.noarch
      - openstack-octavia-amphora-agent.noarch
      - openstack-octavia-ui.noarch
-     - python2-octaviaclient.noarch
+     - python3-octaviaclient.noarch

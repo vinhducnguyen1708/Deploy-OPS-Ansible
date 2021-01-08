@@ -1,0 +1,2 @@
+ansible_python_interpreter: /usr/libexec/platform-python
+external_interface: "bond1"

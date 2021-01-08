@@ -1,5 +1,5 @@
-PORT="11211"
+PORT="{{ memcache_port }}"
 USER="memcached"
 MAXCONN="1024"
 CACHESIZE="64"
-OPTIONS="-l {{ MGNT_IP }}"
+OPTIONS="-l {{ management_ip_address }}"

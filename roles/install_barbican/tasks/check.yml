@@ -1,0 +1,12 @@
+---
+- name: Show status barbican-api
+  debug:
+    msg: "Barbican-api status is {{ services_status.ansible_facts.services['openstack-barbican-api.service'].state }}"
+
+- name: Openstack-barbican-api has problem
+  fail:
+    msg: "Barbican-api status is {{ services_status.ansible_facts.services['openstack-barbican-api.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-barbican-api.service'].state == "stopped"
+  ignore_errors: True
+
+

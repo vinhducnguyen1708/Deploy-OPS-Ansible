@@ -1,0 +1,21 @@
+---
+- name: restart manila-api Services
+  systemd:
+    state: restarted
+    enabled: true
+    name: openstack-manila-api.service
+  throttle: 1
+
+- name: restart manila-scheduler Services
+  systemd:
+     state: restarted
+     enabled: true
+     name: openstack-manila-scheduler.service
+  throttle: 1
+
+- name: restart manila-share Services
+  systemd:
+      state: restarted
+      enabled: true
+      name: openstack-manila-share.service
+  throttle: 1

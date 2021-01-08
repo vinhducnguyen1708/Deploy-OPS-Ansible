@@ -1,0 +1,22 @@
+cinder_api_port: 8776
+
+cinder_lvm_packages:
+   - lvm2 
+   - device-mapper-persistent-data
+   - targetcli
+   - python3-keystone
+
+ceph_backend:
+     - name: "ceph"
+       pool: "volumes"
+
+cinder_backends:
+    - name: "lvm"
+      enabled: "{{ enable_cinder_backend_lvm | bool }}"
+    - name: "{{ ceph_backend | map(attribute='name') | join(',') }}"
+      enabled: "{{ enable_cinder_backend_ceph | bool }}"
+
+
+cinder_enabled_backends: "{{ cinder_backends | selectattr('enabled', 'equalto', true) | list }}"
+
+default_volume_type_ceph: "{% if enable_cinder_backend_ceph | bool %}{{ (ceph_backend | map(attribute='name') | list )[0]  }}{% else %} {% endif %}"

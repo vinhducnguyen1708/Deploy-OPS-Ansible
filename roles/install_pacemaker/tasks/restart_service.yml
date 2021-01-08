@@ -1,0 +1,28 @@
+---
+- name: Restart pacemaker
+  systemd:
+    state: restarted
+    enabled: true
+    name: pacemaker
+  throttle: 1 
+
+- name: Restart corosync
+  systemd:
+    state: restarted
+    enabled: true
+    name: corosync
+  throttle: 1 
+
+- name: Restart haproxy
+  systemd:
+    state: restarted
+    enabled: true
+    name: haproxy
+  throttle: 1 
+
+- name: Restart_PCS
+  systemd:
+    state: restarted
+    enabled: true
+    name: pcsd
+  throttle: 1 

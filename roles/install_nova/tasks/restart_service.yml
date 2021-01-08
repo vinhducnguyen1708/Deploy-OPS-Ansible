@@ -4,24 +4,25 @@
     state: restarted
     enabled: true
     name: openstack-nova-api.service
+  throttle: 1 
 
 - name: Enable and Start Nova-scheduler Services
   systemd:
     state: restarted
     enabled: true
     name: openstack-nova-scheduler.service 
-
+  throttle: 1 
 
 - name: Enable and Start Nova-condutor Services
   systemd:
     state: restarted
     enabled: true
     name: openstack-nova-conductor.service
-
+  throttle: 1 
 
 - name: Enable and Start Nova-novncproxy Services
   systemd:
     state: restarted
     enabled: true
     name: openstack-nova-novncproxy.service
-
+  throttle: 1 

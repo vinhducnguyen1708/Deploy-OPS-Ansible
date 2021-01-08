@@ -1,0 +1,10 @@
+---
+- name: Show status Haproxy
+  debug:
+    msg: "Haproxy status is {{ services_status.ansible_facts.services['haproxy.service'].state }}"
+
+- name: Haproxy has problem
+  fail:
+    msg: "Haproxy status is {{ services_status.ansible_facts.services['haproxy.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['haproxy.service'].state != "running"
+  ignore_errors: True

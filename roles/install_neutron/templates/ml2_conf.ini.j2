@@ -3,22 +3,26 @@
 
 [ml2]
 type_drivers = flat,vlan,vxlan,gre
-tenant_network_types = vxlan,gre,vlan
+tenant_network_types = vxlan,gre
 mechanism_drivers = openvswitch,l2population
 extension_drivers = port_security,qos
-path_mtu = 1500
+path_mtu = 1550
 
 
 [ml2_type_flat]
-flat_networks = physnet1
+flat_networks = {{ provider_physical_network }}
 
 
 [ml2_type_vlan]
-network_vlan_ranges = physnet1
+{% if enable_neutron_vlan | bool %}
+network_vlan_ranges = vlannet:200:500
+{% else %}
+network_vlan_ranges = {{ provider_physical_network }}
+{% endif %}
 
 
 [ml2_type_vxlan]
-vni_ranges = 200:2000
+vni_ranges = 4000:8000
 
 
 [ml2_type_gre]
@@ -27,5 +31,12 @@ tunnel_id_ranges = 2000:4000
 
 [securitygroup]
 enable_ipset = true
-firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+firewall_driver = openvswitch
 
+{% if enable_neutron_fwaas | bool %}
+[agent]
+extensions = fwaas_v2
+
+[fwaas]
+firewall_l2_driver = noop
+{% endif %}

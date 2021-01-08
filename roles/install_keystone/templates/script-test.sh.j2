@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo " ##### Check Mariadb Cluster status ##### "
-mysql -uroot  -e "SHOW STATUS LIKE 'wsrep_cluster_size'"
+mysql -uroot -e "SHOW STATUS LIKE 'wsrep_cluster_size'"
 
 echo " ##### Check RabbitMQ Cluster status ##### "
 sudo rabbitmqctl cluster_status

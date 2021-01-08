@@ -5,7 +5,7 @@
 
 - name: Install pip
   yum:
-     name: python-pip
+     name: python3-pip
 
 - name: Config file /etc/yum.repos.d/epel.repo
   ini_file:
@@ -16,18 +16,19 @@
     mode: '0600'
     backup: yes
 
+- name: Install byobu
+  dnf: 
+    enablerepo: epel
+    name: byobu
+  
+
 - name: Update packages for Servers
   yum:
      name: '*'
      state: latest
-- name: disable firewalld
-  systemd:
-    name: firewalld.service
-    state: stopped
-    enabled: no
 
-- name: disable networkmanager
-  systemd:
-    name: NetworkManager.service
-    state: stopped
-    enabled: no
+- name: Add Welcome Shell
+  template:
+     src: welcome.j2
+     dest: /etc/profile.d/welcome.sh
+     mode: 0755

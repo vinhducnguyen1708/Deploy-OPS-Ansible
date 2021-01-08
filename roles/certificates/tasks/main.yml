@@ -1,5 +1,38 @@
 ---
+- name: Create Ansible-Deploy directory
+  file:
+    path: "{{ deploy_directory }}"
+    state: directory
+
+- name: Check cert already exist on controller and compute node
+  stat:
+    path: "{{ deploy_directory }}/private"
+  register: ca_cert_ops
+
 - include_tasks: generate.yml
-  when: enable_ssl | bool 
-- include_tasks: octavia_cert.yml 
-  when: enable_octavia | bool
+  when: 
+     - enable_ssl | bool 
+     - not ca_cert_ops.stat.exists
+
+# - include_tasks: copy_cert.yml
+
+- name: Check if ocatvia's certs exist
+  stat:
+    path: "{{ deploy_directory }}/octavia_certs"
+  register: octavia_certs
+
+  
+- include_tasks: octavia_cert.yml
+  when:
+    - enable_octavia | bool
+    - not octavia_certs.stat.exists
+
+# - include_tasks: copy_octavia_certs.yml
+#   when:
+#     - enable_octavia | bool
+
+
+
+
+
+

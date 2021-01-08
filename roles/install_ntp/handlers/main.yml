@@ -4,3 +4,9 @@
     state: restarted
     enabled: yes
     name: chronyd.service
+
+- name: Restart crond
+  systemd:
+     state: restarted
+     enabled: true
+     name: crond

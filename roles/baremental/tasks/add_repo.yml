@@ -4,15 +4,34 @@
      name: '*'
      state: latest
 
+- name: Install yum lock
+  yum: 
+    name: yum-plugin-versionlock
+
 - name: Enable the Openstack repository
   yum:
      name: "centos-release-openstack-{{ openstack_release }}"
 
-- name: Enable the Openstack client
+- name: enable Power-tools repo
+  ini_file:
+     path: /etc/yum.repos.d/CentOS-PowerTools.repo
+     section: PowerTools
+     option: "{{ item.key }}"
+     value: "{{ item.value }}"
+  with_dict: "{{ powertools_repo }}"
+  
+- name: Install openstack client
   yum:
-     name: 'python-openstackclient'
+    name: python3-openstackclient
 
 - name: Enable the Openstack Selinux
   yum:
      name: 'openstack-selinux'
-     
+
+- name: Create script lock packages's version
+  template:
+     src: script-lock-version.j2
+     dest: script-lock-version.sh
+     mode: 0700
+     owner: root
+     group: root

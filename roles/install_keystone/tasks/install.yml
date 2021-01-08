@@ -1,7 +1,53 @@
 ---
-- name: Install Keystone 
+- name: Install Keystone
   yum:
     name: "{{ keystone_packages }}"
-#  with_items:
-#    - "{{ keystone_packages }}"
 
+- name: Add user 'keystone' with a bash shell
+  user:
+    name: keystone
+    shell: /bin/bash
+
+- name: Create SSH config directory for keystone
+  file:
+    path: /var/lib/keystone/.ssh
+    state: directory
+
+- name: Config SSH key for user Keystone
+  copy:
+    src: /root/.ssh/id_rsa
+    dest: /var/lib/keystone/.ssh/id_rsa
+    owner: keystone
+    group: keystone
+    mode: 0600
+
+- name: Config user keystone id_rsa.pub
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: /var/lib/keystone/.ssh/id_rsa.pub
+    owner: keystone
+    group: keystone
+    mode: 0600
+
+- name: Config user keystone authorized_keys
+  copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: /var/lib/keystone/.ssh/authorized_keys
+    owner: keystone
+    group: keystone
+    mode: 0600
+
+- name: Config ssh for user keystone
+  template:
+    src: config-ssh.j2
+    dest: /var/lib/keystone/.ssh/config
+    owner: keystone
+    group: keystone
+    mode: 0600
+
+- name: Chown ssh keystone
+  file:
+    path: /var/lib/keystone/.ssh
+    owner: keystone
+    group: keystone
+    mode: 0700

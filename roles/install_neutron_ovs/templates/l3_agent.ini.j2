@@ -1,0 +1,14 @@
+[DEFAULT]
+interface_driver = openvswitch
+external_network_bridge =
+agent_mode = {% if enable_neutron_dvr | bool %}dvr{% else %}legacy{% endif %} 
+
+
+[agent]
+extensions = fip_qos{% if enable_neutron_fwaas | bool %},fwaas_v2{% endif %}{% if enable_neutron_vpnaas | bool %},vpnaas{% endif %}
+
+
+{% if enable_neutron_vpnaas | bool %}
+[vpnagent]
+vpn_device_driver = neutron_vpnaas.services.vpn.device_drivers.libreswan_ipsec.LibreSwanDriver
+{% endif %}

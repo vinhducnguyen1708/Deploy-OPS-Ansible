@@ -1,0 +1,4 @@
+ansible_python_interpreter: /usr/libexec/platform-python
+# external_interface:
+#     - "ens1f0np0"
+#     - "ens2f0np0"

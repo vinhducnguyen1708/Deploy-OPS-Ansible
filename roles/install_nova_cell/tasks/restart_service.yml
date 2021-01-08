@@ -4,11 +4,11 @@
     state: restarted
     enabled: true
     name: libvirtd
+  throttle: 1 
 
 - name: Restart service openstack-nova-compute
   systemd:
     state: restarted
     enabled: true
     name: openstack-nova-compute
-
-
+  throttle: 1 

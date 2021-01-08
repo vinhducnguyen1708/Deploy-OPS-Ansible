@@ -1,16 +1,23 @@
 ---
-- include_tasks: create_containerDB.yml 
+- include_tasks: create_containerDB.yml
   when: 
-    - enable_multisite | bool
-- include_tasks: config_replicate_container.yml 
+    - region_name != region_main_site
+
+- include_tasks: config_replicate_container.yml
   when:
-    - enable_multisite | bool
+    - region_name != region_main_site
+
 - include_tasks: bootstrap.yml
   when:
-    - not enable_multisite | bool
+    - region_name == region_main_site
+
 - include_tasks: install.yml
+
 - include_tasks: config_httpd.yml
+
 - include_tasks: config_keystone.yml
+
 - include_tasks: config_rotate_key.yml
-- include_tasks: restart_service.yml
-- include_tasks: register.yml 
+  when: groups['controller'] | length > 1
+
+- include_tasks: register.yml

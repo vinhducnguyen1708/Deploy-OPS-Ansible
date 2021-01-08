@@ -40,7 +40,7 @@ ServerRoot "/etc/httpd"
 # prevent Apache from glomming onto all bound IP addresses.
 #
 #Listen 12.34.56.78:80
-#Listen {{ MGNT_IP }}:80
+Listen {{ management_ip_address }}:80
 
 #
 # Dynamic Shared Object (DSO) Support
@@ -93,7 +93,7 @@ ServerAdmin root@localhost
 #
 # If your host doesn't have a registered DNS name, enter its IP address here.
 #
-#ServerName www.example.com:80
+#ServerName smartcloud.vn
 
 #
 # Deny access to the entirety of your server's filesystem. You must

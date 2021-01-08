@@ -29,19 +29,40 @@
   template:
     src: neutron.conf.j2
     dest: /etc/neutron/neutron.conf
+    mode: 0640
+    group: neutron
+    owner: root
   notify:
-      - Restart ovs
       - Restart neutron-openvswitch service
-      - Restart service libvirtd
-      - Restart service openstack-nova-compute
 
 
 - name: Config file OVS
   template:
     src: openvswitch_agent.ini.j2
     dest: /etc/neutron/plugins/ml2/openvswitch_agent.ini
+    mode: 0640
+    group: neutron
+    owner: root
   notify:
-      - Restart ovs
       - Restart neutron-openvswitch service
       - Restart service libvirtd
-      - Restart service openstack-nova-compute
+
+- name: Config l3 agent
+  template:
+    src: l3_agent.ini.j2
+    dest: /etc/neutron/l3_agent.ini
+    mode: 0640
+    group: neutron
+    owner: root
+  when: enable_neutron_dvr | bool
+  notify:
+      - Restart neutron-l3-agent
+
+- name: Chown group, user neutron
+  file:
+    path: /etc/neutron
+    owner: root
+    group: neutron
+    mode: u=rwX,g=rX
+    recurse: yes
+    state: directory

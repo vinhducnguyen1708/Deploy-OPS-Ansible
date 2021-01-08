@@ -3,4 +3,12 @@
   systemd:
      name: rabbitmq-server.service
      state: started
-     enabled: yes 
+     enabled: yes
+     daemon_reload: yes
+
+- name: restart rabbitmq-server
+  systemd:
+     name: rabbitmq-server.service
+     state: restarted
+     enabled: yes
+     daemon_reload: yes

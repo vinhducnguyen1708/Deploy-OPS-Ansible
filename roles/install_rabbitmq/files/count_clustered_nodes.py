@@ -1,14 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
-import commands
+import subprocess
+import re
 
-out = commands.getstatusoutput("rabbitmqctl cluster_status")
-begin = out[1].index('running_nodes')
-end = out[1].index('cluster_name')
+out = subprocess.getstatusoutput("rabbitmqctl cluster_status")
+begin = out[1].index('Running Nodes')
+end = out[1].index('Versions')
 
-data = out[1][begin:end].strip("running_nodes,")
-
-nodes = data[:-5].strip('[').strip(']').split(',')
-
-print len(nodes)
-
+res = out[1][begin:end].strip("Running Nodes")
+reaesc = re.compile(r'\x1b[^m]*m')
+new_text = reaesc.sub('', res)
+print(len(new_text.split()))

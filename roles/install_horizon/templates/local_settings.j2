@@ -4,38 +4,39 @@ from openstack_dashboard.settings import HORIZON_CONFIG
 DEBUG = False
 ALLOWED_HOSTS = ['*',]
 LOCAL_PATH = '/tmp'
-SECRET_KEY='8e4fe55f1672e3335aba'
+SECRET_KEY='15393009cbc70ae4a79e'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-OPENSTACK_HOST = "{{ IP_VIP }}"
-OPENSTACK_KEYSTONE_URL = "{{ keystone_protocol }}://%s:5000/v3" % OPENSTACK_HOST
-{% if enable_ssl | bool %}
-#USE_SSL = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-OPENSTACK_SSL_NO_VERIFY = True
-#OPENSTACK_SSL_CACERT = '{{ openstack_cacert }}'
-{% endif %}
-
+OPENSTACK_HOST = "{{ ip_vip_address }}"
+OPENSTACK_KEYSTONE_URL = "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3" 
+# The OPENSTACK_NEUTRON_NETWORK settings can be used to enable optional
+# services provided by neutron. Options currently available are load
+# balancer service, security groups, quotas, VPN service.
 OPENSTACK_NEUTRON_NETWORK = {
     'enable_auto_allocated_network': False,
-    'enable_distributed_router': False,
+    'enable_distributed_router': {% if enable_neutron_dvr | bool %}True{% else %}False{% endif %},
     'enable_fip_topology_check': True,
-    'enable_ha_router': False,
+    'enable_ha_router': {% if enable_neutron_dvr | bool %}True{% else %}False{% endif %},
+    'enable_firewall': True,
+    'enable_vpn': True,
+    'enable_lb': True,
     'enable_ipv6': True,
     # TODO(amotoki): Drop OPENSTACK_NEUTRON_NETWORK completely from here.
     # enable_quotas has the different default value here.
     'enable_quotas': True,
     'enable_rbac_policy': True,
     'enable_router': True,
+
     'default_dns_nameservers': [],
     'supported_provider_types': ['*'],
     'segmentation_id_range': {},
     'extra_provider_types': {},
     'supported_vnic_types': ['*'],
     'physical_networks': [],
+
 }
+
 TIME_ZONE = "Asia/Ho_Chi_Minh"
+POLICY_FILES_PATH = '/etc/openstack-dashboard'
 LOGGING = {
     'version': 1,
     # When set to True this will disable all logging except
@@ -272,15 +273,6 @@ SECURITY_GROUP_RULES = {
         'to_port': '3389',
     },
 }
-OPENSTACK_CINDER_FEATURES = {
-    'enable_backup': True,
-}
-OPENSTACK_HEAT_STACK = {
-    'enable_user_pass': True,
-}
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-OPENSTACK_KEYSTONE_MULTIDOMAIN_SUPPORT = True
-WEBROOT = '/dashboard/'
 OPENSTACK_API_VERSIONS = {
     "identity": 3,
     "image": 2,
@@ -289,13 +281,20 @@ OPENSTACK_API_VERSIONS = {
 CACHES = {
     'default': {
          'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-         'LOCATION': [{%- for item in groups['controller'] %}'{{  hostvars[item].ansible_default_ipv4.address }}:11211'{% if not loop.last %},{% endif %}{% endfor %}]
+         'LOCATION': [{%- for item in groups['controller'] %}'{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}'{% if not loop.last %},{% endif %}{% endfor %}]
         }
 }
-
 OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = "Default"
 OPENSTACK_KEYSTONE_DEFAULT_ROLE = "user"
-#AVAILABLE_REGIONS = [
-#    ('http://{{ IP_VIPSITE1 }}:5000/v3/', '{{ REGION1 }}'),
-#    ('http://{{ IP_VIP }}:5000/v3', '{{ REGION }}'),
-#]
+OPENSTACK_KEYSTONE_MULTIDOMAIN_SUPPORT = True
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+WEBROOT = '/dashboard/'
+{% if enable_ssl | bool %}
+OPENSTACK_SSL_NO_VERIFY = True
+DISALLOW_IFRAME_EMBED = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True 
+PASSWORD_AUTOCOMPLETE = False
+ENFORCE_PASSWORD_CHECK = True
+{% endif %}
+SESSION_COOKIE_HTTPONLY = True 

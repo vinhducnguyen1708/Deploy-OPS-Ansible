@@ -1,49 +1,56 @@
 ---
-
-- name: enable plugin rabbit_management
+- name: Enable plugin rabbit_management
   rabbitmq_plugin: 
     names: rabbitmq_management
     state: enabled
+
+- name: Check /etc/rabbitmq/rabbitmq.conf.bak existed
+  stat:
+    path: /etc/rabbitmq/rabbitmq.conf.bak
+  register: rabbitmq_conf_bak
+
+- name: Backup file config rabbitmq
+  copy:
+   src: /etc/rabbitmq/rabbitmq.conf
+   dest: /etc/rabbitmq/rabbitmq.conf.bak
+   remote_src: yes
   when:
-    - groups['controller'] | length  > 1
+    - not rabbitmq_conf_bak.stat.exists
 
-- name: Stop all Rabbitmq Services
-  systemd: 
-    name: rabbitmq-server
-    state: stopped
-
+- name: Config Rabbitmq
+  template:
+    src: rabbitmq.conf.j2
+    dest: /etc/rabbitmq/rabbitmq.conf
+  when:
+   - groups['controller'] | length > 1
 
 - name: Set erlang_cookie
   command: cat /var/lib/rabbitmq/.erlang.cookie
   register: erlang_cookie
   run_once: yes
 
-- name: Copy file erlang_cookie to other 
+- name: Copy file erlang_cookie to other
   copy: 
     dest: /var/lib/rabbitmq/.erlang.cookie
     content: "{{ erlang_cookie.stdout }}"
   delegate_to: "{{ item }}"
-  with_items:   
+  with_items: 
     - "{{ groups['controller'] }}"
   run_once: yes
 
-#- name: Sync file rabbitmq cookie
-#  synchronize:
-#    src: "{{ item }}"
-#    dest: "{{ item }}"
-#    mode: pull
-#  delegate_to: "{{ groups['controller'][2] }}"
-#  with_items:
-#       - "/var/lib/rabbitmq/.erlang.cookie"
-#      - "{{ groups['controller'][1] }}"
-#      - "{{ groups['controller'][2] }}"
-#  run_once: yes
-#  when: cluster_status.stdout.find("rabbit@{{ inventory_hostname }}") == -1 
+- name: Sleep for 5 seconds and continue with play
+  wait_for:
+    timeout: 5
 
-- name: Start all Rabbitmq Services
+- name: Restart all Rabbitmq Services
   systemd:
     name: rabbitmq-server
-    state: started
+    state: restarted
     enabled: yes
+    daemon_reload: yes
+  throttle: 1
+  
 
 - include_tasks: join_rabbitmq_cluster.yml
+  when:
+   - groups['controller'] | length > 1

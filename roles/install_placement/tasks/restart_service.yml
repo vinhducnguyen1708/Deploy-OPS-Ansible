@@ -1,5 +1,5 @@
 ---
-- name: start httpd service
+- name: Restart httpd service
   systemd:
      state: restarted
      enabled: true

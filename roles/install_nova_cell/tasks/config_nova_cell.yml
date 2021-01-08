@@ -10,49 +10,26 @@
    dest: /etc/nova/nova.conf.bak
    remote_src: yes
   when:
-    - not  nova_compute_conf_bak.stat.exists
+    - not nova_compute_conf_bak.stat.exists
     
 - name: Config file nova.conf
   template:
     src: nova.conf.j2
     dest: /etc/nova/nova.conf
+    mode: 0640
+    group: nova
+    owner: root
   notify: 
     - Restart libvirtd
     - Restart service openstack-nova-compute
 
+- name: Chown group, user nova
+  file:
+    path: "/etc/nova"
+    owner: root
+    group: nova
+    mode: u=rwX,g=rX
+    recurse: yes
+    state: directory
+     
 - meta: flush_handlers
-
-- name: Create secret file key
-  template:
-    src: secret.xml.j2
-    dest: secret.xml
-
-- name: Find existed key
-  shell: virsh secret-list | egrep client.cinder | awk '{print $1}'
-  register: secret_list
-  changed_when: false
-
-- name: Delete existed key
-  command: virsh secret-undefine "{{ secret_list.stdout }}"
-  changed_when: false
-  when:
-     - secret_list.stdout != ""
-- name: Virsh file secret.xml
-  shell: virsh secret-define --file secret.xml
-  when:
-    - enable_ceph | bool
-
-
-- name: Check cinder keyring file exist
-  stat:
-    path: /root/client.cinder.key
-  register: client_cinder_key
-  when:
-    - enable_ceph | bool
-
-
-- name: Combine secret key with Ceph key
-  shell: virsh secret-set-value --secret {{ openstack_uuid }} --base64 $(cat client.cinder.key)
-  when:
-    -  enable_ceph | bool
-    -  client_cinder_key.stat.exists

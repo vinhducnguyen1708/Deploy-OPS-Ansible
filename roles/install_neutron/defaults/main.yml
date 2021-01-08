@@ -6,3 +6,12 @@ neutron_packages:
     - ebtables
     - libibverbs
 
+neutron_server_port: "9696"
+
+neutron_fwaas_packages: 
+    - openstack-neutron-fwaas
+#    - python3-neutron-fwaas
+
+neutron_vpnaas_packages:
+    - openstack-neutron-vpnaas
+    - python3-neutron-vpnaas

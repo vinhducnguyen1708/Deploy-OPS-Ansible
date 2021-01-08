@@ -1,6 +1,8 @@
 ---
-- name: config httpd for placement-api
+- name: Config httpd for placement-api
   template:
    src: 00-placement-api.conf.j2
    dest: /etc/httpd/conf.d/00-placement-api.conf
-
+  notify:
+     - start httpd service
+ 

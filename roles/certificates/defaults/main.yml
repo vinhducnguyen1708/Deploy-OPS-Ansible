@@ -1,11 +1,4 @@
 cafile_name: haproxy
-#     - keystone
-#     - glance
-#     - placement
-#     - nova
-#     - neutron
-#     - cinder
-#     - horizon
 
 country_name: VN
 state_name: HaNoi

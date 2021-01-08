@@ -21,10 +21,11 @@
   systemd:
     state: restarted
     enabled: true
-    name: openstack-cinder-volume
+    name: openstack-cinder-volume.service
 
 - name: restart service Cinder Backup
   systemd: 
     state: restarted
     enabled: true
-    name: openstack-cinder-backup
+    name: openstack-cinder-backup.service
+  when: enable_cinder_backend_ceph | bool

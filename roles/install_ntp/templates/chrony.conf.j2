@@ -1,11 +1,7 @@
 # Use public servers from the pool.ntp.org project.
 # Please consider joining the pool (http://www.pool.ntp.org/join.html).
 
-server 0.asia.pool.ntp.org iburst
-server 1.asia.pool.ntp.org iburst
-
-
-
+server {{ ntp_server_ip }}
 
 # Record the rate at which the system clock gains/losses time.
 driftfile /var/lib/chrony/drift
@@ -25,7 +21,7 @@ rtcsync
 #minsources 2
 
 # Allow NTP client access from local network.
-allow {{ MGNT_CIDR }}
+allow {{ management_cidr }}
 
 # Serve time even if not synchronized to a time source.
 #local stratum 10

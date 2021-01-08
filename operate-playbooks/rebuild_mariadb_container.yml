@@ -1,0 +1,33 @@
+--- 
+- name: Garther_facts
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Group hosts to determine when using --limit
+      setup:
+
+- name: Rebuild Mairadb Containers
+  hosts: controller
+  gather_facts: false
+  tasks:
+    - name: Delete old containers
+      docker_container:
+        name: hcm-mariadb-{{ inventory_hostname_short }}
+        state: absent
+      when:
+        - region_name != region_main_site
+
+    - name: Run task create_containerDB
+      include_role:
+        name: install_keystone
+        tasks_from: create_containerDB
+      when:
+        - region_name != region_main_site
+
+    - name: Run task create_replicate_container
+      include_role:
+        name: install_keystone
+        tasks_from: config_replicate_container
+      when:
+        - region_name != region_main_site
+    

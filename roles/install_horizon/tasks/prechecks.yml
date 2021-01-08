@@ -1,0 +1,8 @@
+---
+- name: Checking free port for Horizon
+  wait_for:
+    host: "{{ management_ip_address }}"
+    port: "80"
+    connect_timeout: 1
+    timeout: 1
+    state: stopped

@@ -1,0 +1,142 @@
+---
+- name: collect facts about system services
+  service_facts:
+  register: services_status
+  
+- name: Check status service
+  service_facts:
+  register: services_status
+
+- name: Wait for port 5672 to become open on the host, don't start checking for 10 seconds
+  wait_for:
+      host: "{{ management_ip_address }}"
+      port: 5672
+      delay: 10
+      msg: " Please check Rabbitmq-server"
+      timeout: 15
+  ignore_errors: yes
+
+- name: Wait for port 15672 to become open on the host, don't start checking for 10 seconds
+  wait_for:
+      host: "{{ management_ip_address }}"
+      port: 15672
+      delay: 10
+      msg: " Please check Rabbitmq-server"
+      timeout: 15
+  ignore_errors: yes
+
+- name: Wait for port 25672 to become open on the host, don't start checking for 10 seconds
+  wait_for:
+      host: "{{ management_ip_address }}"
+      port: 25672
+      delay: 10
+      msg: " Please check Rabbitmq-server"
+      timeout: 15
+  ignore_errors: yes
+
+- name: Show status Rabbitmq-server
+  debug:
+    msg: "Rabbitmq-server status is {{ services_status.ansible_facts.services['rabbitmq-server.service'].state }}"
+
+- name: Rabbitmq-server has problem
+  fail:
+    msg: "Rabbitmq-server status is {{ services_status.ansible_facts.services['rabbitmq-server.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['rabbitmq-server.service'].state != "running"
+  ignore_errors: True
+
+- name: Start if Rabbitmq-server is down
+  systemd:
+    state: started
+    name: rabbitmq-server
+    enabled: yes
+
+- name: Waiting for a while to nodes stabilize themselves
+  wait_for:
+      timeout: 10
+
+- name: Check Rabbitmq Listeners
+  script: count_listeners.py
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: rabbitmq_listeners
+
+- name: Show Listeners on each node
+  debug:
+    var: rabbitmq_listeners.stdout_lines
+
+- name: Check Rabbitmq Versions
+  script: count_versions.py
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: rabbitmq_versions
+
+- name: Show version on each node
+  debug:
+    var: rabbitmq_versions.stdout_lines
+
+- name: Check Rabbitmq Running nodes
+  script: count_runningnodes.py
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: rabbitmq_runningnodes
+
+- name: Show Running nodes on each node
+  debug:
+    var: rabbitmq_runningnodes.stdout_lines      
+
+- name: Show me the meaning
+  debug: 
+      var: hostvars['{{ item }}'].rabbitmq_runningnodes.stdout_lines
+  with_items:
+      - "{{ groups['controller'] }}"
+  run_once: yes
+  
+- name: Check Rabbitmq split-brain
+  script: show_network_partitions.py
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: network_partitions
+
+- name: Show network_partitions on each node
+  debug:
+      var: network_partitions.stdout_lines
+
+- name: Problem !!! Check split brain 
+  fail: 
+    msg: "Please Check Rabbitmq cluster status on {{ inventory_hostname }} node"
+  when: network_partitions.stdout_lines != ["(none)"]
+  ignore_errors: yes
+
+- name: Stopped one node if Rabbitmq node has split brain
+  systemd:
+      state: stopped
+      name: rabbitmq-server
+      enabled: yes
+  run_once: yes 
+  when:
+    - network_partitions.stdout_lines != ["(none)"] or (rabbitmq_runningnodes.stdout_lines | length) < (groups['controller'] | length | int) or (rabbitmq_listeners.stdout_lines | length) < (groups['controller'] | length | int * 3)
+
+- name: Force_boot rabbitmq
+  command: rabbitmqctl force_boot
+  run_once: yes
+  when:
+    - network_partitions.stdout_lines != ["(none)"] or (rabbitmq_runningnodes.stdout_lines | length) < (groups['controller'] | length | int) or (rabbitmq_listeners.stdout_lines | length) < (groups['controller'] | length | int * 3)
+
+- name: Stopped other node if Rabbitmq node has split brain
+  systemd:
+      state: stopped
+      name: rabbitmq-server
+      enabled: yes
+  when:
+    - network_partitions.stdout_lines != ["(none)"] or (rabbitmq_runningnodes.stdout_lines | length) < (groups['controller'] | length | int) or (rabbitmq_listeners.stdout_lines | length) < (groups['controller'] | length | int * 3)
+
+- name: Started all node if Rabbitmq node has split brain
+  systemd:
+      state: started
+      name: rabbitmq-server
+      enabled: yes
+  throttle: 1 

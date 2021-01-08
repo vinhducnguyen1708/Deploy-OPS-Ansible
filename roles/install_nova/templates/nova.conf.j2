@@ -1,110 +1,155 @@
 [DEFAULT]
-my_ip = {{ MGNT_IP }}
+my_ip = {{ management_ip_address }}
 rootwrap_config = /etc/nova/rootwrap.conf
 enabled_apis = osapi_compute,metadata
-osapi_compute_listen = {{ MGNT_IP }}
-metadata_host = {{ MGNT_IP }}
-metadata_listen = {{ MGNT_IP }}
-metadata_listen_port = 8775
-osapi_compute_listen_port = 8774
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+osapi_compute_listen = {{ management_ip_address }}
+metadata_host = {{ management_ip_address }}
+metadata_listen = {{ management_ip_address }}
+metadata_listen_port = {{ nova_metadata_port }}
+osapi_compute_listen_port = {{ nova_api_port }}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 use_neutron = true
 firewall_driver = nova.virt.firewall.NoopFirewallDriver
+allow_resize_to_same_host = True
+log_dir = /var/log/nova
+
 [api]
 auth_strategy = keystone
+
 [api_database]
-connection = mysql+pymysql://nova:{{ novadb_pass }}@{{ IP_VIP }}/nova_api
+connection = mysql+pymysql://nova:{{ novadb_pass }}@{{ ip_vip_address }}/nova_api
+
 [barbican]
+
 [cache]
-memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 enabled = true
 backend = oslo_cache.memcache_pool
+
+
 {% if enable_cinder | bool %}
 [cinder]
-os_region_name = {{ REGION }}
-{% if enable_ssl | bool %}
-insecure = True
-#protocol = https
+os_region_name = {{ region_name }}
+catalog_info = volumev3:cinderv3:internalURL
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/
+auth_type = password
+project_domain_name = default
+user_domain_id = default
+project_name = service
+username = cinder
+password = {{ cinder_pass }}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}true{% else %}false{% endif %}
 {% endif %}
-{% endif %}
+
+
 [compute]
+
 [conductor]
+
 [console]
+
 [consoleauth]
+
 [cors]
+
 [database]
-connection = mysql+pymysql://nova:{{ novadb_pass }}@{{ IP_VIP }}/nova
+connection = mysql+pymysql://nova:{{ novadb_pass }}@{{ ip_vip_address }}/nova
+
 [devices]
+
 [ephemeral_storage_encryption]
+
 [filter_scheduler]
+
 [glance]
-api_servers = {{ keystone_protocol }}://{{ IP_VIP }}:9292
-{% if enable_ssl | bool %}
-insecure = True
-#protocol = https
-{% endif %}
+api_servers = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ glance_api_port }}
+insecure = {% if enable_insecure | bool %}True{% else %}false{% endif %}
+
+cafile = {{ openstack_cacert }}
+
 [guestfs]
+
 [healthcheck]
+
 [hyperv]
+
 [ironic]
+
 [key_manager]
+
 [keystone]
+
 [keystone_authtoken]
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:5000/
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000/
-memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/
+memcached_servers = {% for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_name = default
 user_domain_name = default
 project_name = service
 username = nova
+region_name = {{ region_name }}
 password = {{ nova_pass }}
 cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}false{% endif %}
 
 
 [libvirt]
-{% if enable_ceph | bool %}
+{% if enable_cinder_backend_ceph | bool %}
 rbd_user = cinder
 rbd_secret_uuid = {{ openstack_uuid }}
 {% endif %}
 
-
 [metrics]
+
 [mks]
+
 [neutron]
-url = {{ keystone_protocol }}://{{ IP_VIP }}:9696
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000
+url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ neutron_server_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
 auth_type = password
 project_domain_name = default
 user_domain_name = default
-region_name = {{ REGION }}
+region_name = {{ region_name }}
 project_name = service
 username = neutron
 password = {{ neutron_pass }}
 service_metadata_proxy = true
 metadata_proxy_shared_secret = {{ metadata_secret }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}false{% endif %}
+
 
 [notifications]
+
 [osapi_v21]
+
 [oslo_concurrency]
 lock_path = /var/lib/nova/tmp
-os_region_name = {{ REGION }}
+os_region_name = {{ region_name }}
+
 [oslo_messaging_amqp]
+
 [oslo_messaging_kafka]
+
 [oslo_messaging_notifications]
-transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:5672{% if not loop.last %},{% endif %}{% endfor %}
+transport_url = rabbit://{%- for item in groups['controller'] %}openstack:{{ rabbitmq_pass }}@{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ rabbitmq_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
 
 [oslo_messaging_rabbit]
+{% if groups['controller'] | length == 1 %}
 rabbit_ha_queues = true
 rabbit_retry_interval = 1
 rabbit_retry_backoff = 2
+rabbit_max_retries = 0
 amqp_durable_queues = true
+{% endif %}
+
+
 [oslo_middleware]
 {% if enable_ssl | bool %}
 secure_proxy_ssl_header = X-Forwarded-Proto
@@ -112,44 +157,69 @@ enable_proxy_headers_parsing = true
 {% endif %}
 
 [oslo_policy]
+
 [pci]
+
 [placement]
-os_region_name = {{ REGION }}
 project_domain_name = Default
 project_name = service
 auth_type = password
+region_name = {{ region_name }}
 user_domain_name = Default
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:5000/v3
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3
 username = placement
 password = {{ placement_pass }}
-{% if enable_ssl | bool %}
-insecure = True
-{% endif %}
+cafile = {{ openstack_cacert }}
+insecure = {% if enable_insecure | bool %}True{% else %}false{% endif %}
+
 
 [powervm]
+
 [privsep]
+
 [profiler]
+
 [quota]
+instances = -1
+injected_files = -1
+cores = -1
+ram = -1
+
 [rdp]
 [remote_debug]
+
 [scheduler]
+discover_hosts_in_cells_interval = 300
+
 [serial_console]
+
 [service_user]
+
 [spice]
+
 [upgrade_levels]
+
 [vault]
+
 [vendordata_dynamic_auth]
+
 [vmware]
+
 [vnc]
 enabled = true
-novncproxy_host = {{ MGNT_IP }}
-novncproxy_port = 6080
-server_listen = {{ MGNT_IP }}
-novncproxy_base_url = http://{{ IP_VIP }}:6080/vnc_auto.html
-server_proxyclient_address = {{ MGNT_IP }}
+novncproxy_host = {{ management_ip_address }}
+novncproxy_port = {{ vnc_port }}
+server_listen = {{ management_ip_address }}
+novncproxy_base_url = {{ keystone_protocol }}://{{ novavnc_domain }}:{{ vnc_port }}/vnc_auto.html
+server_proxyclient_address = {{ management_ip_address }}
+
 [workarounds]
+
 [wsgi]
+
 [xenserver]
+
 [xvp]
+
 [zvm]
 

@@ -1,11 +1,2 @@
 ---
-- name: Install chrony packages
-  yum:
-    name: chrony
-- name: Config /etc/chrony.conf 
-  template:
-    src: chrony.conf.j2
-    dest: /etc/chrony.conf
-    mode: '0644'
-  notify:
-    - restart chrony.service 
+- include_tasks: "{{ my_action }}.yml"

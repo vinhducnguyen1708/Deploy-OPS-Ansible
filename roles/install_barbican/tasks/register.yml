@@ -6,7 +6,9 @@
     password: "{{ barbican_pass }}"
     domain: default
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Add role admin for user barbican
   os_user_role:
@@ -15,8 +17,10 @@
     role: admin
     project: service
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     state: present
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create role "Creator"
   os_keystone_role:
@@ -24,7 +28,9 @@
      auth: "{{ openstack_auth }}"
      name: creator
      ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Add role creator for user barbican
   os_user_role:
@@ -33,8 +39,22 @@
     role: creator
     project: service
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     state: present
   run_once: true
+  when: region_name == region_main_site
+
+- name: Add role creator for user admin
+  os_user_role:
+    auth: "{{ openstack_auth }}"
+    user: admin
+    role: creator
+    project: admin
+    ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
+    state: present
+  run_once: true
+  when: region_name == region_main_site
 
 - name: Create the barbican service entities
   os_keystone_service:
@@ -42,16 +62,19 @@
     auth: "{{ openstack_auth }}"
     service_type: key-manager
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     description: Key Manager
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create the Key Manager service API endpoints
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: barbican
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:9311"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ barbican_api_port }}"
+     region: "{{ region_name }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -59,4 +82,24 @@
     - admin
     - internal
   run_once: true
+  when: region_name == region_main_site
 
+- name: Create the Key Manager service API endpoints other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: barbican
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ barbican_api_port }}"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site

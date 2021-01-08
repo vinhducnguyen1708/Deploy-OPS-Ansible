@@ -3,9 +3,12 @@
   hosts: all
   gather_facts: true
   tasks:
+    - name: collect facts about system services
+      service_facts:
+      register: services_status
     - name: Group hosts to determine when using --limit
       setup:
-
+  tags: always
 
 - name: Openstack_facts
   hosts: all
@@ -35,17 +38,6 @@
     - { role: install_ntp,
         tags: install_ntp }
 
-- name: Apply role certificate
-  gather_facts: false
-  become: true
-  hosts:
-     - controller
-     - deployment
-  roles:
-    - { role: certificates,
-        tags: certificates }
-#        when: enable_ssl | bool 
-
 
 - name: Apply role docker
   gather_facts: false
@@ -54,9 +46,7 @@
   roles:
     - { role: install_docker,
         tags: install_docker,
-        when: enable_multisite | bool }
-
-
+        when: region_name != region_main_site }
 
 - name: Apply role Mariadb
   gather_facts: false
@@ -66,7 +56,7 @@
     - { role: install_mariadb,
         tags: install_mariadb }
 
-- name: Apply role Rabbimq
+- name: Apply role Rabbitmq
   gather_facts: false
   become: true
   hosts: controller
@@ -82,15 +72,13 @@
     - { role: install_memcached,
         tags: install_memcached }
 
-
-
 - name: Apply role HAproxy
   gather_facts: false
   become: true
   hosts: controller
   roles:
     - { role: install_haproxy,
-        tags: install_haproxy, 
+        tags: always, 
         when: enable_haproxy | bool }
 
 - name: Apply role Pacemaker
@@ -167,13 +155,12 @@
 
 - name: Apply role Cinder
   become: true
-  gather_facts: yes
+  gather_facts: false
   hosts: controller
   roles: 
     - { role: install_cinder,
         tags: install_cinder,
         when: enable_cinder | bool }
-
 
 - name: Apply role Heat
   gather_facts: false
@@ -193,6 +180,15 @@
         tags: install_barbican,
         when: enable_barbican | bool }
 
+- name: Apply role Manila
+  gather_facts: false
+  become: true
+  hosts: controller
+  roles:
+    - { role: install_manila,
+        tags: install_manila,
+        when: enable_manila | bool }
+
 - name: Apply role Octavia
   gather_facts: false
   become: true
@@ -210,5 +206,3 @@
     - { role: install_horizon,
         tags: install_horizon,
         when: enable_horizon | bool }
-
-

@@ -6,7 +6,9 @@
     password: "{{ octavia_pass }}"
     domain: default
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_main_site }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Add role admin for user Octavia
   os_user_role:
@@ -15,8 +17,10 @@
     role: admin
     project: service
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_main_site }}"
     state: present
   run_once: true
+  when: region_name == region_main_site
 
 
 - name: Create Octavia service
@@ -25,16 +29,36 @@
     auth: "{{ openstack_auth }}"
     service_type: load-balancer
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_main_site }}"
     description: OpenStack Octavia
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create the Load-balancer service API endpoints
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: octavia 
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:9876"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ octavia_api_port }}"
+     region: "{{ region_name }}"
+     ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_main_site }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  when: region_name == region_main_site
+
+- name: Create the Load-balancer service API endpoints other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: octavia 
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ octavia_api_port }}"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -42,15 +66,24 @@
     - admin
     - internal
   run_once: true
-
-
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site
+  
 - name: Create a security group
   os_security_group:
-     auth: "{{ openstack_octavia_auth }}"
+     auth: 
+       auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+       username: "admin"
+       password: "{{ admin_pass }}"
+       project_name: "admin"
+       domain_name: "Default"
+       user_domain_name: "Default"
      name: lb-mgmt-sec-grp
      state: present
      description: Octavia security group
-     region_name: "{{ REGION }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
   run_once: yes
   register: lb_sec_group
@@ -63,7 +96,14 @@
 
 - name: add rule ICMP for security group Octavia
   os_security_group_rule:
-      auth: "{{ openstack_octavia_auth }}"
+      auth: 
+        auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+        username: "admin"
+        password: "{{ admin_pass }}"
+        project_name: "admin"
+        domain_name: "Default"
+        user_domain_name: "Default"
+      region_name: "{{ region_name }}"
       security_group: lb-mgmt-sec-grp
       protocol: icmp
       direction: ingress
@@ -71,9 +111,18 @@
       state: present
       ca_cert: "{{ openstack_cacert }}"
   run_once: yes
+
+
 - name: add rule SSH for security group Octavia
   os_security_group_rule:
-       auth: "{{ openstack_octavia_auth }}"
+       auth: 
+         auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+         username: "admin"
+         password: "{{ admin_pass }}"
+         project_name: "admin"
+         domain_name: "Default"
+         user_domain_name: "Default"
+       region_name: "{{ region_name }}"
        security_group: lb-mgmt-sec-grp
        protocol: tcp
        port_range_min: 22
@@ -86,7 +135,14 @@
       
 - name: add rule TCP/9443 for security group Octavia
   os_security_group_rule:
-      auth: "{{ openstack_octavia_auth }}"
+      auth: 
+         auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+         username: "admin"
+         password: "{{ admin_pass }}"
+         project_name: "admin"
+         domain_name: "Default"
+         user_domain_name: "Default"
+      region_name: "{{ region_name }}"
       security_group: lb-mgmt-sec-grp
       protocol: tcp
       port_range_min: 9443
@@ -97,9 +153,37 @@
       ca_cert: "{{ openstack_cacert }}"
   run_once: yes
 
+
+- name: add rule TCP/112 for security group Octavia
+  os_security_group_rule:
+      auth: 
+         auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+         username: "admin"
+         password: "{{ admin_pass }}"
+         project_name: "admin"
+         domain_name: "Default"
+         user_domain_name: "Default"
+      region_name: "{{ region_name }}"
+      security_group: lb-mgmt-sec-grp
+      protocol: tcp
+      port_range_min: 112
+      port_range_max: 112
+      direction: ingress
+      remote_ip_prefix: 0.0.0.0/0
+      state: present
+      ca_cert: "{{ openstack_cacert }}"
+  run_once: yes
+
 - name: add rule TCP/5555 for security group Octavia
   os_security_group_rule:
-      auth: "{{ openstack_octavia_auth }}"
+      auth: 
+        auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+        username: "admin"
+        password: "{{ admin_pass }}"
+        project_name: "admin"
+        domain_name: "Default"
+        user_domain_name: "Default"
+      region_name: "{{ region_name }}"
       security_group: lb-mgmt-sec-grp
       protocol: tcp
       port_range_min: 5555
@@ -112,7 +196,14 @@
 
 - name: add rule TCP/80 for security group Octavia
   os_security_group_rule:
-      auth: "{{ openstack_octavia_auth }}"
+      auth: 
+        auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+        username: "admin"
+        password: "{{ admin_pass }}"
+        project_name: "admin"
+        domain_name: "Default"
+        user_domain_name: "Default"
+      region_name: "{{ region_name }}"
       security_group: lb-mgmt-sec-grp
       protocol: tcp
       port_range_min: 80
@@ -126,7 +217,14 @@
 
 - name: Create provider network
   os_network:
-      auth: "{{ openstack_auth }}"
+      auth: 
+        auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+        username: "admin"
+        password: "{{ admin_pass }}"
+        project_name: "admin"
+        domain_name: "Default"
+        user_domain_name: "Default"
+      region_name: "{{ region_name }}"
       state: present
       name: "{{ provider_network_name }}"
       shared: yes
@@ -137,10 +235,19 @@
       ca_cert: "{{ openstack_cacert }}"
   run_once: yes
   register: provider_network_info
+  when:
+    - ( id_provider_network is not defined or id_provider_network == "" )
 
-- name: Create subnet for  provider network
+- name: Create subnet for provider network
   os_subnet:
-      auth: "{{ openstack_auth }}"
+      auth: 
+        auth_url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3"
+        username: "admin"
+        password: "{{ admin_pass }}"
+        project_name: "admin"
+        domain_name: "Default"
+        user_domain_name: "Default"
+      region_name: "{{ region_name }}"
       state: present
       network_name: "{{ provider_network_name }}"
       name: "{{ sub_provider_network_name }}"
@@ -151,8 +258,11 @@
       dns_nameservers: "{{ provider_dns_nameservers }}"
       ca_cert: "{{ openstack_cacert }}"
   run_once: yes
+  when:
+    - ( id_provider_network is not defined or id_provider_network == "" )
 
 - name: Set fact provider_network
   set_fact:
      id_provider_network: "{{ provider_network_info.id }}"
-
+  when:
+    - ( id_provider_network is not defined or id_provider_network == "" )

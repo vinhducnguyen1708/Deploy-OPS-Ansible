@@ -1,26 +1,27 @@
 ---
-- name: start mariadb
+- name: Start mariadb
   systemd:
     state: started
     name: mariadb
     enabled: yes
 
-- name: stop mariadb
+- name: Stop mariadb
   systemd:
     state: stopped
     name: mariadb
     enabled: yes
 
-- name: restart mariadb
+- name: Restart mariadb
   systemd:
     state: restarted
     name: mariadb
+  throttle: 1
 
-- name: Ensure there are no packages mariadb
-  yum: 
-   name:
-      - mariadb-common*
-      - mariadb-config*
-      - MariaDB-common
-      - mariadb-libs
-   state: removed   
+
+- name: Restart service xinetd
+  systemd:
+    state: restarted
+    enabled: true
+    name: xinetd
+  when:
+     - groups['controller'] | length > 1

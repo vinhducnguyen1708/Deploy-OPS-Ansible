@@ -1,0 +1,20 @@
+---
+- name: Show status openstack-nova-compute
+  debug:
+    msg: "openstack-nova-compute status is {{ services_status.ansible_facts.services['openstack-nova-compute.service'].state }}"
+
+- name: openstack-nova-compute has problem
+  fail:
+    msg: "openstack-nova-compute status is {{ services_status.ansible_facts.services['openstack-nova-compute.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-nova-compute.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status libvirtd
+  debug:
+    msg: "libvirtd status is {{ services_status.ansible_facts.services['libvirtd.service'].state }}"
+
+- name: libvirtd has problem
+  fail:
+    msg: "libvirtd status is {{ services_status.ansible_facts.services['libvirtd.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['libvirtd.service'].state != "running"
+  ignore_errors: True

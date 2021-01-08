@@ -1,0 +1,7 @@
+---
+- name: restart chrony.service
+  systemd:
+    state: restarted
+    enabled: yes
+    name: chronyd.service
+  throttle: 1 

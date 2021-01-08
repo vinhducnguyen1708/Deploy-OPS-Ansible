@@ -2,4 +2,33 @@
 keystone_packages:
     - openstack-keystone
     - httpd
-    - mod_wsgi
+    - python3-mod_wsgi
+    - python3-oauth2client
+
+
+# Thong tin ve file cau hinh cron de thuc hien rotate key cho keystone
+## file luu log cho qua trinh rotate
+fernet_rotate_log_file: "/var/log/keystone/keystone-fernet-rotate.log"
+
+## file crontab
+fernet_rotate_crontab_file: "/var/spool/cron/keystone"
+
+## thoi gian se thuc hien rotate key ( hours )
+token_expiration_keystone: "2"
+
+#################################################################################
+# Dat ten va password cho user replicate
+replicate_pass: "12345"
+replicate_user: "repl"
+
+#################################################################################
+### Version Packages
+mariadb_version: "10.3"
+
+#################################################################################
+#### Token
+token_expired_min: "{{ token_expiration_keystone | int * 60 | int }}"
+token_expired_sec: "{{ token_expiration_keystone | int * 3600 | int }}"
+number_keystone_node: "{{ groups['controller'] | length | int }}"
+rotation_frequency: "{{ token_expired_sec | int // number_keystone_node | int }}"
+max_active_keys: "{{ token_expired_sec | int // rotation_frequency | int + 2 }}"

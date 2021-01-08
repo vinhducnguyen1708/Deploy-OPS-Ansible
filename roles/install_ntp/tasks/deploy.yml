@@ -1,0 +1,20 @@
+---
+- name: Install chrony packages
+  yum:
+    name: chrony
+
+- name: Config /etc/chrony.conf 
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    mode: '0644'
+  notify:
+    - restart chrony.service 
+
+- meta: flush_handlers
+
+- name: Set timezone to Asia/Ho_Chi_Minh
+  timezone:
+     name: Asia/Ho_Chi_Minh
+  notify:
+     - Restart crond

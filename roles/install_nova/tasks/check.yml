@@ -1,0 +1,76 @@
+---
+- name: Show status openstack-nova-api
+  debug:
+    msg: "openstack-nova-api status is {{ services_status.ansible_facts.services['openstack-nova-api.service'].state }}"
+
+- name: openstack-nova-api has problem
+  fail:
+    msg: "openstack-nova-api status is {{ services_status.ansible_facts.services['openstack-nova-api.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-nova-api.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Show status openstack-nova-scheduler
+  debug:
+    msg: "openstack-nova-scheduler status is {{ services_status.ansible_facts.services['openstack-nova-scheduler.service'].state }}"
+
+- name: openstack-nova-scheduler has problem
+  fail:
+    msg: "openstack-nova-scheduler status is {{ services_status.ansible_facts.services['openstack-nova-scheduler.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-nova-scheduler.service'].state != "running"
+  ignore_errors: True
+
+
+
+- name: Show status openstack-nova-conductor
+  debug:
+    msg: "openstack-nova-conductor status is {{ services_status.ansible_facts.services['openstack-nova-conductor.service'].state }}"
+
+- name: openstack-nova-conductor has problem
+  fail:
+    msg: "openstack-nova-conductor status is {{ services_status.ansible_facts.services['openstack-nova-conductor.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-nova-conductor.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Show status openstack-nova-novncproxy
+  debug:
+    msg: "openstack-nova-novncproxy status is {{ services_status.ansible_facts.services['openstack-nova-novncproxy.service'].state }}"
+
+- name: openstack-nova-novncproxy has problem
+  fail:
+    msg: "openstack-nova-novncproxy status is {{ services_status.ansible_facts.services['openstack-nova-novncproxy.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['openstack-nova-novncproxy.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Check compute services list
+  shell: |
+   source /root/admin-openrc-{{ region_name }}   
+   openstack compute service list | grep down | awk '{ print $6}'
+  register: nova_node_list
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  run_once: yes
+
+- name: Nova service state down
+  block:
+    - shell: |
+        source /root/admin-openrc-{{ region_name }}
+        openstack compute service list | grep down | awk '{ print $4}'
+      register: nova_service_list
+      check_mode: no
+      failed_when: false
+      changed_when: false
+      run_once: yes
+    - name: Check nova
+      fail:
+        msg: " Please Check {{ item[0] }} on node {{ item[1] }} "
+      with_together:
+         - "{{ nova_service_list.stdout.split() }}"
+         - "{{ nova_node_list.stdout.split() }}"
+      ignore_errors: True   
+      run_once: yes
+  when: 
+    - nova_node_list.stdout.split() != []

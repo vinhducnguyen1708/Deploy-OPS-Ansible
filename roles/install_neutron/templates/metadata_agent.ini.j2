@@ -1,6 +1,5 @@
 [DEFAULT]
-nova_metadata_port = 8775
+nova_metadata_port = {{ nova_metadata_port }}
 metadata_proxy_shared_secret = {{ metadata_secret }}
-nova_metadata_host = {{ MGNT_IP }}
+nova_metadata_host = {{ management_ip_address }}
 [cache]
-

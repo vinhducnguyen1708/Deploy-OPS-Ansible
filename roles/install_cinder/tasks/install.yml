@@ -5,9 +5,6 @@
 
 - name: Install packages to setup lvm
   yum:
-    name: "{{ item }}"
-  with_items:
-      - 'targetcli'
-      - 'python-keystone'
+    name: "{{ cinder_lvm_packages }}"
   when:
-     - enable_lvm | bool
+     - enable_cinder_backend_lvm | bool

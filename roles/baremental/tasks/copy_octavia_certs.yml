@@ -1,0 +1,5 @@
+---
+- name: Copy Octavia's Certs to Controller node
+  copy:
+    src: "{{ deploy_directory }}/octavia_certs"
+    dest: "{{ deploy_directory }}/"

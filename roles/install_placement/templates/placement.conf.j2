@@ -1,24 +1,30 @@
 [DEFAULT]
+osapi_compute_listen = {{ management_ip_address }}
+
 [api]
+use_forwarded_for = true
 auth_strategy = keystone
 [cors]
 [keystone_authtoken]
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}/v3
-memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address'] }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}/v3
+memcached_servers = {%- for item in groups['controller'] %}{{  hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_name = Default
 user_domain_name = Default
 project_name = service
 username = placement
+region_name = {{ region_name }}
 password = {{ placement_pass }}
 cafile = {{ openstack_cacert }}
-
+insecure = {% if enable_insecure | bool %}True{% else %}false{% endif %}
 
 [oslo_policy]
 [placement]
+
 [placement_database]
-connection = mysql+pymysql://placement:{{ placementdb_pass }}@{{ IP_VIP }}/placement
+connection = mysql+pymysql://placement:{{ placementdb_pass }}@{{ ip_vip_address }}/placement
+
 [profiler]
 

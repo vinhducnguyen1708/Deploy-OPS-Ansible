@@ -1,2 +1,2 @@
 ---
-- include_tasks: install_pacemaker.yml
+- include_tasks: "{{ my_action }}.yml"

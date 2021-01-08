@@ -16,15 +16,49 @@
   template:
     src: cinder.conf.j2
     dest: /etc/cinder/cinder.conf
+    mode: 0640
+    group: cinder
+    owner: root
   notify:
-     - restart service Nova-API
      - restart Service Cinder-API
      - restart Service Cinder scheduler
      - restart Service Cinder Volume
      - restart service Cinder Backup
 
+- name: Create a volume group 
+  lvg:
+    vg: "{{ cinder_volume_group }}"
+    pvs: "/dev/{{ lvm_disk }}"
+  when: enable_cinder_backend_lvm | bool
+
+- name: Config LVM
+  template:
+     src: lvm.conf.j2
+     dest: /etc/lvm/lvm.conf
+  when: enable_cinder_backend_lvm | bool
+
+# - name: Chown group, user cinder
+#   file:
+#     path: /etc/cinder
+#     owner: root
+#     group: cinder
+#     mode: u=rwX,g=rX
+#     recurse: yes
+#     state: directory
+
+
+- name: Check if table exist
+  command: mysql -uroot -p{{ mariadb_pass }} -e"SHOW TABLES FROM `cinder` LIKE 'volumes';"
+  check_mode: no
+  failed_when: false
+  changed_when: false
+  register: cinderdb_table
+  run_once: yes
+
 - name: Populate the Block Storage service database
   shell: 
      su -s /bin/sh -c "cinder-manage db sync" cinder
   run_once: true
-  when: my_action == "deploy"
+  when:
+    - my_action == "deploy"
+    - cinderdb_table.stdout == ""

@@ -4,6 +4,7 @@
     state: restarted
     enabled: true
     name: octavia-api.service
+  throttle: 1 
 
 
 - name: Enable and Restart Octavia-health manager Services
@@ -11,15 +12,18 @@
      state: restarted
      enabled: true
      name: octavia-health-manager.service
+  throttle: 1 
 
 - name: Enable and Restart Octavia-housekeeping Services
   systemd:
       state: restarted
       enabled: true
       name: octavia-housekeeping.service
+  throttle: 1 
 
 - name: Enable and Restart Octavia-worker Services
   systemd:
       state: restarted
       enabled: true
       name: octavia-worker.service
+  throttle: 1 

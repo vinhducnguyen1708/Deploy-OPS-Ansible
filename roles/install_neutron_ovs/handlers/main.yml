@@ -5,7 +5,6 @@
     enabled: true
     name: openvswitch
 
-
 - name: Restart neutron-openvswitch service
   systemd:
     state: restarted
@@ -23,3 +22,16 @@
     state: restarted
     enabled: true
     name: openstack-nova-compute
+
+- name: Restart network
+  systemd:
+     state: restarted
+     name: network
+     enabled: yes
+  throttle: 1
+
+- name: Restart neutron-l3-agent
+  systemd:
+      state: restarted
+      enabled: true
+      name: neutron-l3-agent

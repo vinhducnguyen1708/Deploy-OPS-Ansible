@@ -5,3 +5,5 @@ heat_packages:
    - openstack-heat-engine
    - openstack-heat-ui
 
+heat_api_port: 8004
+heat_api_cfn_port: 8000

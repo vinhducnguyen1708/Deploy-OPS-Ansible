@@ -1,7 +1,7 @@
 [mysqld]
 server_id={{ 1000 | random(seed=inventory_hostname) }}
 report-host=hcm-mariadb-{{ inventory_hostname_short }}
-report-port=3306
+report-port={{ mysql_cluster_port }}
 bind-address = 0.0.0.0
 replicate_do_db=keystone
 default_storage_engine=InnoDB

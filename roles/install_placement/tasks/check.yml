@@ -1,0 +1,10 @@
+---
+- name: Show status HTTPD
+  debug:
+    msg: "HTTPD status is {{ services_status.ansible_facts.services['httpd.service'].state }}"
+
+- name: HTTPD has problem
+  fail:
+    msg: "HTTPD status is {{ services_status.ansible_facts.services['httpd.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['httpd.service'].state != "running"
+  ignore_errors: True

@@ -1,12 +1,4 @@
 ---
-- name: Ensure old versions of Docker are not installed.
-  package:
-    name:
-      - docker
-      - docker-common
-      - docker-engine
-    state: absent
-
 - name: Add Docker GPG key.
   rpm_key:
     key: "{{ docker_yum_gpg_key }}"
@@ -33,15 +25,11 @@
     section: 'docker-{{ docker_edition }}-test'
     option: enabled
     value: '{{ docker_yum_repo_enable_test }}'
-- name: Download the package from the official repository using the curl
-  shell: curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-
-- name: Install Pip
-  shell: python get-pip.py
 
 - name: Install docker-py
   pip:
-   name: docker-py
+   executable: /usr/bin/pip3
+   name: docker
 
 - name: Install containerd separately (CentOS 8).
   package:

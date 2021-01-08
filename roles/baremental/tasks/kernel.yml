@@ -10,6 +10,23 @@
 
 - name: Create Ansible-Deploy directory
   file:
-    path: "{{ ansible_deploy_files }}"
+    path: "{{ deploy_directory }}"
     state: directory
+  delegate_to: "{{ item }}"
+  run_once: yes
+  with_items:
+     - "{{ groups['all'] }}"
 
+- name: Increase the open files limit on Linux
+  lineinfile:
+     dest: /etc/security/limits.conf
+     line: "* - nofile 100000"
+     insertbefore: '# End of file'
+       
+- name: CMD history logs
+  blockinfile:
+    block: >
+        export PROMPT_COMMAND='RETRN_VAL=$?;
+        logger -p local6.debug -t bash "$(whoami) [$$]:
+        $(history 1 | sed "s/^[ ]*[0-9]\+[ ]*//" ) [$RETRN_VAL]"'
+    path: /etc/bashrc

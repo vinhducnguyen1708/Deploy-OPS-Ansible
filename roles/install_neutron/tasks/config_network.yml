@@ -15,37 +15,36 @@
 - name: Add port for bridge
   openvswitch_port:
     bridge: br-provider
-    port: "{{ FLAT_IF }}"
+    port: "{{ external_interface }}"
     state: present
 
-
-- name: config FLAT interface
+- name: Config EXTERNAL interface
   template:
-    src: ifcfgflat.j2
-    dest: /etc/sysconfig/network-scripts/ifcfg-{{ FLAT_IF }}
+    src: ifcfg-external.j2
+    dest: /etc/sysconfig/network-scripts/ifcfg-{{ external_interface }}
+  notify:
+    - Restart network  
 
 - name: Check Bridge provider config
   stat: 
     path: /etc/sysconfig/network-scripts/ifcfg-br-provider
   register: br_provider
 
+#- name: Find EXTERNAL ip 
+#  set_fact:
+#    external_ip_address: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
+#  when:
+#    - br_provider.stat.exists
 
-- name: Find Flat ip 
-  set_fact:
-    FLAT_IP: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
-  when:
-    - br_provider.stat.exists
-- name: Find Flat netmask
-  set_fact:
-    FLAT_NETMASK: "{{  hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
-  when:
-    - br_provider.stat.exists
+#- name: Find External netmask
+#  set_fact:
+#    external_netmask: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
+#  when:
+#    - br_provider.stat.exists
 
-    
 - name: Config network bridge Provider
   template:
     src: ifcfg-br-provider.j2
     dest: /etc/sysconfig/network-scripts/ifcfg-br-provider
   notify:
     - Restart network  
-

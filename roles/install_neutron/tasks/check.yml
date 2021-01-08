@@ -1,0 +1,54 @@
+---
+- name: Show status Neutron-server
+  debug:
+    msg: "Neutron-server status is {{ services_status.ansible_facts.services['neutron-server.service'].state }}"
+
+- name: Neutron-server has problem
+  fail:
+    msg: "Neutron-server status is {{ services_status.ansible_facts.services['neutron-server.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['neutron-server.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status Neutron-dhcp-agent
+  debug:
+    msg: "Neutron-dhcp-agent status is {{ services_status.ansible_facts.services['neutron-dhcp-agent.service'].state }}"
+
+- name: Neutron-dhcp-agent has problem
+  fail:
+    msg: "Neutron-dhcp-agent status is {{ services_status.ansible_facts.services['neutron-dhcp-agent.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['neutron-dhcp-agent.service'].state != "running"
+  ignore_errors: True
+
+- name: Show status Neutron-l3-agent
+  debug:
+    msg: "Neutron-l3-agent status is {{ services_status.ansible_facts.services['neutron-l3-agent.service'].state }}"
+
+- name: Neutron-l3-agent has problem
+  fail:
+    msg: "Neutron-l3-agent status is {{ services_status.ansible_facts.services['neutron-l3-agent.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['neutron-l3-agent.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Show status Neutron-metadata-agent
+  debug:
+    msg: "Neutron-metadata-agent status is {{ services_status.ansible_facts.services['neutron-metadata-agent.service'].state }}"
+
+- name: Neutron-server has problem
+  fail:
+    msg: "Neutron-metadata-agent status is {{ services_status.ansible_facts.services['neutron-metadata-agent.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['neutron-metadata-agent.service'].state != "running"
+  ignore_errors: True
+
+
+- name: Show status Neutron-openvswitch-agent
+  debug:
+    msg: "Neutron-openvswitch-agent status is {{ services_status.ansible_facts.services['neutron-openvswitch-agent.service'].state }}"
+
+- name: Neutron-openvswitch-agent has problem
+  fail:
+    msg: "Neutron-openvswitch-agent status is {{ services_status.ansible_facts.services['neutron-openvswitch-agent.service'].state }} please check your system"
+  when: services_status.ansible_facts.services['neutron-openvswitch-agent.service'].state != "running"
+  ignore_errors: True
+
+

@@ -1,0 +1,109 @@
+---
+## Cau hinh network cho cum OPS
+### Dia chi IP VIP cho cum OPS
+ip_vip_address: "192.168.10.28"
+ip_vip_netmask: "24"
+
+### Network interface trong cum OPS
+management_interface: "ens3"
+data_interface: "ens3"
+external_interface: "ens4"
+
+## Thu muc nay se duoc tao ra de chua cac file duoc tao ra trong qua trinh chay ansible 
+deploy_directory: "/root/AnsibleOPSfiles-HN"
+
+## Thong tin cua site Hanoi
+### Ten region_name
+region_name: "Hanoi"
+
+enable_multisite: "no"
+region_main_site: "Hanoi"
+other_site_ip_list: 
+       - "10.163.137.34"
+       - "10.163.137.35"
+       - "10.163.137.36"
+
+#################################################################################
+## Cau hinh chay cac services(Khi duoc gan gia tri la "yes" thi se duoc cai dat)
+### HA services
+enable_haproxy: "no"
+enable_pacemaker: "no"
+
+#### Openstack's services
+enable_openstack_core: "yes"
+enable_cinder: "no"
+enable_barbican: "no"
+enable_heat: "no"
+enable_octavia: "no"
+enable_manila: "no"
+
+#################################################################################
+##### Tao dai network cho service octavia
+###### Ten cua dai network provider
+provider_network_name: "provider_network"
+
+###### Ten subnet cua dai network provider
+sub_provider_network_name: "sub1_provider_network"
+
+###### CIDR
+provider_network_address: "192.168.30.0/24"
+
+###### Network type ( flat,Vlan )
+provider_network_type: "flat"
+
+###### physical_network cho dai network ( mac dinh la "physnet1")
+provider_physical_network: "physnet1"
+
+###### VLANID khi su dung network type VLAN
+provider_segmentation_id: ""
+
+###### Khai bao DNS server
+provider_dns_nameservers: "8.8.8.8"
+
+###### Khai bao pool cho subnet
+provider_pool_start: "192.168.30.230"
+provider_pool_end: "192.168.30.245"
+
+#################################################################################
+#### Neu da tao dai network cho octavia thi khai bao network id 
+id_provider_network: "1a16affd-7d76-4ac0-9c89-a8732ef020db"
+
+#################################################################################
+## Storage Backend
+### LVM backend
+#### Khi "enable_cinder_backend_lvm" co gia tri "yes" thi se su dung LVM lam backed cho cinder
+enable_cinder_backend_lvm: "no"
+
+#### Ten cua group cinder
+cinder_volume_group: "cinder-volumes"
+
+### Thiet bi su dung de cap volume
+lvm_disk: "vdb"
+
+### CEPH backend
+#### Khi "enable_cinder_backend_ceph" co gia tri "yes" thi se su dung CEPH lam backend cho cinder
+enable_cinder_backend_ceph: "no"
+ceph_backend:
+     - name: "ceph_ssd"
+       pool: "volumes_ssd"
+     - name: "ceph_hdd"
+       pool: "volumes_hdd"
+
+#### Dia chi IP Management của cum CEPH se su dung
+ip_ceph_mgr_address: "10.163.9.62"
+#### Port SSH đến Node Ceph mac dinh la 22
+ssh_port_ceph_mgr: "7225"
+
+#################################################################################
+## Cau hinh su dung SSL
+### Khi "enable_ssl" co gia tri là "yes" Thi he thong OPS se giao tiep bang giao thuc HTTPS
+enable_ssl: "no"
+
+#################################################################################
+# Domain for main site
+# Include domain horizon and vnc
+#domain_website: "manage.smartcloud.vn"
+#domain_vnc_main_site: "vnchn.manage.smartcloud.vn"
+
+#################################################################################
+#ssh_port: "7225"

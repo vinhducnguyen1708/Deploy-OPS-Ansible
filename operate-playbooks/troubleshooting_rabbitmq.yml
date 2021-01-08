@@ -1,0 +1,8 @@
+---
+- name: Apply role Troubleshooting Rabbitmq
+  hosts: controller
+  gather_facts: true
+  become: true
+  roles:
+    - { role: troubleshooting_rabbitmq,
+        tags: troubleshooting_rabbitmq }

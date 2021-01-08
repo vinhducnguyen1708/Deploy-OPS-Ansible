@@ -1,57 +1,78 @@
 [DEFAULT]
-bind_host = {{ MGNT_IP }}
-bind_port = 9292
+bind_host = {{ management_ip_address }}
+bind_port = {{ glance_api_port }}
 show_image_direct_url = True
 show_multiple_locations = True
 use_forwarded_for = true
+
 [cinder]
+cinder_ca_certificates_file = {{ openstack_cacert }}
+cinder_os_region_name = {{ region_name }}
+
 [cors]
+
 [database]
-connection = mysql+pymysql://glance:{{ glancedb_pass }}@{{ IP_VIP }}/glance
+backend = sqlalchemy
+connection = mysql+pymysql://glance:{{ glancedb_pass }}@{{ ip_vip_address }}/glance
+
 [glance.store.http.store]
 [glance.store.rbd.store]
 [glance.store.sheepdog.store]
 [glance.store.swift.store]
 [glance.store.vmware_datastore.store]
+
 [glance_store]
-stores = {% if enable_ceph | bool %}rbd{% else %}file,http{% endif %}
+stores = {% if enable_cinder_backend_ceph | bool %}rbd,file,http{% else %}file,http{% endif %}
 
-default_store = {% if enable_ceph | bool %}rbd{% else %}file{% endif %}
+default_store = {% if enable_cinder_backend_ceph | bool %}rbd{% else %}file{% endif %}
 
-{% if enable_ceph | bool %}
+filesystem_store_datadir = /var/lib/glance/images/
+{% if enable_cinder_backend_ceph | bool %}
 rbd_store_pool = images
 rbd_store_user = glance
 rbd_store_ceph_conf = /etc/ceph/ceph.conf
 rbd_store_chunk_size = 8
-{% else %}
-filesystem_store_datadir = /var/lib/glance/images/
 {% endif %}
+
 [image_format]
+disk_formats = ami,ari,aki,vhd,vmdk,raw,qcow2,vdi,iso,root-tar
+
 [keystone_authtoken]
-www_authenticate_uri = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
-auth_url = {{ keystone_protocol }}://{{ IP_VIP }}:{{ keystone_port }}
-memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[item]['ansible_' + MGNT_IF]['ipv4']['address']  }}:11211{% if not loop.last %},{% endif %}{% endfor %}
+www_authenticate_uri = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+auth_url = {{ keystone_protocol }}://{{ ip_vip_address }}:{{ keystone_port }}
+memcached_servers = {%- for item in groups['controller'] %}{{ hostvars[item]['ansible_' + management_interface]['ipv4']['address'] }}:{{ memcache_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 auth_type = password
 project_domain_name = Default
 user_domain_name = Default
 project_name = service
+region_name = {{ region_name }}
 username = glance
 password = {{ glance_pass }}
-{% if enable_ssl | bool %}
 cafile = {{ openstack_cacert }}
-{% endif %}
+insecure = {% if enable_insecure | bool %}True{% else %}False{% endif %}
 
 [oslo_concurrency]
 [oslo_messaging_amqp]
 [oslo_messaging_kafka]
 [oslo_messaging_notifications]
 [oslo_messaging_rabbit]
+
 [oslo_middleware]
+enable_proxy_headers_parsing = True
+
 [oslo_policy]
+
 [paste_deploy]
 flavor = keystone
+
 [profiler]
 [store_type_location_strategy]
 [task]
 [taskflow_executor]
+
+{% if enable_barbican | bool %}
+[barbican]
+barbican_endpoint_type = internal
+verify_ssl_path = {{ openstack_cacert }}
+{% endif %}

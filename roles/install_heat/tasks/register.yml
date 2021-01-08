@@ -6,7 +6,9 @@
     password: "{{ heat_pass }}"
     domain: default
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Add role for user Heat
   os_user_role:
@@ -15,8 +17,10 @@
     role: admin
     project: service
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     state: present
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create Heat service
   os_keystone_service:
@@ -24,8 +28,10 @@
     auth: "{{ openstack_auth }}"
     service_type: orchestration
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     description: Orchestration
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create Heat-cfn service
   os_keystone_service:
@@ -33,17 +39,19 @@
     auth: "{{ openstack_auth }}"
     service_type: cloudformation
     ca_cert: "{{ openstack_cacert }}"
+    region_name: "{{ region_name }}"
     description: Orchestration
   run_once: true
-
+  when: region_name == region_main_site
 
 - name: Create the Orchestration service API endpoints
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: heat 
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8004/v1/%(tenant_id)s"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ heat_api_port }}/v1/%(tenant_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -51,15 +59,16 @@
     - admin
     - internal
   run_once: true
-
+  when: region_name == region_main_site
 
 - name: Create Heat-cfn endpoints
   os_keystone_endpoint:
      auth: "{{ openstack_auth }}"
      service: heat-cfn  
      endpoint_interface: "{{ item }}"
-     url: "{{ keystone_protocol }}://{{ IP_VIP }}:8000/v1"
-     region: "{{ REGION }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ heat_api_cfn_port }}/v1"
+     region: "{{ region_name }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      state: present
   with_items:
@@ -67,17 +76,18 @@
     - admin
     - internal
   run_once: true
-
+  when: region_name == region_main_site
 
 - name: Creat Domain for Heat
   os_keystone_domain:
      auth: "{{ openstack_auth }}"
      state: present
      name: heat
-     region_name: "{{ REGION }}"
+     region_name: "{{ region_name }}"
      ca_cert: "{{ openstack_cacert }}"
      description: Stack projects and users
   run_once: true
+  when: region_name == region_main_site
 
 
 - name: Create user heat_domain_admin
@@ -87,17 +97,22 @@
      password: "{{ heat_pass }}"
      domain: heat
      ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_name }}"
      state: present
   run_once: true
+  when: region_name == region_main_site
 
 - name: User to manage projects and users in the heat domain
   os_user_role:
      auth: "{{ openstack_auth }}"
      user: heat_domain_admin  
      role: admin
-     domain: heat 
+     domain: "heat"
      ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_name }}"
+     state: present
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create role heat_stack_owner
   os_keystone_role:
@@ -105,7 +120,9 @@
      auth: "{{ openstack_auth }}"
      name: heat_stack_owner
      ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Apply role for demo user
   os_user_role:
@@ -114,7 +131,9 @@
      role: heat_stack_owner
      project: demo
      ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
 
 - name: Create role heat_stack_user
   os_keystone_role:
@@ -122,5 +141,46 @@
      auth: "{{ openstack_auth }}"
      name: heat_stack_user
      ca_cert: "{{ openstack_cacert }}"
+     region_name: "{{ region_name }}"
   run_once: true
+  when: region_name == region_main_site
   
+- name: Create the Orchestration service API endpoints other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: heat 
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ heat_api_port }}/v1/%(tenant_id)s"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site
+
+- name: Create Heat-cfn endpoints other site
+  os_keystone_endpoint:
+     auth: "{{ openstack_auth }}"
+     service: heat-cfn  
+     endpoint_interface: "{{ item }}"
+     url: "{{ keystone_protocol }}://{{ ip_vip_address }}:{{ heat_api_cfn_port }}/v1"
+     region: "{{ region_name }}"
+     region_name: "{{ region_main_site }}"
+     ca_cert: "{{ openstack_cacert }}"
+     state: present
+  with_items:
+    - public
+    - admin
+    - internal
+  run_once: true
+  vars:
+     ansible_port: "{{ ssh_port_other_site }}"
+  delegate_to: "{{ other_site_ip_list[0] }}"
+  when: region_name != region_main_site
