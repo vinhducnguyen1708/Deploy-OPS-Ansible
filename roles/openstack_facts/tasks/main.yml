@@ -26,17 +26,17 @@
     path: /etc/sysconfig/network-scripts/ifcfg-br-provider
   register: br_provider
 
-#- name: Find External ip 
-#  set_fact:
-#    external_ip_address: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
-#  when:
-#    - br_provider.stat.exists
+- name: Find EXTERNAL ip 
+  set_fact:
+    external_ip_address: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['address'] }}"
+  when:
+   - br_provider.stat.exists
 
-#- name: Find External netmask
-#  set_fact:
-#    external_netmask: "{{  hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
-#  when:
-#    - br_provider.stat.exists
+- name: Find External netmask
+  set_fact:
+    external_netmask: "{{ hostvars[inventory_hostname]['ansible_br_provider']['ipv4']['netmask'] }}"
+  when:
+   - br_provider.stat.exists
 
 
 - name: Set fact horizon domain 
